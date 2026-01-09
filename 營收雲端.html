@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>智慧營收系統 - 雲端自動化版</title>
+    <style>
+        :root { --primary: #4E342E; --mid: #8D6E63; --light: #A89B96; --bg: #EAE3DD; }
+        body.theme-green { --primary: #2D4030; --mid: #556B2F; --light: #A3B18A; --bg: #DAD7CD; }
+        body.theme-blue { --primary: #1B263B; --mid: #415A77; --light: #778DA9; --bg: #E0E1DD; }
+        body.theme-red { --primary: #582F0E; --mid: #7F4F24; --light: #A68A64; --bg: #EDE0D4; }
+        body.theme-purple { --primary: #3C096C; --mid: #7B2CBF; --light: #9D4EDD; --bg: #E0AAFF; }
+
+        body, html { height: 100%; margin: 0; padding: 0; font-family: sans-serif; background: var(--bg); overflow: hidden; display: flex; flex-direction: column; color: var(--primary); transition: background 0.5s; }
+        .header-section { height: 85px; padding: 0 40px; display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+        .page-title { font-size: 26px; font-weight: 900; cursor: pointer; user-select: none; }
+        .year-dropdown { position: absolute; top: 45px; left: 0; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); width: 140px; display: none; z-index: 9999; border: 1px solid #EEE; overflow: hidden; }
+        .year-item { padding: 12px; font-weight: 700; color: var(--mid); cursor: pointer; text-align: center; transition: 0.2s; }
+        .year-item:hover { background: var(--bg); }
+
+        .search-area { display: flex; align-items: center; gap: 10px; }
+        .search-group { display: flex; gap: 8px; }
+        .search-group input { border: 1px solid rgba(0,0,0,0.08); border-radius: 50px; padding: 8px 15px; width: 110px; outline: none; background: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; transition: all 0.4s; }
+        .search-group input:focus { background: #FFF; width: 160px; border-color: var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+
+        .role-btn-group { display: none; gap: 5px; margin-left: 10px; }
+        .role-btn { border: 1px solid var(--light); padding: 6px 15px; border-radius: 50px; font-size: 12px; font-weight: 700; cursor: pointer; background: white; color: var(--mid); transition: 0.3s; }
+        .role-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .viewport { flex: 1; overflow: hidden; position: relative; }
+        .slider-container { display: flex; width: 300vw; height: 100%; transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1); }
+        .page-content { width: 100vw; height: 100%; padding: 0 20px 100px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
+        
+        .white-card { background: white; border-radius: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.03); }
+        .table-scroll { flex: 1; overflow-y: scroll; width: 100%; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 1400px; }
+        th { background: var(--primary); color: white; padding: 12px 2px; font-size: 11px; position: sticky; top: 0; z-index: 10; }
+        td { border-bottom: 1px solid rgba(0,0,0,0.03); height: 38px; text-align: center; font-size: 13px; position: relative; }
+        
+        input[type="checkbox"] { width: 13px !important; height: 13px !important; cursor: pointer; accent-color: var(--primary); }
+
+        tr.is-settled { opacity: 0.4; background: #f9f9f9; }
+        input, select { border: none; width: 100%; height: 100%; text-align: center; font-size: 12px; background: transparent; outline: none; font-weight: 600; color: var(--primary); }
+        .readonly { color: var(--light); background: #FAF9F8; cursor: default; }
+
+        .bottom-ui-wrap { position: fixed; bottom: 30px; left: 0; width: 100%; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; pointer-events: none; z-index: 1000; }
+        .bottom-ui-wrap > * { pointer-events: auto; }
+        .tab-bar-container { display: flex; gap: 5px; background: rgba(255,255,255,0.95); padding: 5px; border-radius: 50px; border: 1px solid #DDD; position: absolute; left: 50%; transform: translateX(-50%); box-shadow: 0 8px 25px rgba(0,0,0,0.08); backdrop-filter: blur(10px); }
+        .tab-item { padding: 10px 22px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--mid); transition: 0.3s; }
+        .tab-item.active { background: var(--primary); color: white; }
+
+        .btn-group { display: flex; gap: 8px; }
+        .action-btn { padding: 10px 18px; border-radius: 50px; background: white; border: 1px solid #DDD; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .action-btn:hover { background: var(--primary); color: white; }
+    </style>
+</head>
+<body onclick="document.getElementById('yMenu').style.display='none'">
+
+<div class="header-section">
+    <div style="position:relative">
+        <div class="page-title" onclick="event.stopPropagation(); document.getElementById('yMenu').style.display='block'"><span id="yDisp">2026</span> 營收表</div>
+        <div id="yMenu" class="year-dropdown"><div id="yList"></div><div class="year-item" style="color:green; border-top:1px solid #EEE" onclick="addNewYear()">+</div></div>
+    </div>
+    
+    <div class="search-area">
+        <div class="search-group" id="searchInputs">
+            <input type="text" id="sC" placeholder="👤 客戶" oninput="runSearch()">
+            <input type="text" id="sM" placeholder="📅 月份" oninput="runSearch()">
+        </div>
+        <div class="search-group" id="settleSearchGroup" style="display:none">
+            <input type="text" id="ssC" placeholder="🔍 搜尋客戶" oninput="runSettleSearch()">
+            <input type="text" id="ssM" placeholder="🔍 結算月份" oninput="runSettleSearch()">
+        </div>
+        <div class="role-btn-group" id="roleBtns">
+            <button class="role-btn active" onclick="setRole('公司', this)">公司</button>
+            <button class="role-btn" onclick="setRole('老闆', this)">老闆</button>
+            <button class="role-btn" onclick="setRole('員工', this)">員工</button>
+        </div>
+    </div>
+</div>
+
+<div class="viewport">
+    <div class="slider-container" id="mainSlider">
+        <div class="page-content"><div class="white-card"><div class="table-scroll"><table><thead><tr><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">員工%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">員工金額</th><th style="width:120px">備註</th></tr></thead><tbody id="tb"></tbody></table></div></div></div>
+        <div class="page-content"><div class="white-card"><div class="table-scroll"><table><thead><tr><th>月份</th><th>總收(未稅)</th><th>總收(含稅)</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>員工分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
+        <div class="page-content"><div class="white-card"><div class="table-scroll"><table><thead><tr><th style="width:10%">年月</th><th style="width:8%">編號</th><th style="width:15%">客戶名稱</th><th style="width:25%">案件名稱</th><th style="width:15%">成交(未稅)</th><th style="width:12%" id="sP">公司抽%</th><th style="width:15%" id="sA">公司金額</th></tr></thead><tbody id="settle-tb"></tbody></table></div><div id="settle-bar" style="height:70px; display:none; align-items:center; justify-content:flex-end; padding:0 40px; border-top:1px solid #EEE;"><div id="settle-total-val" style="color:#D32F2F; font-size:24px; font-weight:900;">結算總額：$ 0</div></div></div></div>
+    </div>
+</div>
+
+<div class="bottom-ui-wrap">
+    <div class="btn-group">
+        <button class="action-btn" id="cloudSaveBtn" style="border-color:#4285F4; color:#4285F4" onclick="cloudSync('SAVE')">☁️ 雲端同步</button>
+        <button class="action-btn" style="border-color:#FBBC05" onclick="cloudSync('LOAD')">🔄 載入雲端</button>
+    </div>
+    <div class="tab-bar-container">
+        <div class="tab-item active" onclick="switchSlide(0, this)">案件明細</div>
+        <div class="tab-item" onclick="switchSlide(1, this)">月報統計</div>
+        <div class="tab-item" onclick="switchSlide(2, this)">分潤結算</div>
+    </div>
+    <div class="btn-group">
+        <button class="action-btn" onclick="exportData()">📤 匯出備份</button>
+    </div>
+</div>
+
+<script>
+// --- ⚠️ 重要：請在此處填入你的 Google API 網址 ---
+const CLOUD_API = "https://script.google.com/macros/s/AKfycby13dgio2KdDj-R3QhkzO73NKl9SygorGNKRja9KO5P9kpsRLt3ILMqY1Rgj53kjKgK/exec"; 
+
+let curY = localStorage.getItem('vB_Y') || '2026';
+let yArr = JSON.parse(localStorage.getItem('vB_List')) || ['2026'];
+let opts = JSON.parse(localStorage.getItem('vB_Opts')) || { 4: [], 6: [] };
+window.curRole = '公司';
+
+function changeYear(y) { curY=y; localStorage.setItem('vB_Y',y); document.getElementById('yDisp').innerText=y; applyTheme(y); initTable(); }
+function applyTheme(y) { const themes=['','theme-green','theme-blue','theme-red','theme-purple']; document.body.className=themes[parseInt(y)%themes.length]; }
+function addNewYear() { let y=prompt("年份:"); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();localStorage.setItem('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
+function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
+
+function switchSlide(idx, el) {
+    document.getElementById('mainSlider').style.transform = `translateX(-${idx * 100}vw)`;
+    document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+    document.getElementById('searchInputs').style.display = (idx === 0) ? 'flex' : 'none';
+    document.getElementById('settleSearchGroup').style.display = (idx === 2) ? 'flex' : 'none';
+    document.getElementById('roleBtns').style.display = (idx === 2) ? 'flex' : 'none';
+    document.getElementById('settle-bar').style.display = (idx === 2) ? 'flex' : 'none';
+    if(idx === 2) runSettleSearch();
+    if(idx === 1) updateMonthlyReport();
+}
+
+function handleOptChange(r, c) {
+    let sel = document.getElementById(`r${r}c${c}`);
+    if (sel.value === "__ADD__") {
+        let n = prompt("新增:");
+        if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); }
+        else sel.value = "";
+    } else if (sel.value === "__DEL__") {
+        let target = prompt("刪除名稱:");
+        if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); }
+        else sel.value = "";
+    } else { calc(r, c); }
+}
+
+function createRow(r) {
+    let tr = document.createElement('tr'); tr.id = `r${r}`;
+    let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+    for(let c=0; c<21; c++) {
+        let td = document.createElement('td'), val = saved[c] || '';
+        if(c===7) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
+        else if(c===4 || c===6) {
+            let optionsHtml = (opts[c]||[]).map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
+            td.innerHTML = `<select id="r${r}c${c}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${optionsHtml}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
+        } else {
+            let ro = [0,10,11,13,17,18,19].includes(c);
+            td.innerHTML = `<input id="r${r}c${c}" value="${val}" class="${ro?'readonly':''}" ${ro?'readonly tabindex="-1"':''} oninput="calc(${r},${c})">`;
+        }
+        tr.appendChild(td);
+    }
+    return tr;
+}
+
+function calc(r, c, save=true) {
+    const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
+    const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
+    let rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    if(r === rowCount - 1 && g(c) !== "") {
+        for(let i=0; i<10; i++) document.getElementById('tb').appendChild(createRow(rowCount++));
+        localStorage.setItem(`rowCount_${curY}`, rowCount);
+    }
+    if(g(5).includes('/')) s(0, `${curY}-${g(5).split('/')[0].padStart(2,'0')}`);
+    let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7)?Math.round(net*0.05):0, total = net+tax;
+    let rem = total - (parseFloat(g(8))||0) - (parseFloat(g(12))||0);
+    s(10, tax); s(11, total); s(13, rem);
+    s(17, Math.round(net*(g(14)/100))); s(18, Math.round(net*(g(15)/100))); s(19, Math.round(net*(g(16)/100)));
+    document.getElementById(`r${r}`).classList.toggle('is-settled', net > 0 && rem <= 0);
+    if(save) { let d = {}; for(let i=0; i<21; i++) d[i] = g(i); localStorage.setItem(`d_${curY}_${r}`, JSON.stringify(d)); }
+}
+
+function initTable() { const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } }
+function setRole(r, el) { window.curRole = r; document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); runSettleSearch(); }
+
+function runSettleSearch() {
+    let r = window.curRole, tb = document.getElementById('settle-tb'), tot = 0; tb.innerHTML = '';
+    let sc = document.getElementById('ssC').value.trim().toLowerCase();
+    let sm = document.getElementById('ssM').value.trim().padStart(2,'0');
+    let pIdx = (r==='公司'?14:(r==='老闆'?15:16)), aIdx = (r==='公司'?17:(r==='老闆'?18:19));
+    document.getElementById('sP').innerText = r+"抽%"; document.getElementById('sA').innerText = r+"金額";
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    for(let i=0; i<count; i++) {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {}; 
+        let val = parseFloat(d[aIdx])||0;
+        let rowCust = (d[2]||"").toLowerCase();
+        let rowMonth = (d[0]||"").split('-')[1] || "";
+        if(val > 0 && (!sc || rowCust.includes(sc)) && (!sm || sm==='00' || rowMonth === sm)) {
+            tb.innerHTML += `<tr><td>${d[0]||''}</td><td>${d[1]||''}</td><td>${d[2]||''}</td><td>${d[3]||''}</td><td>${(parseFloat(d[9])||0).toLocaleString()}</td><td>${d[pIdx]||0}%</td><td>${val.toLocaleString()}</td></tr>`; 
+            tot += val;
+        }
+    }
+    document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
+}
+
+function updateMonthlyReport() {
+    const rt = document.getElementById('report-tb'); rt.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    for(let m=1; m<=12; m++) {
+        let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
+        for(let i=0; i<count; i++) {
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+            if(d[0] === mStr) { n+=parseFloat(d[9])||0; t+=parseFloat(d[11])||0; r+=(parseFloat(d[8])||0)+(parseFloat(d[12])||0); re+=parseFloat(d[13])||0; c1+=parseFloat(d[17])||0; c2+=parseFloat(d[18])||0; c3+=parseFloat(d[19])||0; ct++; }
+        }
+        if(ct > 0) rt.innerHTML += `<tr><td>${m}月</td><td>${n.toLocaleString()}</td><td>${t.toLocaleString()}</td><td>${r.toLocaleString()}</td><td>${re.toLocaleString()}</td><td>${c1.toLocaleString()}</td><td>${c2.toLocaleString()}</td><td>${c3.toLocaleString()}</td><td>${ct}</td></tr>`;
+    }
+}
+
+function runSearch() { 
+    let sc = document.getElementById('sC').value.toLowerCase(), sm = document.getElementById('sM').value.padStart(2,'0'); 
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    for(let r=0; r<count; r++){ 
+        let row = document.getElementById(`r${r}`), mv = document.getElementById(`r${r}c0`).value, cv = document.getElementById(`r${r}c2`).value.toLowerCase(); 
+        row.style.display = ((!sc || cv.includes(sc)) && (!sm || sm==='00' || mv.includes(`-${sm}`))) ? '' : 'none'; 
+    } 
+}
+
+async function cloudSync(mode) {
+    if (CLOUD_API.includes("你的_APPS_SCRIPT_URL")) return alert("請先填入 Google Apps Script 的 API URL");
+    const btn = document.getElementById('cloudSaveBtn');
+    if (mode === 'SAVE') {
+        btn.innerText = "⏳ 同步中...";
+        let fullData = {};
+        for(let i=0; i<localStorage.length; i++){
+            let k = localStorage.key(i);
+            if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_')) fullData[k] = localStorage.getItem(k);
+        }
+        try {
+            await fetch(CLOUD_API, { method: 'POST', body: JSON.stringify({ key: 'vB_Backup', value: JSON.stringify(fullData) }) });
+            alert("✅ 雲端同步成功！資料已備份。");
+        } catch(e) { alert("❌ 同步失敗，請檢查網路或 API 設定。"); }
+        btn.innerText = "☁️ 雲端同步";
+    } else {
+        if(!confirm("載入雲端會覆蓋目前本機資料，確定嗎？")) return;
+        try {
+            const res = await fetch(`${CLOUD_API}?key=vB_Backup`);
+            const cloudJson = await res.json();
+            if(!cloudJson || cloudJson === "{}") return alert("雲端沒有備份資料。");
+            const data = JSON.parse(cloudJson);
+            Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+            location.reload();
+        } catch(e) { alert("❌ 載入失敗。"); }
+    }
+}
+
+function exportData() { let b = new Blob([JSON.stringify(localStorage)], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `backup_${curY}.json`; a.click(); }
+window.onload = () => { applyTheme(curY); document.getElementById('yDisp').innerText = curY; initTable(); renderYearList(); };
+</script>
+</body>
+</html>
