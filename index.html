@@ -219,7 +219,9 @@ function runSearch() {
 }
 
 async function cloudSync(mode) {
+    if (CLOUD_API.includes("你的_APPS_SCRIPT_URL")) return alert("請先填入 Google Apps Script 的 API URL");
     const btn = document.getElementById('cloudSaveBtn');
+    
     if (mode === 'SAVE') {
         btn.innerText = "⏳ 同步中...";
         let fullData = {};
@@ -228,15 +230,19 @@ async function cloudSync(mode) {
             if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_')) fullData[k] = localStorage.getItem(k);
         }
         try {
-            // --- 修正重點：確保傳送的名稱與 Google 端對齊 ---
+            // --- 修正後的 Fetch：加入 mode: 'no-cors' ---
             await fetch(CLOUD_API, { 
                 method: 'POST', 
-                mode: 'no-cors', // 增加這行可以避免部分跨網域報錯
+                mode: 'no-cors', 
+                cache: 'no-cache',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ key: 'vB_Backup', val: JSON.stringify(fullData) }) // 把 value 改成 val
+                body: JSON.stringify({ key: 'vB_Backup', value: JSON.stringify(fullData) }) 
             });
-            alert("✅ 雲端同步指令已發出！(請重新載入確認)");
-        } catch(e) { alert("❌ 同步失敗，請檢查網路。"); }
+            alert("✅ 雲端同步指令已發送！\n請注意：因 Google 限制，若成功將不會有回傳訊息。請稍後點擊「載入雲端」確認。");
+        } catch(e) { 
+            console.error(e);
+            alert("❌ 同步失敗，請檢查網路或 API 設定。"); 
+        }
         btn.innerText = "☁️ 雲端同步";
     } else {
         if(!confirm("載入雲端會覆蓋目前本機資料，確定嗎？")) return;
@@ -244,10 +250,15 @@ async function cloudSync(mode) {
             const res = await fetch(`${CLOUD_API}?key=vB_Backup`);
             const cloudJson = await res.json();
             if(!cloudJson || cloudJson === "{}") return alert("雲端沒有備份資料。");
-            const data = JSON.parse(cloudJson);
+            // 修正：cloudJson 本身可能就是字串，需要再 parse 一次
+            const data = (typeof cloudJson === 'string') ? JSON.parse(cloudJson) : cloudJson;
             Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+            alert("✅ 載入成功！網頁即將重新整理。");
             location.reload();
-        } catch(e) { alert("❌ 載入失敗。"); }
+        } catch(e) { 
+            console.error(e);
+            alert("❌ 載入失敗，請確認雲端是否有資料。"); 
+        }
     }
 }
 
@@ -266,6 +277,7 @@ window.onload = () => { applyTheme(curY); document.getElementById('yDisp').inner
 
 
  
+
 
 
 
