@@ -219,7 +219,6 @@ function runSearch() {
 }
 
 async function cloudSync(mode) {
-   
     const btn = document.getElementById('cloudSaveBtn');
     if (mode === 'SAVE') {
         btn.innerText = "⏳ 同步中...";
@@ -229,9 +228,15 @@ async function cloudSync(mode) {
             if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_')) fullData[k] = localStorage.getItem(k);
         }
         try {
-            await fetch(CLOUD_API, { method: 'POST', body: JSON.stringify({ key: 'vB_Backup', value: JSON.stringify(fullData) }) });
-            alert("✅ 雲端同步成功！資料已備份。");
-        } catch(e) { alert("❌ 同步失敗，請檢查網路或 API 設定。"); }
+            // --- 修正重點：確保傳送的名稱與 Google 端對齊 ---
+            await fetch(CLOUD_API, { 
+                method: 'POST', 
+                mode: 'no-cors', // 增加這行可以避免部分跨網域報錯
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'vB_Backup', val: JSON.stringify(fullData) }) // 把 value 改成 val
+            });
+            alert("✅ 雲端同步指令已發出！(請重新載入確認)");
+        } catch(e) { alert("❌ 同步失敗，請檢查網路。"); }
         btn.innerText = "☁️ 雲端同步";
     } else {
         if(!confirm("載入雲端會覆蓋目前本機資料，確定嗎？")) return;
@@ -261,5 +266,6 @@ window.onload = () => { applyTheme(curY); document.getElementById('yDisp').inner
 
 
  
+
 
 
