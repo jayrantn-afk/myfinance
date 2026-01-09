@@ -219,7 +219,7 @@ function runSearch() {
 }
 
 async function cloudSync(mode) {
-    if (CLOUD_API.includes("你的_APPS_SCRIPT_URL")) return alert("請先填入 Google Apps Script 的 API URL");
+   
     const btn = document.getElementById('cloudSaveBtn');
     if (mode === 'SAVE') {
         btn.innerText = "⏳ 同步中...";
@@ -261,3 +261,4 @@ window.onload = () => { applyTheme(curY); document.getElementById('yDisp').inner
 
 
  
+
