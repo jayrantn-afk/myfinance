@@ -37,7 +37,6 @@
         td { border-bottom: 1px solid rgba(0,0,0,0.03); height: 38px; text-align: center; font-size: 13px; position: relative; }
         
         input[type="checkbox"] { width: 13px !important; height: 13px !important; cursor: pointer; accent-color: var(--primary); }
-
         tr.is-settled { opacity: 0.4; background: #f9f9f9; }
         input, select { border: none; width: 100%; height: 100%; text-align: center; font-size: 12px; background: transparent; outline: none; font-weight: 600; color: var(--primary); }
         .readonly { color: var(--light); background: #FAF9F8; cursor: default; }
@@ -102,7 +101,7 @@
 </div>
 
 <script>
-// --- ⚠️ 重要：請在此處填入你的 Google API 網址 ---
+// --- 關鍵：已填入你指定的最新資料庫網址 ---
 const CLOUD_API = "https://script.google.com/macros/s/AKfycby13dgio2KdDj-R3QhkzO73NKl9SygorGNKRja9KO5P9kpsRLt3ILMqY1Rgj53kjKgK/exec"; 
 
 let curY = localStorage.getItem('vB_Y') || '2026';
@@ -219,9 +218,7 @@ function runSearch() {
 }
 
 async function cloudSync(mode) {
-    if (CLOUD_API.includes("你的_APPS_SCRIPT_URL")) return alert("請先填入 Google Apps Script 的 API URL");
     const btn = document.getElementById('cloudSaveBtn');
-    
     if (mode === 'SAVE') {
         btn.innerText = "⏳ 同步中...";
         let fullData = {};
@@ -230,35 +227,27 @@ async function cloudSync(mode) {
             if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_')) fullData[k] = localStorage.getItem(k);
         }
         try {
-            // --- 修正後的 Fetch：加入 mode: 'no-cors' ---
+            // 修正：使用 no-cors 模式並對齊 value 鍵名
             await fetch(CLOUD_API, { 
                 method: 'POST', 
-                mode: 'no-cors', 
-                cache: 'no-cache',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key: 'vB_Backup', value: JSON.stringify(fullData) }) 
             });
-            alert("✅ 雲端同步指令已發送！\n請注意：因 Google 限制，若成功將不會有回傳訊息。請稍後點擊「載入雲端」確認。");
-        } catch(e) { 
-            console.error(e);
-            alert("❌ 同步失敗，請檢查網路或 API 設定。"); 
-        }
+            alert("✅ 指令已送出！請稍候 3 秒後點擊「載入雲端」確認是否備份成功。");
+        } catch(e) { alert("❌ 同步失敗，請檢查 API 網址。"); }
         btn.innerText = "☁️ 雲端同步";
     } else {
         if(!confirm("載入雲端會覆蓋目前本機資料，確定嗎？")) return;
         try {
             const res = await fetch(`${CLOUD_API}?key=vB_Backup`);
             const cloudJson = await res.json();
-            if(!cloudJson || cloudJson === "{}") return alert("雲端沒有備份資料。");
-            // 修正：cloudJson 本身可能就是字串，需要再 parse 一次
+            if(!cloudJson || cloudJson === "{}" || cloudJson === "null") return alert("雲端沒有備份資料。");
             const data = (typeof cloudJson === 'string') ? JSON.parse(cloudJson) : cloudJson;
             Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
-            alert("✅ 載入成功！網頁即將重新整理。");
+            alert("✅ 載入成功！");
             location.reload();
-        } catch(e) { 
-            console.error(e);
-            alert("❌ 載入失敗，請確認雲端是否有資料。"); 
-        }
+        } catch(e) { alert("❌ 載入失敗，雲端可能尚未有資料。"); }
     }
 }
 
@@ -267,19 +256,3 @@ window.onload = () => { applyTheme(curY); document.getElementById('yDisp').inner
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
