@@ -219,6 +219,14 @@ function runSearch() {
 }
 
 async function cloudSync(mode) {
+    // 1. 先跳出視窗要密碼
+    const password = prompt("請輸入杰冉管理員密碼：");
+    
+    // 2. 驗證密碼（請把 '0000' 改成你自己想要的密碼）
+    if (password !== '0809') {
+        alert("❌ 密碼錯誤！你沒有權限存取雲端資料庫。");
+        return; // 直接中斷，不執行下面的 fetch
+    }
     const btn = document.getElementById('cloudSaveBtn');
     if (mode === 'SAVE') {
         btn.innerText = "⏳ 同步中...";
@@ -257,5 +265,6 @@ window.onload = () => { applyTheme(curY); document.getElementById('yDisp').inner
 </script>
 </body>
 </html>
+
 
 
