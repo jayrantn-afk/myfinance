@@ -2,12 +2,16 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>杰冉宇宙營收表</title>
     
     <!-- 引入 html2pdf 引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- 引入 Chart.js 繪圖引擎 (數據中心專用) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Flatpickr 精美日期選擇器 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
@@ -49,14 +53,14 @@
 
         .search-area { display: flex; align-items: center; margin-left: auto; }
         .search-group { display: flex; gap: 12px; align-items: center; }
-        .search-group input { 
+        .search-group input[type="text"] { 
             border: 1px solid transparent; border-radius: 50px; padding: 10px 20px; width: 160px; 
             outline: none; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px);
             font-size: 13px; font-weight: 600; color: var(--text-main); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: text; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
-        .search-group input::placeholder { color: var(--light); font-weight: 400; }
-        .search-group input:focus { background: #FFF; width: 220px; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2); }
+        .search-group input[type="text"]::placeholder { color: var(--light); font-weight: 400; }
+        .search-group input[type="text"]:focus { background: #FFF; width: 220px; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2); }
         
         .vip-dropdown-container { position: relative; }
         .vip-trigger { border: 1px solid transparent; border-radius: 50px; padding: 10px 20px; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px); font-size: 13px; font-weight: 700; color: var(--text-main); cursor: default; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.3s; display: flex; align-items: center; gap: 6px; user-select: none; }
@@ -91,6 +95,7 @@
         .role-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
 
         .viewport { flex: 1; overflow: hidden; position: relative; }
+        /* 6 個頁面 */
         .slider-container { display: flex; width: 600vw; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .page-content { width: 100vw; height: 100%; padding: 0 30px 110px 30px; box-sizing: border-box; display: flex; flex-direction: column; }
         .white-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); border-radius: 24px; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.04); position: relative; border: 1px solid var(--glass-border); }
@@ -102,7 +107,8 @@
         .month-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); transform: translateY(-1px); }
 
         .table-scroll { flex: 1; overflow-y: scroll; width: 100%; }
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 1430px; user-select: none; }
+        /* 🚨 修正：移除 table 的 user-select: none; 讓表格文字可以被反白複製 */
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 1430px; }
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; }
         td { border-bottom: 1px solid rgba(0,0,0,0.03); height: 44px; text-align: center; font-size: 13px; position: relative; transition: background 0.2s; }
         tr:hover td { background: rgba(var(--primary-rgb), 0.03); } 
@@ -110,9 +116,21 @@
         tr.is-settled { opacity: 0.35; filter: grayscale(1); transition: 0.4s ease; }
         tr.is-settled:hover { opacity: 0.6; }
         input, select { border: none; width: 100%; height: 100%; text-align: center; font-size: 13px; background: transparent; outline: none; font-weight: 600; color: var(--text-main); cursor: pointer; font-family: inherit; transition: color 0.3s; }
+        
+        /* 當 input 被反白選取時不要變色，以免影響閱讀 */
+        input:focus::selection { background: rgba(var(--primary-rgb), 0.2); }
         input:focus, select:focus { cursor: text; color: var(--primary); font-weight: 800; }
         .readonly { color: var(--light); background: rgba(0,0,0,0.01); cursor: default; font-weight: 500; }
         
+        /* 📅 專屬精美日曆按鈕樣式 */
+        .custom-date-picker {
+            border: 1px solid transparent; width: 90%; height: 32px; text-align: center; font-size: 13px;
+            background: rgba(0,0,0,0.02); border-radius: 8px; outline: none; font-weight: 700; color: var(--text-main);
+            cursor: pointer; font-family: inherit; transition: all 0.3s; margin: 0 auto; display: block;
+        }
+        .custom-date-picker:hover { background: rgba(var(--primary-rgb), 0.05); }
+        .custom-date-picker:focus { background: #FFF; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.1); color: var(--primary); font-weight: 800; }
+
         .drag-handle { color: rgba(0,0,0,0.15); font-size: 16px; cursor: grab; user-select: none; display: flex; align-items: center; justify-content: center; height: 100%; transition: color 0.2s; }
         .drag-handle:hover { color: var(--primary); }
         tr.dragging td { opacity: 0.3; background: rgba(var(--primary-rgb), 0.05); }
@@ -172,44 +190,149 @@
            📊 數據中心專屬 UI 樣式
         ========================================= */
         .dashboard-container { 
-            padding: 30px 40px; display: flex; flex-direction: column; gap: 30px; 
+            padding: 30px 40px; display: flex; flex-direction: column; gap: 20px; 
             overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%;
         }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
         .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
         .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
         
-        /* 下拉選單樣式復刻 */
-        .db-select {
-            padding: 10px 35px 10px 20px; border-radius: 8px; border: 1px solid var(--glass-border);
-            background: #FFFFFF url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236E6E73%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 15px top 50%;
-            background-size: 10px auto; appearance: none; font-size: 16px; font-weight: 800; color: var(--text-main);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; transition: 0.3s;
-        }
-        .db-select:hover { border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        .db-controls { display: flex; gap: 15px; align-items: center; }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .db-custom-select-container { position: relative; user-select: none; z-index: 1000; }
+        .db-custom-trigger {
+            background: #FFFFFF; border: 1px solid var(--glass-border); padding: 10px 20px;
+            border-radius: 8px; font-size: 15px; font-weight: 800; color: var(--text-main);
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; min-width: 140px; white-space: nowrap;
+        }
+        .db-custom-trigger:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: rgba(var(--primary-rgb), 0.5); }
+        .db-custom-menu {
+            position: absolute; top: 110%; right: 0; background: #FFFFFF; border-radius: 8px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--glass-border);
+            width: 100%; display: none; flex-direction: column; padding: 4px; 
+            max-height: 300px; overflow-y: auto;
+        }
+        .db-custom-menu.active { display: flex; }
+        .db-custom-option {
+            padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 700;
+            color: var(--mid); cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .db-custom-option:hover { background: rgba(var(--primary-rgb), 0.05); color: var(--primary); }
+        .db-custom-option.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0; }
         .kpi-card { 
-            background: #FFFFFF; border-radius: 16px; padding: 30px 20px; text-align: center; 
+            background: #FFFFFF; border-radius: 16px; padding: 25px 20px; text-align: center; 
             box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; 
             border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center;
         }
         .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
-        .kpi-title { font-size: 15px; color: #6E6E73; font-weight: 800; margin-bottom: 15px; }
-        .kpi-value { font-size: 42px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        .kpi-title { font-size: 14px; color: #6E6E73; font-weight: 800; margin-bottom: 12px; }
+        .kpi-value { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
         
-        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; flex: 1; min-height: 400px; padding-bottom: 50px; }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-shrink: 0; min-height: 350px; padding-bottom: 30px; }
         .chart-card { 
-            background: #FFFFFF; border-radius: 16px; padding: 30px; 
+            background: #FFFFFF; border-radius: 16px; padding: 25px; 
             box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); 
             display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box;
         }
-        .chart-title { font-size: 16px; font-weight: 800; color: #6E6E73; margin-bottom: 25px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
+        .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
         .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
+
+        /* =========================================
+           🛡️ 全域系統美化彈窗與登入畫面 
+        ========================================= */
+        .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
+        .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 320px; text-align: center; border: 1px solid var(--glass-border); }
+        
+        .custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .custom-modal.active { display: flex; opacity: 1; }
+        .custom-modal-content { background: #FFF; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align: center; transform: translateY(20px); transition: transform 0.3s; }
+        .custom-modal.active .custom-modal-content { transform: translateY(0); }
+        .custom-modal-text { margin: 15px 0 25px; color: var(--mid); font-size: 15px; line-height: 1.5; white-space: pre-wrap; font-weight: 600; }
+        .custom-modal-input { width: 100%; box-sizing: border-box; border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 12px; font-size: 14px; margin-bottom: 25px; outline: none; transition: 0.3s; background: #F4F7F6; font-weight: 600; color: var(--text-main); }
+        .custom-modal-input:focus { background: #FFF; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2); }
+        .custom-modal-actions { display: flex; gap: 15px; justify-content: center; }
+        .custom-modal-btn { padding: 12px 24px; border-radius: 50px; font-weight: 800; cursor: pointer; border: none; font-size: 14px; transition: 0.2s; flex: 1; }
+        .btn-cancel { background: #F4F7F6; color: var(--mid); }
+        .btn-cancel:hover { background: #E5E5EA; color: var(--text-main); }
+        .btn-confirm { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
+        .btn-confirm:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+        /* =========================================
+           ✨ 自訂右鍵選單樣式
+        ========================================= */
+        .custom-context-menu {
+            display: none; position: fixed; background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); z-index: 100000; padding: 8px 0;
+            min-width: 150px; flex-direction: column; overflow: hidden;
+            transform: scale(0.95); opacity: 0; transition: transform 0.15s, opacity 0.15s;
+        }
+        .custom-context-menu.active { display: flex; transform: scale(1); opacity: 1; }
+        .context-menu-item {
+            padding: 10px 20px; font-size: 13px; font-weight: 700; color: var(--text-main);
+            cursor: pointer; display: flex; align-items: center; gap: 10px; transition: 0.2s;
+        }
+        .context-menu-item:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+        .context-menu-item.danger:hover { background: rgba(211, 47, 47, 0.1); color: #D32F2F; }
+        .context-menu-divider { height: 1px; background: rgba(0,0,0,0.05); margin: 4px 0; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
+
+<!-- 自訂右鍵選單 -->
+<div id="customContextMenu" class="custom-context-menu">
+    <div class="context-menu-item" onclick="execMenuAction('copy')"><span>📄</span> 複製</div>
+    <div class="context-menu-item" onclick="execMenuAction('paste')"><span>📋</span> 貼上</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item danger" onclick="execMenuAction('clear')"><span>🗑️</span> 清除內容</div>
+</div>
+
+<!-- 🔐 系統登入鎖 (密碼已更新為 8721) -->
+<div id="login-screen" class="login-screen">
+    <div class="login-card">
+        <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">杰冉營收系統</h2>
+        <p style="color:var(--mid); font-size:13px; margin-bottom:25px; font-weight: 600;">請輸入管理員密碼以進入系統<br>(登入後將記住此裝置)</p>
+        <input type="password" id="login-pwd" class="custom-modal-input" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
+        <button class="custom-modal-btn btn-confirm" style="width:100%" onclick="checkLogin()">登入系統</button>
+    </div>
+</div>
+
+<script>
+    // ⭐ 在此修改您的管理員密碼
+    window.APP_PWD = "8721"; 
+
+    if(localStorage.getItem('vB_Auth') === 'true') {
+        document.getElementById('login-screen').style.display = 'none';
+    }
+
+    function checkLogin() {
+        let p = document.getElementById('login-pwd').value;
+        if(p === window.APP_PWD) {
+            localStorage.setItem('vB_Auth', 'true');
+            document.getElementById('login-screen').style.display = 'none';
+        } else {
+            alert("密碼錯誤，請重新輸入！"); 
+            document.getElementById('login-pwd').value = "";
+        }
+    }
+</script>
+
+<!-- 全域系統提示彈窗 -->
+<div id="ui-modal" class="custom-modal">
+    <div class="custom-modal-content">
+        <h3 id="ui-modal-title" style="margin-top:0; color:var(--text-main); font-weight: 900;">提示</h3>
+        <p id="ui-modal-text" class="custom-modal-text"></p>
+        <input type="text" id="ui-modal-input" class="custom-modal-input" style="display:none;">
+        <div class="custom-modal-actions">
+            <button id="ui-modal-cancel" class="custom-modal-btn btn-cancel">取消</button>
+            <button id="ui-modal-confirm" class="custom-modal-btn btn-confirm">確定</button>
+        </div>
+    </div>
+</div>
 
 <!-- 圈選統計面板 -->
 <div class="selection-stats-bar" id="selectionStatsBar">
@@ -333,16 +456,29 @@
         <!-- Slide 4: 發票管理 -->
         <div class="page-content">
             <div class="white-card">
+                <!-- 📁 完美還原：與案件明細同款的按鈕分頁 -->
+                <div class="month-nav-wrapper">
+                    <div class="month-nav">
+                        <button class="month-btn active" onclick="selectInvPeriod('all', this)">全部期別</button>
+                        <button class="month-btn" onclick="selectInvPeriod('1-2月', this)">1-2月</button>
+                        <button class="month-btn" onclick="selectInvPeriod('3-4月', this)">3-4月</button>
+                        <button class="month-btn" onclick="selectInvPeriod('5-6月', this)">5-6月</button>
+                        <button class="month-btn" onclick="selectInvPeriod('7-8月', this)">7-8月</button>
+                        <button class="month-btn" onclick="selectInvPeriod('9-10月', this)">9-10月</button>
+                        <button class="month-btn" onclick="selectInvPeriod('11-12月', this)">11-12月</button>
+                    </div>
+                </div>
                 <div class="table-scroll">
                     <table style="min-width: 1000px;">
-                        <thead><tr><th style="width:25px"></th><th style="width:100px">期別</th><th style="width:120px">發票號碼</th><th style="width:120px">客戶名稱</th><th style="width:120px">統編</th><th style="width:100px">開立日期</th><th style="width:120px">未稅金額</th><th style="width:100px">稅金</th><th style="width:120px">含稅總額</th><th style="width:200px">備註</th></tr></thead>
+                        <!-- 🚨 隱藏了「期別」欄位，讓畫面更乾淨 -->
+                        <thead><tr><th style="width:25px"></th><th style="display:none;">期別</th><th style="width:120px">發票號碼</th><th style="width:120px">客戶名稱</th><th style="width:120px">統編</th><th style="width:130px">開立日期</th><th style="width:120px">未稅金額</th><th style="width:100px">稅金</th><th style="width:120px">含稅總額</th><th style="width:200px">備註</th></tr></thead>
                         <tbody id="inv-tb"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- Slide 5: 📊 營運數據中心 (完美復刻版) -->
+        <!-- Slide 5: 📊 營運數據中心 -->
         <div class="page-content">
             <div class="dashboard-container">
                 <div class="dashboard-header">
@@ -350,24 +486,33 @@
                         <div class="dashboard-title-line"></div>
                         <div class="dashboard-title">營運數據中心</div>
                     </div>
-                    <!-- 加入跟截圖一模一樣的下拉選單 -->
-                    <select class="db-select" id="dbMonthFilter" onchange="renderDashboard()">
-                        <option value="all">年度總結</option>
-                        <option value="01">1月</option>
-                        <option value="02">2月</option>
-                        <option value="03">3月</option>
-                        <option value="04">4月</option>
-                        <option value="05">5月</option>
-                        <option value="06">6月</option>
-                        <option value="07">7月</option>
-                        <option value="08">8月</option>
-                        <option value="09">9月</option>
-                        <option value="10">10月</option>
-                        <option value="11">11月</option>
-                        <option value="12">12月</option>
-                    </select>
+                    
+                    <div class="db-controls">
+                        <div class="db-custom-select-container">
+                            <div class="db-custom-trigger" id="dbFilterTrigger" onclick="document.getElementById('dbFilterMenu').classList.toggle('active'); event.stopPropagation();">
+                                <span id="dbFilterText">年度總結</span>
+                                <span style="font-size: 10px; margin-left: 8px;">▼</span>
+                            </div>
+                            <div class="db-custom-menu" id="dbFilterMenu">
+                                <div class="db-custom-option active" onclick="selectDashboardMonth('all', '年度總結', this)">年度總結</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('01', '1月', this)">1月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('02', '2月', this)">2月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('03', '3月', this)">3月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('04', '4月', this)">4月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('05', '5月', this)">5月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('06', '6月', this)">6月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('07', '7月', this)">7月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('08', '8月', this)">8月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('09', '9月', this)">9月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('10', '10月', this)">10月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('11', '11月', this)">11月</div>
+                                <div class="db-custom-option" onclick="selectDashboardMonth('12', '12月', this)">12月</div>
+                            </div>
+                            <input type="hidden" id="dbMonthFilter" value="all">
+                        </div>
+                    </div>
                 </div>
-                
+
                 <div class="kpi-grid">
                     <div class="kpi-card"><div class="kpi-title">總案件數</div><div class="kpi-value" id="kpi-proj" style="color: #1D1D1F;">0</div></div>
                     <div class="kpi-card"><div class="kpi-title">總營收 (含稅)</div><div class="kpi-value" id="kpi-rev" style="color: #007AFF;">$ 0</div></div>
@@ -402,13 +547,169 @@
         <div class="tab-item" onclick="switchSlide(2, this)">月報統計</div>
         <div class="tab-item" onclick="switchSlide(3, this)">報價系統</div>
         <div class="tab-item" onclick="switchSlide(4, this)">發票紀錄</div>
-        <!-- 數據中心按鈕 -->
-        <div class="tab-item" style="color: #FF2D55;" onclick="switchSlide(5, this)">數據中心</div>
+        <div class="tab-item" onclick="switchSlide(5, this)">數據中心</div>
     </div>
     <div class="btn-group-right"><button class="sync-btn" style="color:var(--text-main)" onclick="exportData()">📤 匯出電腦備份</button></div>
 </div>
 
 <script>
+/* =========================================
+   UI 核心共用模組 (精美彈窗)
+========================================= */
+function uiAlert(msg, title = "提示") {
+    return new Promise(resolve => {
+        const m = document.getElementById('ui-modal');
+        document.getElementById('ui-modal-title').innerText = title;
+        document.getElementById('ui-modal-text').innerText = msg;
+        document.getElementById('ui-modal-text').style.display = 'block';
+        document.getElementById('ui-modal-input').style.display = 'none';
+        document.getElementById('ui-modal-cancel').style.display = 'none';
+        
+        const btnConfirm = document.getElementById('ui-modal-confirm');
+        btnConfirm.onclick = () => { m.classList.remove('active'); resolve(); };
+        m.classList.add('active');
+    });
+}
+
+function uiConfirm(msg, title = "請確認") {
+    return new Promise(resolve => {
+        const m = document.getElementById('ui-modal');
+        document.getElementById('ui-modal-title').innerText = title;
+        document.getElementById('ui-modal-text').innerText = msg;
+        document.getElementById('ui-modal-text').style.display = 'block';
+        document.getElementById('ui-modal-input').style.display = 'none';
+        document.getElementById('ui-modal-cancel').style.display = 'block';
+        
+        document.getElementById('ui-modal-cancel').onclick = () => { m.classList.remove('active'); resolve(false); };
+        document.getElementById('ui-modal-confirm').onclick = () => { m.classList.remove('active'); resolve(true); };
+        m.classList.add('active');
+    });
+}
+
+function uiPrompt(msg, defaultVal = "", title = "請輸入", type = "text") {
+    return new Promise(resolve => {
+        const m = document.getElementById('ui-modal');
+        document.getElementById('ui-modal-title').innerText = title;
+        document.getElementById('ui-modal-text').innerText = msg;
+        document.getElementById('ui-modal-text').style.display = 'block';
+        
+        const input = document.getElementById('ui-modal-input');
+        input.type = type; 
+        input.style.display = 'block';
+        input.value = defaultVal;
+        document.getElementById('ui-modal-cancel').style.display = 'block';
+        
+        input.onkeypress = (e) => { if(e.key === 'Enter') document.getElementById('ui-modal-confirm').click(); };
+        
+        document.getElementById('ui-modal-cancel').onclick = () => { m.classList.remove('active'); resolve(null); };
+        document.getElementById('ui-modal-confirm').onclick = () => { m.classList.remove('active'); resolve(input.value); };
+        m.classList.add('active');
+        setTimeout(() => input.focus(), 100);
+    });
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.db-custom-select-container')) {
+        let dbMenu = document.getElementById('dbFilterMenu');
+        if(dbMenu) dbMenu.classList.remove('active');
+    }
+    document.getElementById('yMenu').style.display='none';
+});
+
+// =======================================================
+// 🖱️ 自訂右鍵選單邏輯
+// =======================================================
+const contextMenu = document.getElementById('customContextMenu');
+let rightClickedElement = null;
+
+document.addEventListener('contextmenu', function(e) {
+    let cell = e.target.closest('td, input, select');
+    if (cell && !e.target.closest('.header-section')) {
+        e.preventDefault(); 
+        rightClickedElement = cell;
+        
+        let x = e.clientX;
+        let y = e.clientY;
+        
+        contextMenu.style.display = 'flex'; 
+        
+        if (x + contextMenu.offsetWidth > window.innerWidth) x = window.innerWidth - contextMenu.offsetWidth - 10;
+        if (y + contextMenu.offsetHeight > window.innerHeight) y = window.innerHeight - contextMenu.offsetHeight - 10;
+        
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        
+        setTimeout(() => contextMenu.classList.add('active'), 10);
+    } else {
+        contextMenu.classList.remove('active');
+        setTimeout(() => { if(!contextMenu.classList.contains('active')) contextMenu.style.display = 'none'; }, 150);
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.button !== 2) { 
+        contextMenu.classList.remove('active');
+        setTimeout(() => { if(!contextMenu.classList.contains('active')) contextMenu.style.display = 'none'; }, 150);
+    }
+});
+
+async function execMenuAction(action) {
+    contextMenu.classList.remove('active');
+    setTimeout(() => contextMenu.style.display = 'none', 150);
+
+    if (!rightClickedElement) return;
+
+    let inputEl = rightClickedElement.tagName === 'INPUT' || rightClickedElement.tagName === 'SELECT' ? rightClickedElement : rightClickedElement.querySelector('input, select');
+    
+    try {
+        if (action === 'copy') {
+            let textToCopy = inputEl ? (inputEl.type === 'checkbox' ? inputEl.checked : inputEl.value) : rightClickedElement.innerText;
+            if(textToCopy !== undefined && textToCopy !== null) {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textToCopy);
+                } else {
+                    let textArea = document.createElement("textarea");
+                    textArea.value = textToCopy;
+                    textArea.style.position = "fixed";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+            }
+        } else if (action === 'paste') {
+            if (inputEl && !inputEl.readOnly) {
+                let pastedText = await navigator.clipboard.readText();
+                if (inputEl.tagName === 'SELECT') {
+                    let option = Array.from(inputEl.options).find(o => o.value === pastedText || o.text === pastedText);
+                    if (option) inputEl.value = option.value;
+                } else if (inputEl.type === 'checkbox') {
+                    inputEl.checked = (pastedText.toLowerCase() === 'true');
+                } else {
+                    inputEl.value = pastedText;
+                }
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        } else if (action === 'clear') {
+            if (inputEl && !inputEl.readOnly) {
+                if (inputEl.type === 'checkbox') {
+                    inputEl.checked = false;
+                } else {
+                    inputEl.value = '';
+                }
+                inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+                inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    } catch (err) {
+        console.error('Failed to perform action: ', err);
+        await uiAlert('操作失敗！如果您要貼上內容，請允許瀏覽器讀取您的剪貼簿權限。');
+    }
+    rightClickedElement = null;
+}
+
 let curY = localStorage.getItem('vB_Y') || '2026';
 let yArr = JSON.parse(localStorage.getItem('vB_List')) || ['2026'];
 let opts = JSON.parse(localStorage.getItem('vB_Opts')) || { 4: [], 6: [] };
@@ -416,7 +717,6 @@ let vipClients = JSON.parse(localStorage.getItem('vB_VipClients')) || [];
 let activeVipFilter = "";
 window.curRole = '公司';
 
-// 儲存圖表實例
 let chartPie = null; let chartBar = null;
 
 function migrateRitaToYiminjia() {
@@ -430,7 +730,7 @@ function migrateRitaToYiminjia() {
 
 function changeYear(y) { curY=y; localStorage.setItem('vB_Y',y); document.getElementById('yDisp').innerText=y; applyTheme(y); initTable(); initInvoiceTable(); renderDashboard(); }
 function applyTheme(y) { const themes=['','theme-green','theme-blue','theme-red','theme-purple']; document.body.className=themes[parseInt(y)%themes.length]; }
-function addNewYear() { let y=prompt("年份:"); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();localStorage.setItem('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
+async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:", ""); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();localStorage.setItem('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
 
 function switchSlide(idx, el) {
@@ -452,30 +752,39 @@ function switchSlide(idx, el) {
 }
 
 /* =======================================================
-   📊 數據中心核心 (加入篩選連動功能)
+   📊 數據中心核心
 ======================================================= */
+function selectDashboardMonth(val, text, el) {
+    document.getElementById('dbMonthFilter').value = val;
+    document.getElementById('dbFilterText').innerText = text;
+    document.querySelectorAll('#dbFilterMenu .db-custom-option').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('dbFilterMenu').classList.remove('active');
+    renderDashboard();
+}
+
 function renderDashboard() {
-    let filterMonth = document.getElementById('dbMonthFilter').value; // 取得右上角的選項 (all, 01, 02...)
+    let filterMonth = document.getElementById('dbMonthFilter').value; 
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
     let totalProjects = 0, totalRevGross = 0, totalCol = 0, totalPen = 0;
     let typeData = {};
-    let barData = {}; 
-    
-    // 如果是選年度，先準備好 12 個月的桶子
-    if(filterMonth === 'all') { barData = { "01": 0, "02": 0, "03": 0, "04": 0, "05": 0, "06": 0, "07": 0, "08": 0, "09": 0, "10": 0, "11": 0, "12": 0 }; }
+    let monthlyArray = [0,0,0,0,0,0,0,0,0,0,0,0]; 
+    let clientData = {}; 
 
-    // 掃描表格
     for(let i=0; i<count; i++) {
         let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
         let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
         let gross = parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
-        let rowMonth = d[0] ? d[0].split('-')[1] : null;
+        
+        let rowMonthStr = String(d[0] || "").trim();
+        let mMatch = rowMonthStr.match(/(?:-|^)(\d{1,2})(?:月|$)/);
+        let rowMonthInt = mMatch ? parseInt(mMatch[1], 10) : null;
+        let rowMonthPad = rowMonthInt ? String(rowMonthInt).padStart(2, '0') : null;
 
         if (hasData && net > 0) {
-            // 💡 關鍵篩選：如果選了特定月份，就只抓那個月的資料！
-            if (filterMonth !== 'all' && rowMonth !== filterMonth) continue;
+            if (filterMonth !== 'all' && rowMonthPad !== filterMonth) continue;
 
             totalProjects++;
             let deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0; 
@@ -486,28 +795,25 @@ function renderDashboard() {
             totalCol += (deposit + tail);
             totalPen += unp;
 
-            // 圓餅圖：案件類型統計
             let type = d[4] || "未分類";
             typeData[type] = (typeData[type] || 0) + net;
 
-            // 長條圖資料分配
-            if(filterMonth === 'all') {
-                if(rowMonth && barData[rowMonth] !== undefined) barData[rowMonth] += net;
+            if (filterMonth === 'all') {
+                if (rowMonthInt >= 1 && rowMonthInt <= 12) {
+                    monthlyArray[rowMonthInt - 1] += net;
+                }
             } else {
-                // 如果選了單一月份，長條圖改成顯示「各客戶的貢獻營收」！
                 let client = d[2] || "未知客戶";
-                barData[client] = (barData[client] || 0) + net;
+                clientData[client] = (clientData[client] || 0) + net;
             }
         }
     }
 
-    // 填入上方 KPI 數字
     document.getElementById('kpi-proj').innerText = totalProjects;
     document.getElementById('kpi-rev').innerText = "$ " + totalRevGross.toLocaleString();
     document.getElementById('kpi-col').innerText = "$ " + totalCol.toLocaleString();
     document.getElementById('kpi-pen').innerText = "$ " + totalPen.toLocaleString();
 
-    // 更新長條圖標題
     document.getElementById('db-bar-title').innerText = filterMonth === 'all' ? '👆 每月營收趨勢 (未稅)' : `👆 ${parseInt(filterMonth)}月份：各客戶營收貢獻排行`;
 
     if(chartPie) chartPie.destroy();
@@ -515,7 +821,6 @@ function renderDashboard() {
 
     const colors = ['#007AFF', '#FF9500', '#8E8E93', '#34C759', '#BF5AF2', '#FF3B30', '#5AC8FA', '#FF2D55'];
 
-    // 1. 繪製左側甜甜圈圖
     let ctxPie = document.getElementById('pieChart').getContext('2d');
     chartPie = new Chart(ctxPie, {
         type: 'doughnut',
@@ -529,15 +834,13 @@ function renderDashboard() {
         }
     });
 
-    // 2. 準備右側長條圖資料
     let barLabels = [];
     let barValues = [];
     if (filterMonth === 'all') {
         barLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-        barValues = Object.values(barData);
+        barValues = monthlyArray;
     } else {
-        // 單月模式：把客戶營收從高到低排序
-        let sortedClients = Object.entries(barData).sort((a,b) => b[1] - a[1]);
+        let sortedClients = Object.entries(clientData).sort((a,b) => b[1] - a[1]);
         barLabels = sortedClients.map(x => x[0]);
         barValues = sortedClients.map(x => x[1]);
     }
@@ -550,14 +853,14 @@ function renderDashboard() {
             datasets: [{
                 label: '營收 (未稅)',
                 data: barValues,
-                backgroundColor: filterMonth === 'all' ? '#34C759' : '#007AFF', // 年度用綠色，單月客戶排行用藍色區分
+                backgroundColor: filterMonth === 'all' ? '#34C759' : '#007AFF', 
                 borderRadius: 8, 
                 hoverBackgroundColor: filterMonth === 'all' ? '#28A745' : '#0056b3'
             }]
         },
         options: { 
             responsive: true, maintainAspectRatio: false, 
-            plugins: { legend: { display: false } }, 
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } }, 
             scales: { 
                 y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } }, 
                 x: { grid: { display: false }, border: { display: false } } 
@@ -583,9 +886,9 @@ function toggleVipFilter(clientName) {
     renderVipBubbles(); filterTable();      
 }
 
-function manageVip(action) {
-    if (action === 'add') { let n = prompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
-    else if (action === 'del') { let target = prompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
+async function manageVip(action) {
+    if (action === 'add') { let n = await uiPrompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
+    else if (action === 'del') { let target = await uiPrompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
 }
 
 let currentMonthFilter = 'all';
@@ -602,8 +905,9 @@ function setStatusFilter(val, text, el) {
 
 function filterTable() {
     let sc = activeVipFilter, sk = document.getElementById('fK').value.trim().toLowerCase(), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let isFiltering = (sc !== "") || (sk !== "") || (currentMonthFilter !== 'all'), emptyVisible = 0, visibleUnpaid = 0;
+    let isFiltering = (sc !== "") || (sk !== ""), emptyVisible = 0, visibleUnpaid = 0;
     let terms = sk ? sk.split(/[\s,，]+/) : [];
+    
     for(let r=0; r<rowCount; r++) {
         let tr = document.getElementById(`r${r}`); if(!tr) continue;
         let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {}, rowMonth = d[0] ? d[0].split('-')[1] : "";
@@ -613,15 +917,24 @@ function filterTable() {
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3] || !!d[9];
         let unpaid = d[13] ? parseFloat(String(d[13]).replace(/,/g, '')) : 0;
         
-        if (!hasData) { if (isFiltering) { if (emptyVisible < 10) { tr.style.display = ''; emptyVisible++; } else { tr.style.display = 'none'; } } else { tr.style.display = ''; } } 
-        else { if (matchC && matchM && matchK) { tr.style.display = ''; if(unpaid > 0) visibleUnpaid++; } else { tr.style.display = 'none'; } }
+        // 💡 魔法隱藏：解除月份過濾的限制，讓任何分頁都能固定顯示 10 行空白列供輸入
+        if (!hasData) { 
+            if (!isFiltering && emptyVisible < 10) { 
+                tr.style.display = ''; emptyVisible++; 
+            } else { 
+                tr.style.display = 'none'; 
+            } 
+        } else { 
+            if (matchC && matchM && matchK) { tr.style.display = ''; if(unpaid > 0) visibleUnpaid++; } 
+            else { tr.style.display = 'none'; } 
+        }
     }
     let batchBtn = document.getElementById('simpleBatchBtn');
     if (isFiltering && visibleUnpaid > 0) { batchBtn.style.display = 'flex'; batchBtn.innerText = `⚡ 批次結清 (${visibleUnpaid}筆)`; } else { batchBtn.style.display = 'none'; }
 }
 
-function simpleBatchResolve() {
-    if (!confirm("確定要把畫面上顯示的所有未結案項目，標記為「銀行匯款」並自動填入尾款結清嗎？")) return;
+async function simpleBatchResolve() {
+    if (!(await uiConfirm("確定要把畫面上顯示的所有未結案項目，標記為「銀行匯款」並自動填入尾款結清嗎？"))) return;
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65, count = 0;
     for(let r=0; r<rc; r++) {
         let tr = document.getElementById(`r${r}`);
@@ -636,7 +949,7 @@ function simpleBatchResolve() {
             }
         }
     }
-    if (count > 0) { initTable(); filterTable(); renderDashboard(); alert(`✅ 已成功批次結清 ${count} 筆案件！`); }
+    if (count > 0) { initTable(); filterTable(); renderDashboard(); await uiAlert(`✅ 已成功批次結清 ${count} 筆案件！`); }
 }
 
 function runSettleSearch() {
@@ -711,7 +1024,26 @@ function downloadPDF() {
     html2pdf().set(opt).from(element).save().then(() => { btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; });
 }
 
-function initTable() { const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } renderVipBubbles(); renderDashboard(); }
+function initTable() { 
+    const b = document.getElementById('tb'); b.innerHTML = ''; 
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; 
+    for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } 
+    
+    // 💡 確保剛載入時，資料庫的真實空白格數量至少有 10 行
+    let ec = 0;
+    for(let i=count-1; i>=0; i--) {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        if (!d[0] && !d[1] && !d[2] && !d[3] && !d[9]) ec++; else break;
+    }
+    if (ec < 10) {
+        for(let i=0; i<10; i++) { b.appendChild(createRow(count++)); }
+        localStorage.setItem(`rowCount_${curY}`, count);
+    }
+    
+    renderVipBubbles(); 
+    renderDashboard(); 
+}
+
 function setRole(r, el) { window.curRole = r; document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); runSettleSearch(); }
 
 let dragSrcRow = null;
@@ -738,23 +1070,40 @@ function createRow(r) {
 }
 
 function initInvoiceTable() {
-    const b = document.getElementById('inv-tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30; 
+    const b = document.getElementById('inv-tb'); b.innerHTML = ''; 
+    let count = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30; 
     for(let r=0; r<count; r++) { b.appendChild(createInvoiceRow(r)); calcInvoice(r, 0, false); }
+    
+    // 💡 確保剛載入時，發票表的真實空白格數量至少有 10 行
+    let ec = 0;
+    for(let i=count-1; i>=0; i--) {
+        let d = JSON.parse(localStorage.getItem(`inv_${curY}_${i}`)) || {};
+        if (!d[1] && !d[2] && !d[3] && !d[4] && !d[5]) ec++; else break;
+    }
+    if (ec < 10) {
+        for(let i=0; i<10; i++) { b.appendChild(createInvoiceRow(count++)); }
+        localStorage.setItem(`invCount_${curY}`, count);
+    }
+    
+    flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" });
 }
 
 function createInvoiceRow(r) {
     let tr = document.createElement('tr'); tr.id = `inv_r${r}`;
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
-    let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
+    let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
+    
     for(let c=0; c<9; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
         if(c===0) {
-            let periods = ['1-2月','3-4月','5-6月','7-8月','9-10月','11-12月'];
-            let ops = periods.map(p => `<option value="${p}" ${val===p?'selected':''}>${p}</option>`).join('');
-            td.innerHTML = `<select id="inv_r${r}c${c}" onchange="calcInvoice(${r},${c})"><option value="">--</option>${ops}</select>`;
+            // 💡 徹底隱藏期別輸入，改為背景默默儲存
+            td.style.display = 'none';
+            td.innerHTML = `<input type="hidden" id="inv_r${r}c${c}" value="${val}">`;
+        } else if (c===4) {
+            td.innerHTML = `<input type="text" id="inv_r${r}c${c}" value="${val}" class="custom-date-picker" placeholder="選擇日期" onchange="calcInvoice(${r},${c})">`;
         } else {
             let ro = [6,7].includes(c);
             td.innerHTML = `<input id="inv_r${r}c${c}" value="${val}" class="${ro?'readonly':''}" ${ro?'readonly tabindex="-1"':''} oninput="calcInvoice(${r},${c})">`;
@@ -764,49 +1113,127 @@ function createInvoiceRow(r) {
     return tr;
 }
 
+let currentInvPeriodFilter = 'all';
+// 💡 修正：改用與案件明細相同的 Class Name 以抓取按鈕並切換樣式
+function selectInvPeriod(val, el) {
+    currentInvPeriodFilter = val;
+    let navs = el.parentElement.querySelectorAll('.month-btn');
+    navs.forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    filterInvoiceTable();
+}
+
 function calcInvoice(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`inv_r${r}c${col}`); return el ? el.value : ""; };
     const s = (col, val) => { if(document.getElementById(`inv_r${r}c${col}`)) document.getElementById(`inv_r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30;
+    
+    // 💡 魔法自動歸類：當選擇日期後，自動推算屬於哪個期別並存起來
+    let dateStr = g(4);
+    if(dateStr) {
+        let mMatch = dateStr.match(/(?:-|^)(\d{1,2})(?:-|$)/);
+        if(mMatch) {
+            let m = parseInt(mMatch[1], 10);
+            let p = "";
+            if (m <= 2) p = "1-2月";
+            else if (m <= 4) p = "3-4月";
+            else if (m <= 6) p = "5-6月";
+            else if (m <= 8) p = "7-8月";
+            else if (m <= 10) p = "9-10月";
+            else p = "11-12月";
+            s(0, p);
+        }
+    }
+
     let preTax = parseFloat(String(g(5)).replace(/,/g,'')) || 0;
     let tax = Math.round(preTax * 0.05); let total = preTax + tax;
     s(6, tax); s(7, total);
-    if(save) { let d = {}; for(let i=0; i<9; i++) d[i] = g(i); localStorage.setItem(`inv_${curY}_${r}`, JSON.stringify(d)); }
-    let ec = 0; for(let i=rc-1; i>=0; i--){ let d=JSON.parse(localStorage.getItem(`inv_${curY}_${i}`))||{}; if(!d[0]&&!d[1]&&!d[2]&&!d[3]&&!d[4]&&!d[5]) ec++; else break; }
-    if (ec <= 2 && save) { for(let i=0; i<10; i++) { document.getElementById('inv-tb').appendChild(createInvoiceRow(rc++)); } localStorage.setItem(`invCount_${curY}`, rc); filterInvoiceTable(); }
+    
+    if(save) { 
+        let d = {}; for(let i=0; i<9; i++) d[i] = g(i); 
+        localStorage.setItem(`inv_${curY}_${r}`, JSON.stringify(d)); 
+        
+        // 💡 修正發票表自動新增列邏輯：徹底獨立判斷，確保永遠有底
+        let ec = 0; 
+        for(let i=rc-1; i>=0; i--){ 
+            let dataRow = JSON.parse(localStorage.getItem(`inv_${curY}_${i}`))||{}; 
+            if(!dataRow[1]&&!dataRow[2]&&!dataRow[3]&&!dataRow[4]&&!dataRow[5]) ec++; else break; 
+        }
+        if (ec < 10) { 
+            for(let i=0; i<10; i++) { 
+                document.getElementById('inv-tb').appendChild(createInvoiceRow(rc++)); 
+            } 
+            localStorage.setItem(`invCount_${curY}`, rc); 
+            flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" });
+        }
+        
+        filterInvoiceTable(); // 存檔與增生完成後，強制刷新畫面顯示
+    }
 }
 
 function filterInvoiceTable() {
-    let sk = document.getElementById('invSearchK').value.trim().toLowerCase(), rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30, terms = sk ? sk.split(/[\s,，]+/) : [], emptyVisible = 0;
+    let sk = document.getElementById('invSearchK').value.trim().toLowerCase(), rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30, terms = sk ? sk.split(/[\s,，]+/) : [];
+    let pFilter = currentInvPeriodFilter;
+    let emptyVisible = 0; 
+    
     for(let r=0; r<rc; r++) {
         let tr = document.getElementById(`inv_r${r}`); if(!tr) continue;
         let d = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
         let matchK = terms.length === 0 ? true : terms.some(term => (d[1]||"").toLowerCase().includes(term) || (d[2]||"").toLowerCase().includes(term) || (d[3]||"").toLowerCase().includes(term));
-        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3] || !!d[4] || !!d[5];
-        if (!hasData) { if (sk !== "") { if (emptyVisible < 5) { tr.style.display = ''; emptyVisible++; } else { tr.style.display = 'none'; } } else { tr.style.display = ''; } } 
-        else { if (matchK) { tr.style.display = ''; } else { tr.style.display = 'none'; } }
+        // 💡 修正：即使還沒填入日期 (d[0] === "")，在任何期別分頁中都先允許顯示
+        let matchP = (pFilter === 'all') || (d[0] === pFilter) || (!d[0] || d[0].trim() === "");
+        let hasData = !!d[1] || !!d[2] || !!d[3] || !!d[4] || !!d[5];
+        
+        if (!hasData) { 
+            // 💡 只有在「沒有搜尋」時，才顯示 10 行空白行 (且不受期別過濾影響，讓每個資料夾都有預設輸入框)
+            if (sk === "" && emptyVisible < 10) { 
+                tr.style.display = ''; emptyVisible++; 
+            } else { 
+                tr.style.display = 'none'; 
+            } 
+        } else { 
+            if (matchK && matchP) { tr.style.display = ''; } else { tr.style.display = 'none'; } 
+        }
     }
 }
 
-/* --- EXCEL 級拖曳圈選計算功能 --- */
-let isSelecting = false; let selectedCells = new Set(); 
+/* =======================================================
+   🖱️ EXCEL 級拖曳圈選計算功能 (修正版：完全不干擾文字反白)
+======================================================= */
+let isSelecting = false; let selectedCells = new Set(); let dragStartCell = null;
+
 document.addEventListener('mousedown', function(e) {
-    if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.closest('.drag-handle')) return;
+    if (e.target.tagName === 'INPUT' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.closest('.drag-handle')) { return; }
+    
     let td = e.target.closest('td.calc-cell'); 
-    if (td && e.button === 0) { isSelecting = true; clearSelection(); selectCell(td); } 
-    else { if(!e.target.closest('.selection-stats-bar')) { clearSelection(); } }
+    if (td && e.button === 0) { 
+        isSelecting = true; 
+        dragStartCell = td;
+        clearSelection(); 
+        selectCell(td); 
+    } else { 
+        if(!e.target.closest('.selection-stats-bar')) { clearSelection(); } 
+    }
 });
 
 document.addEventListener('mousemove', function(e) { 
     if (isSelecting) { 
-        if(window.getSelection) window.getSelection().removeAllRanges();
-        e.preventDefault();
         let el = document.elementFromPoint(e.clientX, e.clientY);
-        if(el) { let td = el.closest('td.calc-cell'); if (td) { selectCell(td); } }
+        if(el) { 
+            let td = el.closest('td.calc-cell'); 
+            if (td) { 
+                if (td !== dragStartCell) {
+                    if(window.getSelection) window.getSelection().removeAllRanges();
+                    e.preventDefault();
+                }
+                selectCell(td); 
+            } 
+        }
     } 
 });
 
-document.addEventListener('mouseup', function() { isSelecting = false; updateStatsBar(); });
+document.addEventListener('mouseup', function() { isSelecting = false; dragStartCell = null; updateStatsBar(); });
+
 function selectCell(td) { td.classList.add('cell-selected'); selectedCells.add(td); updateStatsBar(); }
 function clearSelection() { selectedCells.forEach(td => td.classList.remove('cell-selected')); selectedCells.clear(); document.getElementById('selectionStatsBar').classList.remove('visible'); }
 function updateStatsBar() {
@@ -822,8 +1249,9 @@ function updateStatsBar() {
         document.getElementById('selCount').innerText = count; 
         document.getElementById('selSum').innerText = sum.toLocaleString(undefined, {maximumFractionDigits: 2}); 
         bar.classList.add('visible'); 
-    } 
-    else { bar.classList.remove('visible'); }
+    } else { 
+        bar.classList.remove('visible'); 
+    }
 }
 
 function handleDragStart(e) { dragSrcRow = this; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => this.classList.add('dragging'), 0); }
@@ -852,7 +1280,10 @@ function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    if(g(5).includes('/')) s(0, `${curY}-${g(5).split('/')[0].padStart(2,'0')}`);
+    
+    if(c === 5 && g(5).includes('/') && (!g(0) || g(0).trim() === "")) {
+        s(0, `${curY}-${g(5).split('/')[0].padStart(2,'0')}`);
+    }
     
     let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
     let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
@@ -865,16 +1296,28 @@ function calc(r, c, save=true) {
     
     if(save) {
         localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20)}));
+        
+        // 💡 修正案件明細表自動新增列邏輯：徹底獨立判斷，確保永遠有底
+        let ec = 0; 
+        for(let i=rc-1; i>=0; i--){ 
+            let dataRow = JSON.parse(localStorage.getItem(`d_${curY}_${i}`))||{}; 
+            if(!dataRow[0]&&!dataRow[1]&&!dataRow[2]&&!dataRow[3]&&!dataRow[9]) ec++; else break; 
+        }
+        if (ec < 10) { 
+            for(let i=0; i<10; i++) { 
+                document.getElementById('tb').appendChild(createRow(rc++)); 
+            } 
+            localStorage.setItem(`rowCount_${curY}`, rc); 
+        }
+        
+        filterTable(); // 存檔與增生完成後，強制刷新畫面顯示
     }
-    
-    let ec = 0; for(let i=rc-1; i>=0; i--){ let d=JSON.parse(localStorage.getItem(`d_${curY}_${i}`))||{}; if(!d[0]&&!d[1]&&!d[2]&&!d[3]&&!d[9]) ec++; else break; }
-    if (ec <= 2 && save) { for(let i=0; i<10; i++) { document.getElementById('tb').appendChild(createRow(rc++)); } localStorage.setItem(`rowCount_${curY}`, rc); filterTable(); }
 }
 
-function handleOptChange(r, c) {
+async function handleOptChange(r, c) {
     let sel = document.getElementById(`r${r}c${c}`);
-    if (sel.value === "__ADD__") { let n = prompt("新增:"); if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
-    else if (sel.value === "__DEL__") { let target = prompt("刪除名稱:"); if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
+    if (sel.value === "__ADD__") { let n = await uiPrompt("新增:"); if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
+    else if (sel.value === "__DEL__") { let target = await uiPrompt("刪除名稱:"); if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
     else calc(r, c);
 }
 
@@ -917,12 +1360,12 @@ document.addEventListener('keydown', function(e) {
     if (nextId) { let el = document.getElementById(nextId); if (el) { e.preventDefault(); el.focus(); if(el.tagName==='INPUT') el.select(); } }
 });
 
-// 將全域函數暴露
 window.exportData = exportData;
 window.switchSlide = switchSlide;
 window.manageVip = manageVip;
 window.runSettleSearch = runSettleSearch;
 
+// 初始化時確保兩個表格都有足夠的空白底色
 window.onload = () => { 
     migrateRitaToYiminjia(); 
     applyTheme(curY); 
@@ -930,13 +1373,14 @@ window.onload = () => {
     initTable(); 
     initInvoiceTable();
     renderYearList(); 
-    renderDashboard();
+    
+    let activeTab = document.querySelector('.tab-item.active');
+    if (activeTab && activeTab.innerText.includes('數據中心')) {
+        renderDashboard();
+    }
 };
 </script>
 
-<!-- ======================================================== -->
-<!-- 🚀 Google Firebase 雲端引擎 -->
-<!-- ======================================================== -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -960,24 +1404,27 @@ window.onload = () => {
 
         signInAnonymously(auth).catch((error) => {
             console.error("Firebase 登入失敗:", error);
-            alert("⚠️ 無法連線至 Firebase，請確認您已在 Firebase 控制台的 Authentication 開啟了「匿名登入 (Anonymous)」。");
         });
 
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
-            if (user) { console.log("🔥 Firebase 已成功連線！", user.uid); }
         });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
 
     window.cloudSync = async function(mode) {
-        if (!app || !auth || !db) { alert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
-        if (!currentUser) { alert("⏳ 正在與 Firebase 雲端建立安全連線...請稍等幾秒後再試！"); return; }
+        if (!app || !auth || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
+        if (!currentUser) { await uiAlert("⏳ 正在與 Firebase 雲端建立安全連線...請稍等幾秒後再試！"); return; }
 
         const btn = document.getElementById('cloudSaveBtn');
-        const originalText = btn.innerText;
         const docRef = doc(db, 'system_data', 'default_backup');
 
         if (mode === 'SAVE') {
+            let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
+            if (pwd !== window.APP_PWD) {
+                await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗");
+                return;
+            }
+
             btn.innerText = "🔥 正在上傳雲端...";
             let fullData = {};
             for(let i=0; i<localStorage.length; i++){
@@ -988,24 +1435,24 @@ window.onload = () => {
             }
             try {
                 await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
-                alert("🔥 搬家成功！\n您的資料已經完美轉移到您自己的 Google Firebase 雲端上了！");
+                await uiAlert("🔥 搬家成功！\n您的資料已經完美轉移到您的 Google Firebase 雲端上了！");
             } catch(e) {
                 console.error("上傳錯誤:", e);
-                alert("❌ 上傳失敗！請確認您已經在 Firebase > Firestore Database 中，將權限設定為「以測試模式開始」。");
+                await uiAlert("❌ 上傳失敗！請確認您已經在 Firebase > Firestore Database 中，將權限設定為「以測試模式開始」。");
             }
             btn.innerText = "🔥 搬家至 Firebase";
         } else {
-            if(!confirm("⚠️ 注意：這將會清除畫面上目前的資料，並從 Firebase 下載最新的備份蓋過去。\n確定要執行嗎？")) return;
+            if(!(await uiConfirm("⚠️ 注意：這將會清除畫面上目前的資料，並從 Firebase 下載最新的備份蓋過去。\n\n確定要執行嗎？"))) return;
             try {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const cloudData = JSON.parse(docSnap.data().data);
                     localStorage.clear(); 
                     Object.keys(cloudData).forEach(k => localStorage.setItem(k, cloudData[k]));
-                    alert("✅ 載入成功！資料已同步為雲端最新版本。");
+                    await uiAlert("✅ 載入成功！資料已同步為雲端最新版本。");
                     location.reload(); 
-                } else { alert("🤷‍♂️ 雲端資料庫目前是空的！\n請先在有資料的電腦上點擊「🔥 搬家至 Firebase」。"); }
-            } catch(e) { console.error("下載錯誤:", e); alert("❌ 載入失敗！請確認您的網路連線與資料庫設定。"); }
+                } else { await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！\n請先在有資料的電腦上點擊「🔥 搬家至 Firebase」。"); }
+            } catch(e) { console.error("下載錯誤:", e); await uiAlert("❌ 載入失敗！請確認您的網路連線與資料庫設定。"); }
         }
     };
 </script>
