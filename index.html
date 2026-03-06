@@ -3,166 +3,432 @@
 <head>
     <meta charset="UTF-8">
     <title>杰冉宇宙營收表</title>
+    
+    <!-- 引入 html2pdf 引擎 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- 引入 Chart.js 繪圖引擎 (數據中心專用) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        /* --- 100% 原始核心樣式復原 --- */
-        :root { --primary: #4E342E; --mid: #8D6E63; --light: #A89B96; --bg: #EAE3DD; }
-        body.theme-green { --primary: #2D4030; --mid: #556B2F; --light: #A3B18A; --bg: #DAD7CD; }
-        body.theme-blue { --primary: #1B263B; --mid: #415A77; --light: #778DA9; --bg: #E0E1DD; }
-        body.theme-red { --primary: #582F0E; --mid: #7F4F24; --light: #A68A64; --bg: #EDE0D4; }
-        body.theme-purple { --primary: #3C096C; --mid: #7B2CBF; --light: #9D4EDD; --bg: #E0AAFF; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
 
-        body, html { height: 100%; margin: 0; padding: 0; font-family: sans-serif; background: var(--bg); overflow: hidden; display: flex; flex-direction: column; color: var(--primary); transition: background 0.5s; cursor: default; }
+        :root { 
+            --primary: #007AFF; 
+            --primary-rgb: 0, 122, 255;
+            --mid: #6E6E73; 
+            --light: #86868B; 
+            --bg: #F4F7F6; 
+            --text-main: #1D1D1F;
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+        body.theme-green { --primary: #00D26A; --primary-rgb: 0, 210, 106; --bg: #F0F7F4; }
+        body.theme-blue { --primary: #0A84FF; --primary-rgb: 10, 132, 255; --bg: #F2F6FC; }
+        body.theme-red { --primary: #FF3B30; --primary-rgb: 255, 59, 48; --bg: #FCF2F2; }
+        body.theme-purple { --primary: #BF5AF2; --primary-rgb: 191, 90, 242; --bg: #F8F2FC; }
+
+        body, html { 
+            height: 100%; margin: 0; padding: 0; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); overflow: hidden; display: flex; flex-direction: column; 
+            color: var(--text-main); transition: background 0.6s ease; cursor: default;
+            font-variant-numeric: tabular-nums; 
+        }
         
-        /* Header 區域 */
-        .header-section { height: 85px; padding: 0 40px; display: flex; align-items: center; flex-shrink: 0; }
-        .page-title { font-size: 26px; font-weight: 900; cursor: pointer; user-select: none; margin-right: 30px; }
-        .year-dropdown { position: absolute; top: 45px; left: 0; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); width: 140px; display: none; z-index: 9999; border: 1px solid #EEE; overflow: hidden; }
-        .year-item { padding: 12px; font-weight: 700; color: var(--mid); cursor: pointer; text-align: center; transition: 0.2s; }
-        .year-item:hover { background: var(--bg); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
 
-        /* 搜尋區域：鎖死在左側 */
-        .search-area { display: flex; align-items: center; }
-        .search-group { display: flex; gap: 8px; }
-        .search-group input { border: 1px solid rgba(0,0,0,0.08); border-radius: 50px; padding: 8px 15px; width: 110px; outline: none; background: rgba(255,255,255,0.7); font-size: 13px; font-weight: 600; transition: all 0.4s; cursor: text; }
-        .search-group input:focus { background: #FFF; width: 160px; border-color: var(--primary); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .header-section { height: 90px; padding: 0 40px; display: flex; align-items: center; flex-shrink: 0; z-index: 100; position: relative; }
+        .page-title { font-size: 28px; font-weight: 900; cursor: pointer; user-select: none; margin-right: 40px; letter-spacing: -0.5px; transition: color 0.3s; }
+        .page-title:hover { color: var(--primary); text-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3); }
+        .year-dropdown { position: absolute; top: 50px; left: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); width: 140px; display: none; z-index: 9999; border: 1px solid var(--glass-border); overflow: hidden; }
+        .year-item { padding: 12px; font-weight: 700; color: var(--text-main); cursor: pointer; text-align: center; transition: 0.2s; }
+        .year-item:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
 
-        /* 角色按鈕：推到最右邊 */
-        .role-btn-group { display: none; gap: 5px; margin-left: auto; }
-        .role-btn { border: 1px solid var(--light); padding: 6px 15px; border-radius: 50px; font-size: 12px; font-weight: 700; cursor: pointer; background: white; color: var(--mid); transition: 0.3s; }
-        .role-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .search-area { display: flex; align-items: center; margin-left: auto; }
+        .search-group { display: flex; gap: 12px; align-items: center; }
+        .search-group input { 
+            border: 1px solid transparent; border-radius: 50px; padding: 10px 20px; width: 160px; 
+            outline: none; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px);
+            font-size: 13px; font-weight: 600; color: var(--text-main); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: text; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .search-group input::placeholder { color: var(--light); font-weight: 400; }
+        .search-group input:focus { background: #FFF; width: 220px; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2); }
+        
+        .vip-dropdown-container { position: relative; }
+        .vip-trigger { border: 1px solid transparent; border-radius: 50px; padding: 10px 20px; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px); font-size: 13px; font-weight: 700; color: var(--text-main); cursor: default; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.3s; display: flex; align-items: center; gap: 6px; user-select: none; }
+        .vip-dropdown-container:hover .vip-trigger { background: #FFF; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .vip-trigger.active-filter { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
+        .vip-menu { position: absolute; top: 100%; right: 0; padding-top: 10px; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; z-index: 999; }
+        .vip-dropdown-container:hover .vip-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .vip-menu-content { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; width: 280px; display: flex; flex-direction: column; gap: 15px; }
+        .vip-bubble-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .vip-bubble { padding: 8px 16px; border-radius: 50px; background: rgba(0,0,0,0.04); font-size: 12px; font-weight: 700; color: var(--mid); cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
+        .vip-bubble:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+        .vip-bubble.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3); transform: scale(1.05); }
+        .vip-actions { display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 12px; }
+        .vip-action-btn { background: transparent; border: none; font-size: 12px; font-weight: 800; cursor: pointer; padding: 5px; transition: color 0.2s; }
+        .btn-add { color: var(--primary); } .btn-add:hover { filter: brightness(1.2); }
+        .btn-del { color: #D32F2F; } .btn-del:hover { filter: brightness(1.2); }
+
+        .status-dropdown-container { position: relative; }
+        .status-trigger { border: 1px solid transparent; border-radius: 50px; padding: 10px 20px; background: rgba(255,255,255,0.6); backdrop-filter: blur(10px); font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.3s; display: flex; align-items: center; justify-content: space-between; gap: 8px; user-select: none; min-width: 140px; }
+        .status-dropdown-container:hover .status-trigger { background: #FFF; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .status-trigger.active-filter { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
+        .status-menu { position: absolute; top: 100%; left: 0; padding-top: 10px; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; z-index: 999; min-width: 180px; }
+        .status-dropdown-container:hover .status-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .status-menu-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+        .status-option { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--mid); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .status-option:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+        .status-option.active { background: var(--primary); color: white; }
+
+        .role-btn-group { display: none; gap: 8px; margin-left: 24px; padding-left: 24px; border-left: 2px solid rgba(0,0,0,0.08); height: 40px; align-items: center; }
+        .role-btn { border: 1px solid transparent; padding: 8px 20px; border-radius: 50px; font-size: 13px; font-weight: 700; cursor: pointer; background: rgba(255,255,255,0.5); color: var(--mid); transition: 0.3s; backdrop-filter: blur(10px); }
+        .role-btn:hover { background: rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .role-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
 
         .viewport { flex: 1; overflow: hidden; position: relative; }
-        .slider-container { display: flex; width: 300vw; height: 100%; transition: transform 0.6s cubic-bezier(0.65, 0, 0.35, 1); }
-        .page-content { width: 100vw; height: 100%; padding: 0 20px 100px 20px; box-sizing: border-box; display: flex; flex-direction: column; }
-        
-        .white-card { background: white; border-radius: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.03); position: relative; }
-        .table-scroll { flex: 1; overflow-y: scroll; width: 100%; }
-        
-        /* 表格樣式 */
-        table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 1400px; }
-        th { background: var(--primary); color: white; padding: 12px 2px; font-size: 11px; position: sticky; top: 0; z-index: 10; }
-        td { border-bottom: 1px solid rgba(0,0,0,0.03); height: 38px; text-align: center; font-size: 13px; position: relative; }
-        
-        input[type="checkbox"] { width: 13px !important; height: 13px !important; cursor: pointer; accent-color: var(--primary); }
-        
-        /* 結案變灰樣式 */
-        tr.is-settled { opacity: 0.4; filter: grayscale(1); transition: 0.3s; }
-        tr.is-settled input, tr.is-settled select { color: #888; }
-        
-        input, select { border: none; width: 100%; height: 100%; text-align: center; font-size: 12px; background: transparent; outline: none; font-weight: 600; color: var(--primary); cursor: pointer; }
-        input:focus, select:focus { cursor: text; }
-        .readonly { color: var(--light); background: #FAF9F8; cursor: default; }
+        .slider-container { display: flex; width: 600vw; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
+        .page-content { width: 100vw; height: 100%; padding: 0 30px 110px 30px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .white-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); border-radius: 24px; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.04); position: relative; border: 1px solid var(--glass-border); }
 
-        /* 底部 UI */
+        .month-nav-wrapper { padding: 10px 25px 0 25px; border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.3); flex-shrink: 0; }
+        .month-nav { display: flex; gap: 8px; overflow-x: auto; padding: 4px 4px 18px 4px; }
+        .month-btn { padding: 8px 18px; border-radius: 50px; border: 1px solid transparent; background: rgba(255,255,255,0.5); color: var(--mid); cursor: pointer; font-weight: 800; font-size: 12px; transition: all 0.3s; white-space: nowrap; letter-spacing: 0.5px; }
+        .month-btn:hover { background: rgba(255,255,255,0.9); color: var(--text-main); }
+        .month-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); transform: translateY(-1px); }
+
+        .table-scroll { flex: 1; overflow-y: scroll; width: 100%; }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; min-width: 1430px; user-select: none; }
+        th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; }
+        td { border-bottom: 1px solid rgba(0,0,0,0.03); height: 44px; text-align: center; font-size: 13px; position: relative; transition: background 0.2s; }
+        tr:hover td { background: rgba(var(--primary-rgb), 0.03); } 
+        input[type="checkbox"] { width: 14px !important; height: 14px !important; cursor: pointer; accent-color: var(--primary); }
+        tr.is-settled { opacity: 0.35; filter: grayscale(1); transition: 0.4s ease; }
+        tr.is-settled:hover { opacity: 0.6; }
+        input, select { border: none; width: 100%; height: 100%; text-align: center; font-size: 13px; background: transparent; outline: none; font-weight: 600; color: var(--text-main); cursor: pointer; font-family: inherit; transition: color 0.3s; }
+        input:focus, select:focus { cursor: text; color: var(--primary); font-weight: 800; }
+        .readonly { color: var(--light); background: rgba(0,0,0,0.01); cursor: default; font-weight: 500; }
+        
+        .drag-handle { color: rgba(0,0,0,0.15); font-size: 16px; cursor: grab; user-select: none; display: flex; align-items: center; justify-content: center; height: 100%; transition: color 0.2s; }
+        .drag-handle:hover { color: var(--primary); }
+        tr.dragging td { opacity: 0.3; background: rgba(var(--primary-rgb), 0.05); }
+        tr.drag-over-top td { border-top: 2px solid var(--primary) !important; }
+        tr.drag-over-bottom td { border-bottom: 2px solid var(--primary) !important; }
+        
+        .cell-selected { background-color: rgba(var(--primary-rgb), 0.15) !important; outline: 1px solid rgba(var(--primary-rgb), 0.5); }
+        .cell-selected input { color: var(--primary) !important; }
+
+        .selection-stats-bar {
+            position: fixed; bottom: 100px; right: 40px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 20px;
+            display: flex; gap: 20px; align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); z-index: 1000;
+            opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.3s ease;
+        }
+        .selection-stats-bar.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-label { font-size: 11px; color: var(--light); font-weight: 700; text-transform: uppercase; }
+        .stat-value { font-size: 16px; font-weight: 900; color: var(--primary); font-variant-numeric: tabular-nums; }
+
         .bottom-ui-wrap { position: fixed; bottom: 30px; left: 0; width: 100%; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; pointer-events: none; z-index: 1000; }
         .bottom-ui-wrap > * { pointer-events: auto; }
         .btn-group-left { display: flex; gap: 12px; width: 250px; } 
-        .tab-bar-container { display: flex; gap: 5px; background: rgba(255,255,255,0.95); padding: 5px; border-radius: 50px; border: 1px solid #DDD; position: absolute; left: 50%; transform: translateX(-50%); box-shadow: 0 8px 25px rgba(0,0,0,0.08); backdrop-filter: blur(10px); }
+        .tab-bar-container { display: flex; gap: 8px; background: var(--glass-bg); padding: 6px; border-radius: 50px; position: absolute; left: 50%; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.06); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); }
         .btn-group-right { display: flex; justify-content: flex-end; width: 250px; }
+        .tab-item { padding: 12px 24px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--mid); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; }
+        .tab-item:hover { color: var(--text-main); background: rgba(0,0,0,0.03); }
+        .tab-item.active { background: var(--primary); color: white; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.3); }
+        .sync-btn { padding: 12px 24px; border-radius: 50px; background: var(--glass-bg); border: 1px solid transparent; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.04); white-space: nowrap; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(10px); }
+        .sync-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); background: #FFF; }
         
-        .tab-item { padding: 10px 22px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--mid); transition: 0.3s; }
-        .tab-item.active { background: var(--primary); color: white; transform: scale(1.05); }
+        .btn-firebase { color: #FF9500; border: 1px solid rgba(255, 149, 0, 0.3); }
+        .btn-firebase:hover { background: rgba(255, 149, 0, 0.1); }
 
-        /* 左下角按鈕樣式 (防止變圓球) */
-        .sync-btn { 
-            padding: 10px 22px; border-radius: 50px; background: #FFF; border: 2px solid; 
-            font-weight: 900; font-size: 13px; cursor: pointer; transition: 0.3s; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); white-space: nowrap; 
-            display: flex; align-items: center; gap: 5px; 
-        }
-        .sync-btn:hover { transform: scale(1.05); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
-
-        /* --- 專業雙欄對帳單畫布 --- */
-        #invoice-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(40px); z-index: 50; display: none; padding: 25px 40px; box-sizing: border-box; flex-direction: column; overflow: hidden; }
-        .inv-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 3px solid var(--primary); padding-bottom: 5px; }
-        .inv-header h1 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: 5px; color: var(--primary); }
-        
-        #inv-list-wrapper { flex: 1; column-count: 2; column-gap: 60px; column-rule: 1px solid rgba(0,0,0,0.1); overflow: hidden; padding-top: 10px; }
-        .inv-item { break-inside: avoid; width: 100%; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.05); padding: 12px 0; }
-        .inv-col-id { width: 30px; color: var(--light); font-size: 10px; text-align: center; }
-        .inv-col-info { flex: 1; display: flex; flex-direction: column; padding: 0 10px; }
-        .inv-col-name { font-weight: 900; color: var(--primary); font-size: 14px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .inv-col-prices { display: flex; gap: 15px; font-size: 11px; font-weight: 700; color: var(--mid); }
+        #invoice-view { width: 100%; height: 100%; background: transparent; display: flex; padding: 25px 40px; box-sizing: border-box; flex-direction: column; overflow: hidden; }
+        .quote-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--light); font-size: 16px; font-weight: 600; flex-direction: column; gap: 10px; }
+        .inv-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 2px solid rgba(var(--primary-rgb), 0.2); padding-bottom: 10px; }
+        .inv-header h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 2px; color: var(--text-main); }
+        #inv-list-wrapper { flex: 1; column-count: 2; column-gap: 50px; column-rule: 1px solid rgba(0,0,0,0.05); overflow-y: auto; padding-right: 10px; }
+        .inv-item { break-inside: avoid; width: 100%; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding: 12px 15px 12px 0; box-sizing: border-box; }
+        .inv-col-id { width: 35px; color: var(--light); font-size: 12px; text-align: center; font-weight: 700; flex-shrink: 0; }
+        .inv-col-info { flex: 1; display: flex; flex-direction: column; padding: 0 10px; overflow: hidden; }
+        .inv-col-name { font-weight: 800; color: var(--text-main); font-size: 15px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inv-col-prices { display: flex; flex-direction: row; gap: 15px; font-size: 12px; font-weight: 600; color: var(--mid); white-space: nowrap; }
         .price-tag { color: var(--light); font-weight: 400; margin-right: 3px; }
-        .inv-col-total { width: 90px; text-align: right; font-weight: 900; color: #000; font-size: 15px; }
+        .inv-col-total { width: 90px; text-align: right; font-weight: 900; color: var(--primary); font-size: 16px; flex-shrink: 0; padding-right: 10px; }
+        .inv-footer { margin-top: 30px; padding-top: 20px; display: flex; justify-content: flex-end; align-items: flex-end; border-top: 1px solid rgba(0,0,0,0.08); break-inside: avoid; }
+        .inv-summary-box { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .inv-summary-row { display: flex; align-items: baseline; justify-content: flex-end; width: 100%; gap: 20px; }
+        .inv-summary-label { font-size: 14px; font-weight: 700; color: var(--light); letter-spacing: 1px; text-transform: uppercase; }
+        .inv-total-pre { font-size: 32px; font-weight: 900; color: var(--mid); padding-right: 10px; width: 220px; text-align: right; }
+        .inv-total-amt { font-size: 32px; font-weight: 900; color: #D32F2F; line-height: 1; padding-right: 10px; width: 220px; text-align: right; }
 
-        .inv-footer { margin-top: auto; padding-top: 15px; display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid rgba(0,0,0,0.1); }
-        .inv-total-amt { font-size: 34px; font-weight: 900; color: #D32F2F; margin-left: 20px; }
+        /* =========================================
+           📊 數據中心專屬 UI 樣式
+        ========================================= */
+        .dashboard-container { 
+            padding: 30px 40px; display: flex; flex-direction: column; gap: 30px; 
+            overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%;
+        }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
+        .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
+        .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
+        
+        /* 下拉選單樣式復刻 */
+        .db-select {
+            padding: 10px 35px 10px 20px; border-radius: 8px; border: 1px solid var(--glass-border);
+            background: #FFFFFF url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236E6E73%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") no-repeat right 15px top 50%;
+            background-size: 10px auto; appearance: none; font-size: 16px; font-weight: 800; color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); cursor: pointer; transition: 0.3s;
+        }
+        .db-select:hover { border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .kpi-card { 
+            background: #FFFFFF; border-radius: 16px; padding: 30px 20px; text-align: center; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; 
+            border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center;
+        }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
+        .kpi-title { font-size: 15px; color: #6E6E73; font-weight: 800; margin-bottom: 15px; }
+        .kpi-value { font-size: 42px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; flex: 1; min-height: 400px; padding-bottom: 50px; }
+        .chart-card { 
+            background: #FFFFFF; border-radius: 16px; padding: 30px; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); 
+            display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box;
+        }
+        .chart-title { font-size: 16px; font-weight: 800; color: #6E6E73; margin-bottom: 25px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
+        .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
 
+<!-- 圈選統計面板 -->
+<div class="selection-stats-bar" id="selectionStatsBar">
+    <div class="stat-item"><span class="stat-label">計數</span><span class="stat-value" id="selCount">0</span></div>
+    <div class="stat-item" style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 15px;"><span class="stat-label">加總</span><span class="stat-value" id="selSum">0</span></div>
+</div>
+
 <div class="header-section">
     <div style="position:relative">
         <div class="page-title" onclick="event.stopPropagation(); document.getElementById('yMenu').style.display='block'"><span id="yDisp">2026</span> 營收表</div>
-        <div id="yMenu" class="year-dropdown"><div id="yList"></div><div class="year-item" style="color:green; border-top:1px solid #EEE" onclick="addNewYear()">+</div></div>
+        <div id="yMenu" class="year-dropdown"><div id="yList"></div><div class="year-item" style="color:var(--primary); border-top:1px solid rgba(0,0,0,0.05)" onclick="addNewYear()">+ 新增年度</div></div>
     </div>
     
     <div class="search-area">
-        <div class="search-group" id="searchInputs">
-            <input type="text" id="sC" placeholder="👤 客戶搜尋" oninput="runSearch()">
-            <input type="text" id="sM" placeholder="📅 月份" oninput="runSearch()">
+        <div class="search-group" id="tableFilterGroup">
+            <div class="vip-dropdown-container">
+                <div class="vip-trigger" id="vipTrigger">⭐ 常用客戶 <span style="font-size: 10px;">▼</span></div>
+                <div class="vip-menu">
+                    <div class="vip-menu-content">
+                        <div class="vip-bubble-list" id="vipBubbleList"></div>
+                        <div class="vip-actions"><button class="vip-action-btn btn-add" onclick="manageVip('add')">+ 新增常用客戶</button><button class="vip-action-btn btn-del" onclick="manageVip('del')">- 刪除</button></div>
+                    </div>
+                </div>
+            </div>
+            <input type="text" id="fK" placeholder="🔍 關鍵字過濾" oninput="filterTable()">
+            <button id="simpleBatchBtn" class="sync-btn" style="display:none; color:#00D26A; border: 1px solid rgba(0, 210, 106, 0.2);" onclick="simpleBatchResolve()">⚡ 批次結清畫面案件</button>
         </div>
-        <div class="search-group" id="settleSearchGroup" style="display:none">
-            <input type="text" id="ssC" placeholder="🔍 搜尋客戶" oninput="runSettleSearch()">
-            <input type="text" id="ssM" placeholder="🔍 結算月份" oninput="runSettleSearch()">
+        
+        <div class="search-group" id="settleSearchGroup" style="display:none;">
+            <div class="status-dropdown-container">
+                <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
+                <div class="status-menu">
+                    <div class="status-menu-content">
+                        <div class="status-option active" onclick="setStatusFilter('', '💰 所有入帳狀態', this)">💰 所有入帳狀態</div>
+                        <div class="status-option" onclick="setStatusFilter('paid', '✅ 已收齊 (可發放)', this)">✅ 已收齊 (可發放)</div>
+                        <div class="status-option" onclick="setStatusFilter('unpaid', '⏳ 有未收尾款', this)">⏳ 有未收尾款</div>
+                    </div>
+                </div>
+                <input type="hidden" id="ssStatus" value="">
+            </div>
+            <input type="text" id="ssC" placeholder="🔍 客戶/代號 (空格)" oninput="runSettleSearch()" style="width: 180px;">
+            <input type="text" id="ssM" placeholder="📅 結算月 (ex:05)" oninput="runSettleSearch()" style="width: 110px;">
         </div>
-    </div>
 
-    <div class="role-btn-group" id="roleBtns">
-        <button class="role-btn active" onclick="setRole('公司', this)">公司</button>
-        <button class="role-btn" onclick="setRole('老闆', this)">老闆</button>
-        <button class="role-btn" onclick="setRole('員工', this)">員工</button>
+        <div class="search-group" id="quoteSearchGroup" style="display:none;">
+            <input type="text" id="qC" placeholder="👤 客戶 (空格隔開)" oninput="runQuoteSearch()">
+            <input type="text" id="qM" placeholder="📅 報價月 (ex:05)" oninput="runQuoteSearch()">
+        </div>
+
+        <div class="search-group" id="invoiceManageSearchGroup" style="display:none;">
+            <input type="text" id="invSearchK" placeholder="🔍 發票號/客戶/統編" oninput="filterInvoiceTable()" style="width: 220px;">
+        </div>
+        
+        <div class="role-btn-group" id="roleBtns">
+            <button class="role-btn active" onclick="setRole('公司', this)">公司</button>
+            <button class="role-btn" onclick="setRole('老闆', this)">老闆</button>
+            <button class="role-btn" onclick="setRole('員工', this)">員工</button>
+        </div>
     </div>
 </div>
 
 <div class="viewport">
     <div class="slider-container" id="mainSlider">
+        <!-- Slide 0: 案件明細 -->
         <div class="page-content">
             <div class="white-card">
+                <div class="month-nav-wrapper">
+                    <div class="month-nav">
+                        <button class="month-btn active" onclick="setMonthFilter('all', this)">全部月份</button>
+                        <button class="month-btn" onclick="setMonthFilter('01', this)">1月</button>
+                        <button class="month-btn" onclick="setMonthFilter('02', this)">2月</button>
+                        <button class="month-btn" onclick="setMonthFilter('03', this)">3月</button>
+                        <button class="month-btn" onclick="setMonthFilter('04', this)">4月</button>
+                        <button class="month-btn" onclick="setMonthFilter('05', this)">5月</button>
+                        <button class="month-btn" onclick="setMonthFilter('06', this)">6月</button>
+                        <button class="month-btn" onclick="setMonthFilter('07', this)">7月</button>
+                        <button class="month-btn" onclick="setMonthFilter('08', this)">8月</button>
+                        <button class="month-btn" onclick="setMonthFilter('09', this)">9月</button>
+                        <button class="month-btn" onclick="setMonthFilter('10', this)">10月</button>
+                        <button class="month-btn" onclick="setMonthFilter('11', this)">11月</button>
+                        <button class="month-btn" onclick="setMonthFilter('12', this)">12月</button>
+                    </div>
+                </div>
                 <div class="table-scroll" id="input-view">
-                    <table>
-                        <thead><tr><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">員工%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">員工金額</th><th style="width:120px">備註</th></tr></thead>
+                    <table id="mainTable">
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">員工%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">員工金額</th><th style="width:120px">備註</th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
-                </div>
-                <div id="invoice-view">
-                    <div class="inv-header"><h1>對帳明細單</h1><div id="inv-cust-info" style="font-weight:900; font-size:16px; color:var(--mid);"></div></div>
-                    <div id="inv-list-wrapper"></div>
-                    <div class="inv-footer"><div style="font-size: 18px; font-weight: 900; color: var(--mid);">應付總計 (含稅)</div><div class="inv-total-amt" id="inv-total-amt">$ 0</div></div>
                 </div>
             </div>
         </div>
         
-        <div class="page-content"><div class="white-card"><div class="table-scroll"><table><thead><tr><th style="width:12%">年月</th><th style="width:10%">編號</th><th style="width:18%">客戶</th><th style="width:30%">案名</th><th style="width:15%">成交未稅</th><th style="width:12%" id="sP">公司 %</th><th style="width:15%" id="sA">金額 $</th></tr></thead><tbody id="settle-tb"></tbody></table></div><div id="settle-bar" style="height:70px; display:none; align-items:center; justify-content:flex-end; padding:0 40px; border-top:1px solid #EEE;"><div id="settle-total-val" style="color:#D32F2F; font-size:24px; font-weight:900;">結算總額：$ 0</div></div></div></div>
+        <!-- Slide 1: 分潤結算 -->
+        <div class="page-content">
+            <div class="white-card">
+                <div class="table-scroll">
+                    <table>
+                        <thead><tr><th style="width:10%">年月</th><th style="width:8%">編號</th><th style="width:15%">客戶</th><th style="width:25%">案名</th><th style="width:12%">付款狀態</th><th style="width:10%">未收金額</th><th style="width:10%" id="sP">公司 %</th><th style="width:10%" id="sA">金額 $</th></tr></thead>
+                        <tbody id="settle-tb"></tbody>
+                    </table>
+                </div>
+                <div id="settle-bar" style="height:80px; display:none; align-items:center; justify-content:flex-end; padding:0 40px; border-top:1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.5); backdrop-filter: blur(10px);"><div id="settle-total-val" style="color:var(--primary); font-size:26px; font-weight:900;">結算總額：$ 0</div></div>
+            </div>
+        </div>
 
+        <!-- Slide 2: 月報統計 -->
         <div class="page-content"><div class="white-card"><div class="table-scroll"><table><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>員工分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
+
+        <!-- Slide 3: 報價系統 -->
+        <div class="page-content">
+            <div class="white-card" id="invoice-view">
+                <div class="quote-placeholder" id="quote-placeholder">🧾<br>請輸入搜尋條件產生報價單</div>
+                <div id="quote-content" style="display: none; height: 100%; flex-direction: column;">
+                    <div class="inv-header"><h1>報價 / 對帳明細單</h1><div style="display: flex; align-items: center; gap: 20px;"><button id="exportPdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="downloadPDF()">📥 一鍵匯出 PDF</button><div id="inv-cust-info" style="font-weight:800; font-size:16px; color:var(--mid);"></div></div></div>
+                    <div id="inv-list-wrapper"></div>
+                    <div class="inv-footer"><div class="inv-summary-box"><div class="inv-summary-row"><span class="inv-summary-label">未稅總計</span><span class="inv-total-pre" id="inv-total-pre">$ 0</span></div><div class="inv-summary-row"><span class="inv-summary-label" style="color: #D32F2F;">應付總計 (含稅)</span><span class="inv-total-amt" id="inv-total-amt">$ 0</span></div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 發票管理 -->
+        <div class="page-content">
+            <div class="white-card">
+                <div class="table-scroll">
+                    <table style="min-width: 1000px;">
+                        <thead><tr><th style="width:25px"></th><th style="width:100px">期別</th><th style="width:120px">發票號碼</th><th style="width:120px">客戶名稱</th><th style="width:120px">統編</th><th style="width:100px">開立日期</th><th style="width:120px">未稅金額</th><th style="width:100px">稅金</th><th style="width:120px">含稅總額</th><th style="width:200px">備註</th></tr></thead>
+                        <tbody id="inv-tb"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 📊 營運數據中心 (完美復刻版) -->
+        <div class="page-content">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div class="dashboard-title-wrap">
+                        <div class="dashboard-title-line"></div>
+                        <div class="dashboard-title">營運數據中心</div>
+                    </div>
+                    <!-- 加入跟截圖一模一樣的下拉選單 -->
+                    <select class="db-select" id="dbMonthFilter" onchange="renderDashboard()">
+                        <option value="all">年度總結</option>
+                        <option value="01">1月</option>
+                        <option value="02">2月</option>
+                        <option value="03">3月</option>
+                        <option value="04">4月</option>
+                        <option value="05">5月</option>
+                        <option value="06">6月</option>
+                        <option value="07">7月</option>
+                        <option value="08">8月</option>
+                        <option value="09">9月</option>
+                        <option value="10">10月</option>
+                        <option value="11">11月</option>
+                        <option value="12">12月</option>
+                    </select>
+                </div>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card"><div class="kpi-title">總案件數</div><div class="kpi-value" id="kpi-proj" style="color: #1D1D1F;">0</div></div>
+                    <div class="kpi-card"><div class="kpi-title">總營收 (含稅)</div><div class="kpi-value" id="kpi-rev" style="color: #007AFF;">$ 0</div></div>
+                    <div class="kpi-card"><div class="kpi-title">已收金額 (訂金+尾款)</div><div class="kpi-value" id="kpi-col" style="color: #00D26A;">$ 0</div></div>
+                    <div class="kpi-card"><div class="kpi-title">待收餘額</div><div class="kpi-value" id="kpi-pen" style="color: #FF3B30;">$ 0</div></div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <div class="chart-title">👆 點擊區塊看明細 (案件類型營收佔比)</div>
+                        <div class="chart-canvas-wrap"><canvas id="pieChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title" id="db-bar-title">👆 每月營收趨勢 (未稅)</div>
+                        <div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
 <div class="bottom-ui-wrap">
     <div class="btn-group-left">
-        <button class="sync-btn" id="cloudSaveBtn" style="border-color:#4285F4; color:#4285F4" onclick="cloudSync('SAVE')">☁️ 雲端同步</button>
-        <button class="sync-btn" style="border-color:#FBBC05; color:#FBBC05" onclick="cloudSync('LOAD')">🔄 載入雲端</button>
+        <button class="sync-btn btn-firebase" id="cloudSaveBtn" onclick="cloudSync('SAVE')">🔥 搬家至 Firebase</button>
+        <button class="sync-btn" style="color:var(--primary)" onclick="cloudSync('LOAD')">🔄 從雲端載入</button>
     </div>
     <div class="tab-bar-container">
         <div class="tab-item active" onclick="switchSlide(0, this)">案件明細</div>
         <div class="tab-item" onclick="switchSlide(1, this)">分潤結算</div>
         <div class="tab-item" onclick="switchSlide(2, this)">月報統計</div>
+        <div class="tab-item" onclick="switchSlide(3, this)">報價系統</div>
+        <div class="tab-item" onclick="switchSlide(4, this)">發票紀錄</div>
+        <!-- 數據中心按鈕 -->
+        <div class="tab-item" style="color: #FF2D55;" onclick="switchSlide(5, this)">數據中心</div>
     </div>
-    <div class="btn-group-right">
-        <button class="sync-btn" style="border-color:#DDD; color:var(--mid)" onclick="exportData()">📤 匯出備份</button>
-    </div>
+    <div class="btn-group-right"><button class="sync-btn" style="color:var(--text-main)" onclick="exportData()">📤 匯出電腦備份</button></div>
 </div>
 
 <script>
-const CLOUD_API = "https://script.google.com/macros/s/AKfycby13dgio2KdDj-R3QhkzO73NKl9SygorGNKRja9KO5P9kpsRLt3ILMqY1Rgj53kjKgK/exec"; 
 let curY = localStorage.getItem('vB_Y') || '2026';
 let yArr = JSON.parse(localStorage.getItem('vB_List')) || ['2026'];
 let opts = JSON.parse(localStorage.getItem('vB_Opts')) || { 4: [], 6: [] };
+let vipClients = JSON.parse(localStorage.getItem('vB_VipClients')) || [];
+let activeVipFilter = "";
 window.curRole = '公司';
 
-function changeYear(y) { curY=y; localStorage.setItem('vB_Y',y); document.getElementById('yDisp').innerText=y; applyTheme(y); initTable(); }
+// 儲存圖表實例
+let chartPie = null; let chartBar = null;
+
+function migrateRitaToYiminjia() {
+    let vips = JSON.parse(localStorage.getItem('vB_VipClients')) || [];
+    if (vips.includes('RITA')) { vips = vips.map(c => c === 'RITA' ? '醫敏家' : c); localStorage.setItem('vB_VipClients', JSON.stringify(vips)); vipClients = vips; }
+    for (let i = 0; i < localStorage.length; i++) {
+        let key = localStorage.key(i);
+        if (key && key.startsWith('d_')) { try { let d = JSON.parse(localStorage.getItem(key)); if (d && d[2] === 'RITA') { d[2] = '醫敏家'; localStorage.setItem(key, JSON.stringify(d)); } } catch(e) {} }
+    }
+}
+
+function changeYear(y) { curY=y; localStorage.setItem('vB_Y',y); document.getElementById('yDisp').innerText=y; applyTheme(y); initTable(); initInvoiceTable(); renderDashboard(); }
 function applyTheme(y) { const themes=['','theme-green','theme-blue','theme-red','theme-purple']; document.body.className=themes[parseInt(y)%themes.length]; }
 function addNewYear() { let y=prompt("年份:"); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();localStorage.setItem('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
@@ -171,46 +437,293 @@ function switchSlide(idx, el) {
     document.getElementById('mainSlider').style.transform = `translateX(-${idx * 100}vw)`;
     document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active')); el.classList.add('active');
     
-    document.getElementById('searchInputs').style.display = (idx === 0) ? 'flex' : 'none';
+    document.getElementById('tableFilterGroup').style.display = (idx === 0) ? 'flex' : 'none';
     document.getElementById('settleSearchGroup').style.display = (idx === 1) ? 'flex' : 'none';
+    document.getElementById('quoteSearchGroup').style.display = (idx === 3) ? 'flex' : 'none';
+    document.getElementById('invoiceManageSearchGroup').style.display = (idx === 4) ? 'flex' : 'none';
     document.getElementById('roleBtns').style.display = (idx === 1) ? 'flex' : 'none';
     document.getElementById('settle-bar').style.display = (idx === 1) ? 'flex' : 'none';
-    if(idx === 1) { window.curRole = '公司'; runSettleSearch(); }
+    
+    if(idx === 0) filterTable();
+    if(idx === 1) { let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; for(let r=0; r<count; r++) { calc(r, 0, true); } runSettleSearch(); }
     if(idx === 2) updateMonthlyReport();
+    if(idx === 4) filterInvoiceTable();
+    if(idx === 5) renderDashboard(); 
 }
 
-function runSearch() { 
-    let sc = document.getElementById('sC').value.trim().toLowerCase();
-    let sm = document.getElementById('sM').value.trim().padStart(2,'0'); 
-    let rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let invView = document.getElementById('invoice-view');
-    let invWrapper = document.getElementById('inv-list-wrapper');
-    if (sc !== "" || (sm !== "" && sm !== "00")) {
-        invView.style.display = 'flex'; invWrapper.innerHTML = '';
-        document.getElementById('inv-cust-info').innerText = sc ? `客戶：${sc.toUpperCase()}` : `月份：${sm}月`;
-        let results = []; let totalSum = 0;
-        for(let r=0; r<rowCount; r++){ 
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
-            if (((!sc || (d[2]||"").toLowerCase().includes(sc)) && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`))) && d[3]) {
-                results.push(d); totalSum += parseFloat(String(d[11]).replace(/,/g,'')) || 0;
+/* =======================================================
+   📊 數據中心核心 (加入篩選連動功能)
+======================================================= */
+function renderDashboard() {
+    let filterMonth = document.getElementById('dbMonthFilter').value; // 取得右上角的選項 (all, 01, 02...)
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    
+    let totalProjects = 0, totalRevGross = 0, totalCol = 0, totalPen = 0;
+    let typeData = {};
+    let barData = {}; 
+    
+    // 如果是選年度，先準備好 12 個月的桶子
+    if(filterMonth === 'all') { barData = { "01": 0, "02": 0, "03": 0, "04": 0, "05": 0, "06": 0, "07": 0, "08": 0, "09": 0, "10": 0, "11": 0, "12": 0 }; }
+
+    // 掃描表格
+    for(let i=0; i<count; i++) {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
+        let gross = parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
+        let rowMonth = d[0] ? d[0].split('-')[1] : null;
+
+        if (hasData && net > 0) {
+            // 💡 關鍵篩選：如果選了特定月份，就只抓那個月的資料！
+            if (filterMonth !== 'all' && rowMonth !== filterMonth) continue;
+
+            totalProjects++;
+            let deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0; 
+            let tail = parseFloat(String(d[12]).replace(/,/g,'')) || 0; 
+            let unp = parseFloat(String(d[13]).replace(/,/g,'')) || 0; 
+            
+            totalRevGross += gross;
+            totalCol += (deposit + tail);
+            totalPen += unp;
+
+            // 圓餅圖：案件類型統計
+            let type = d[4] || "未分類";
+            typeData[type] = (typeData[type] || 0) + net;
+
+            // 長條圖資料分配
+            if(filterMonth === 'all') {
+                if(rowMonth && barData[rowMonth] !== undefined) barData[rowMonth] += net;
+            } else {
+                // 如果選了單一月份，長條圖改成顯示「各客戶的貢獻營收」！
+                let client = d[2] || "未知客戶";
+                barData[client] = (barData[client] || 0) + net;
             }
         }
-        let padding = results.length > 35 ? 2 : (results.length > 20 ? 6 : 10);
-        results.forEach((d, index) => {
-            invWrapper.innerHTML += `<div class="inv-item" style="padding:${padding}px 0;"><div class="inv-col-id">${String(index+1).padStart(2, '0')}</div><div class="inv-col-info"><div class="inv-col-name">${d[3]}</div><div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span><span><span class="price-tag">小計:</span>${d[11]||'0'}</span></div></div><div class="inv-col-total">${d[11]||'0'}</div></div>`;
-        });
-        document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
-    } else { invView.style.display = 'none'; }
+    }
+
+    // 填入上方 KPI 數字
+    document.getElementById('kpi-proj').innerText = totalProjects;
+    document.getElementById('kpi-rev').innerText = "$ " + totalRevGross.toLocaleString();
+    document.getElementById('kpi-col').innerText = "$ " + totalCol.toLocaleString();
+    document.getElementById('kpi-pen').innerText = "$ " + totalPen.toLocaleString();
+
+    // 更新長條圖標題
+    document.getElementById('db-bar-title').innerText = filterMonth === 'all' ? '👆 每月營收趨勢 (未稅)' : `👆 ${parseInt(filterMonth)}月份：各客戶營收貢獻排行`;
+
+    if(chartPie) chartPie.destroy();
+    if(chartBar) chartBar.destroy();
+
+    const colors = ['#007AFF', '#FF9500', '#8E8E93', '#34C759', '#BF5AF2', '#FF3B30', '#5AC8FA', '#FF2D55'];
+
+    // 1. 繪製左側甜甜圈圖
+    let ctxPie = document.getElementById('pieChart').getContext('2d');
+    chartPie = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(typeData),
+            datasets: [{ data: Object.values(typeData), backgroundColor: colors, borderWidth: 0, hoverOffset: 15 }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false, cutout: '65%',
+            plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', weight: 'bold' } } }, tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } } 
+        }
+    });
+
+    // 2. 準備右側長條圖資料
+    let barLabels = [];
+    let barValues = [];
+    if (filterMonth === 'all') {
+        barLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+        barValues = Object.values(barData);
+    } else {
+        // 單月模式：把客戶營收從高到低排序
+        let sortedClients = Object.entries(barData).sort((a,b) => b[1] - a[1]);
+        barLabels = sortedClients.map(x => x[0]);
+        barValues = sortedClients.map(x => x[1]);
+    }
+
+    let ctxBar = document.getElementById('barChart').getContext('2d');
+    chartBar = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: barLabels,
+            datasets: [{
+                label: '營收 (未稅)',
+                data: barValues,
+                backgroundColor: filterMonth === 'all' ? '#34C759' : '#007AFF', // 年度用綠色，單月客戶排行用藍色區分
+                borderRadius: 8, 
+                hoverBackgroundColor: filterMonth === 'all' ? '#28A745' : '#0056b3'
+            }]
+        },
+        options: { 
+            responsive: true, maintainAspectRatio: false, 
+            plugins: { legend: { display: false } }, 
+            scales: { 
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } }, 
+                x: { grid: { display: false }, border: { display: false } } 
+            } 
+        }
+    });
 }
 
-function initTable() { const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } }
+function renderVipBubbles() {
+    let container = document.getElementById('vipBubbleList'); if (!container) return;
+    if (vipClients.length === 0) { container.innerHTML = `<span style="color:var(--light); font-size: 12px;">尚無常用客戶。</span>`; return; }
+    let html = ''; [...vipClients].sort().forEach(c => {
+        let isActive = (c === activeVipFilter) ? 'active' : '';
+        html += `<div class="vip-bubble ${isActive}" onclick="toggleVipFilter('${c}')">${c}</div>`;
+    });
+    container.innerHTML = html;
+}
+
+function toggleVipFilter(clientName) {
+    let trigger = document.getElementById('vipTrigger');
+    if (activeVipFilter === clientName) { activeVipFilter = ""; trigger.innerHTML = `⭐ 常用客戶 <span style="font-size: 10px;">▼</span>`; trigger.classList.remove('active-filter'); } 
+    else { activeVipFilter = clientName; trigger.innerHTML = `⭐ ${clientName} <span style="font-size: 10px;">▼</span>`; trigger.classList.add('active-filter'); }
+    renderVipBubbles(); filterTable();      
+}
+
+function manageVip(action) {
+    if (action === 'add') { let n = prompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
+    else if (action === 'del') { let target = prompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
+}
+
+let currentMonthFilter = 'all';
+function setMonthFilter(m, el) { currentMonthFilter = m; document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); filterTable(); }
+
+function setStatusFilter(val, text, el) {
+    document.getElementById('ssStatus').value = val;
+    let trigger = document.getElementById('statusTrigger'); trigger.innerHTML = `${text} <span style="font-size: 10px;">▼</span>`;
+    if (val !== '') trigger.classList.add('active-filter'); else trigger.classList.remove('active-filter');
+    document.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active')); el.classList.add('active');
+    let menu = el.closest('.status-menu'); menu.style.display = 'none'; setTimeout(() => menu.style.display = '', 100);
+    runSettleSearch();
+}
+
+function filterTable() {
+    let sc = activeVipFilter, sk = document.getElementById('fK').value.trim().toLowerCase(), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    let isFiltering = (sc !== "") || (sk !== "") || (currentMonthFilter !== 'all'), emptyVisible = 0, visibleUnpaid = 0;
+    let terms = sk ? sk.split(/[\s,，]+/) : [];
+    for(let r=0; r<rowCount; r++) {
+        let tr = document.getElementById(`r${r}`); if(!tr) continue;
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {}, rowMonth = d[0] ? d[0].split('-')[1] : "";
+        let matchC = (sc === "") || (d[2]||"").includes(sc);
+        let matchM = (currentMonthFilter === 'all') || (rowMonth === currentMonthFilter);
+        let matchK = terms.length === 0 || terms.some(term => (d[1]||"").toLowerCase().includes(term) || (d[3]||"").toLowerCase().includes(term) || (d[2]||"").toLowerCase().includes(term));
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3] || !!d[9];
+        let unpaid = d[13] ? parseFloat(String(d[13]).replace(/,/g, '')) : 0;
+        
+        if (!hasData) { if (isFiltering) { if (emptyVisible < 10) { tr.style.display = ''; emptyVisible++; } else { tr.style.display = 'none'; } } else { tr.style.display = ''; } } 
+        else { if (matchC && matchM && matchK) { tr.style.display = ''; if(unpaid > 0) visibleUnpaid++; } else { tr.style.display = 'none'; } }
+    }
+    let batchBtn = document.getElementById('simpleBatchBtn');
+    if (isFiltering && visibleUnpaid > 0) { batchBtn.style.display = 'flex'; batchBtn.innerText = `⚡ 批次結清 (${visibleUnpaid}筆)`; } else { batchBtn.style.display = 'none'; }
+}
+
+function simpleBatchResolve() {
+    if (!confirm("確定要把畫面上顯示的所有未結案項目，標記為「銀行匯款」並自動填入尾款結清嗎？")) return;
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65, count = 0;
+    for(let r=0; r<rc; r++) {
+        let tr = document.getElementById(`r${r}`);
+        if (tr && tr.style.display !== 'none') {
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+            let unpaid = d[13] ? parseFloat(String(d[13]).replace(/,/g, '')) : 0;
+            if (unpaid > 0 && d[3]) {
+                d[6] = "銀行匯款"; d[7] = true;
+                let totalAmount = parseFloat(String(d[11]).replace(/,/g,'')) || 0, deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0;
+                d[12] = totalAmount - deposit; d[13] = 0; 
+                localStorage.setItem(`d_${curY}_${r}`, JSON.stringify(d)); count++;
+            }
+        }
+    }
+    if (count > 0) { initTable(); filterTable(); renderDashboard(); alert(`✅ 已成功批次結清 ${count} 筆案件！`); }
+}
+
+function runSettleSearch() {
+    let role = window.curRole, tb = document.getElementById('settle-tb'), tot = 0; tb.innerHTML = '';
+    let statusF = document.getElementById('ssStatus').value, sk = document.getElementById('ssC').value.trim().toLowerCase(), sm = document.getElementById('ssM').value.trim().padStart(2,'0');
+    let pIdx = (role==='公司'?14:(role==='老闆'?15:16)), aIdx = (role==='公司'?17:(role==='老闆'?18:19));
+    document.getElementById('sP').innerText = role+"抽%"; document.getElementById('sA').innerText = role+"金額";
+    let terms = sk ? sk.split(/[\s,，]+/) : [], count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65, matched = [];
+    
+    for(let i=0; i<count; i++) {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let val = parseFloat(d[aIdx])||0, rowMonth = (d[0]||"").split('-')[1] || "";
+        let rawUnpaid = d[13], unpaid = 0;
+        if(rawUnpaid !== undefined && rawUnpaid !== "" && rawUnpaid !== null) { unpaid = parseFloat(String(rawUnpaid).replace(/,/g, '')); if(isNaN(unpaid)) unpaid = 0; }
+        if (statusF === 'paid' && unpaid > 0) continue; 
+        if (statusF === 'unpaid' && unpaid <= 0) continue; 
+        let matchK = terms.length === 0 || terms.some(t => (d[1]||"").toLowerCase().includes(t) || (d[2]||"").toLowerCase().includes(t) || (d[3]||"").toLowerCase().includes(t));
+        if(val > 0 && matchK && (!sm || sm==='00' || rowMonth === sm)) matched.push({...d, computedUnpaid: unpaid});
+    }
+
+    matched.sort((a, b) => {
+        let cA = a[2] || "", cB = b[2] || ""; if (cA !== cB) return cA.localeCompare(cB, 'zh-Hant');
+        let mA = a[0] || "", mB = b[0] || ""; if (mA !== mB) return mA.localeCompare(mB);
+        let iA = String(a[1] || ""), iB = String(b[1] || "");
+        let isUpperA = /^[A-Z]/.test(iA), isUpperB = /^[A-Z]/.test(iB);
+        if (isUpperA && !isUpperB) return -1; if (!isUpperA && isUpperB) return 1; return iA.localeCompare(iB);
+    });
+
+    matched.forEach(d => {
+        let unpaidStyle = d.computedUnpaid > 0 ? 'color:#D32F2F;font-weight:800;' : 'color:var(--light);';
+        tb.innerHTML += `<tr>
+            <td class="calc-cell">${d[0]||''}</td>
+            <td class="calc-cell">${d[1]||''}</td>
+            <td class="calc-cell">${d[2]||''}</td>
+            <td class="calc-cell">${d[3]||''}</td>
+            <td class="calc-cell">${d[6]||''}</td>
+            <td class="calc-cell" style="${unpaidStyle}">${d.computedUnpaid.toLocaleString()}</td>
+            <td class="calc-cell">${d[pIdx]||0}%</td>
+            <td class="calc-cell" style="font-weight:800;color:var(--primary);">${(parseFloat(d[aIdx])||0).toLocaleString()}</td>
+        </tr>`;
+        tot += parseFloat(d[aIdx])||0;
+    });
+    document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
+}
+
+function runQuoteSearch() { 
+    let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    let placeholder = document.getElementById('quote-placeholder'), content = document.getElementById('quote-content'), invWrapper = document.getElementById('inv-list-wrapper');
+    if (sc !== "" || (sm !== "" && sm !== "00")) {
+        placeholder.style.display = 'none'; content.style.display = 'flex'; invWrapper.innerHTML = '';
+        let terms = sc ? sc.split(/[\s,，]+/) : []; document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
+        let results = [], totalSum = 0, totalPreSum = 0;
+        for(let r=0; r<rowCount; r++){ 
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+            let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
+            if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); totalPreSum += parseFloat(String(d[9]).replace(/,/g,''))||0; totalSum += parseFloat(String(d[11]).replace(/,/g,''))||0; }
+        }
+        let half = Math.ceil(results.length / 2);
+        results.forEach((d, index) => {
+            let isLast = (index === half-1 || index === results.length-1);
+            invWrapper.innerHTML += `<div class="inv-item" style="${isLast?'border-bottom:none':''}"><div class="inv-col-id">${String(index+1).padStart(2,'0')}</div><div class="inv-col-info"><div class="inv-col-name">${d[3]}</div><div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span></div></div><div class="inv-col-total">${d[11]||'0'}</div></div>`;
+        });
+        document.getElementById('inv-total-pre').innerText = `$ ${totalPreSum.toLocaleString()}`; document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
+    } else { placeholder.style.display = 'flex'; content.style.display = 'none'; }
+}
+
+function downloadPDF() {
+    const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
+    btn.style.display = 'none'; let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
+    let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_報價單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
+    let oh = element.style.height, ow = wrapper.style.overflow; element.style.height = 'auto'; wrapper.style.overflow = 'visible';
+    html2pdf().set(opt).from(element).save().then(() => { btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; });
+}
+
+function initTable() { const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } renderVipBubbles(); renderDashboard(); }
 function setRole(r, el) { window.curRole = r; document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); runSettleSearch(); }
 
+let dragSrcRow = null;
 function createRow(r) {
     let tr = document.createElement('tr'); tr.id = `r${r}`;
+    tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
+    let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
+    tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
     for(let c=0; c<21; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
+        td.className = 'calc-cell'; 
         if(c===7) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
         else if(c===4 || c===6) {
             let ops = (opts[c]||[]).map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
@@ -224,50 +737,145 @@ function createRow(r) {
     return tr;
 }
 
+function initInvoiceTable() {
+    const b = document.getElementById('inv-tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30; 
+    for(let r=0; r<count; r++) { b.appendChild(createInvoiceRow(r)); calcInvoice(r, 0, false); }
+}
+
+function createInvoiceRow(r) {
+    let tr = document.createElement('tr'); tr.id = `inv_r${r}`;
+    tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
+    let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
+    tr.appendChild(hTd);
+    let saved = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
+    for(let c=0; c<9; c++) {
+        let td = document.createElement('td'), val = saved[c] || '';
+        td.className = 'calc-cell'; 
+        if(c===0) {
+            let periods = ['1-2月','3-4月','5-6月','7-8月','9-10月','11-12月'];
+            let ops = periods.map(p => `<option value="${p}" ${val===p?'selected':''}>${p}</option>`).join('');
+            td.innerHTML = `<select id="inv_r${r}c${c}" onchange="calcInvoice(${r},${c})"><option value="">--</option>${ops}</select>`;
+        } else {
+            let ro = [6,7].includes(c);
+            td.innerHTML = `<input id="inv_r${r}c${c}" value="${val}" class="${ro?'readonly':''}" ${ro?'readonly tabindex="-1"':''} oninput="calcInvoice(${r},${c})">`;
+        }
+        tr.appendChild(td);
+    }
+    return tr;
+}
+
+function calcInvoice(r, c, save=true) {
+    const g = (col) => { let el = document.getElementById(`inv_r${r}c${col}`); return el ? el.value : ""; };
+    const s = (col, val) => { if(document.getElementById(`inv_r${r}c${col}`)) document.getElementById(`inv_r${r}c${col}`).value = val; };
+    let rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30;
+    let preTax = parseFloat(String(g(5)).replace(/,/g,'')) || 0;
+    let tax = Math.round(preTax * 0.05); let total = preTax + tax;
+    s(6, tax); s(7, total);
+    if(save) { let d = {}; for(let i=0; i<9; i++) d[i] = g(i); localStorage.setItem(`inv_${curY}_${r}`, JSON.stringify(d)); }
+    let ec = 0; for(let i=rc-1; i>=0; i--){ let d=JSON.parse(localStorage.getItem(`inv_${curY}_${i}`))||{}; if(!d[0]&&!d[1]&&!d[2]&&!d[3]&&!d[4]&&!d[5]) ec++; else break; }
+    if (ec <= 2 && save) { for(let i=0; i<10; i++) { document.getElementById('inv-tb').appendChild(createInvoiceRow(rc++)); } localStorage.setItem(`invCount_${curY}`, rc); filterInvoiceTable(); }
+}
+
+function filterInvoiceTable() {
+    let sk = document.getElementById('invSearchK').value.trim().toLowerCase(), rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30, terms = sk ? sk.split(/[\s,，]+/) : [], emptyVisible = 0;
+    for(let r=0; r<rc; r++) {
+        let tr = document.getElementById(`inv_r${r}`); if(!tr) continue;
+        let d = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
+        let matchK = terms.length === 0 ? true : terms.some(term => (d[1]||"").toLowerCase().includes(term) || (d[2]||"").toLowerCase().includes(term) || (d[3]||"").toLowerCase().includes(term));
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3] || !!d[4] || !!d[5];
+        if (!hasData) { if (sk !== "") { if (emptyVisible < 5) { tr.style.display = ''; emptyVisible++; } else { tr.style.display = 'none'; } } else { tr.style.display = ''; } } 
+        else { if (matchK) { tr.style.display = ''; } else { tr.style.display = 'none'; } }
+    }
+}
+
+/* --- EXCEL 級拖曳圈選計算功能 --- */
+let isSelecting = false; let selectedCells = new Set(); 
+document.addEventListener('mousedown', function(e) {
+    if (e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.closest('.drag-handle')) return;
+    let td = e.target.closest('td.calc-cell'); 
+    if (td && e.button === 0) { isSelecting = true; clearSelection(); selectCell(td); } 
+    else { if(!e.target.closest('.selection-stats-bar')) { clearSelection(); } }
+});
+
+document.addEventListener('mousemove', function(e) { 
+    if (isSelecting) { 
+        if(window.getSelection) window.getSelection().removeAllRanges();
+        e.preventDefault();
+        let el = document.elementFromPoint(e.clientX, e.clientY);
+        if(el) { let td = el.closest('td.calc-cell'); if (td) { selectCell(td); } }
+    } 
+});
+
+document.addEventListener('mouseup', function() { isSelecting = false; updateStatsBar(); });
+function selectCell(td) { td.classList.add('cell-selected'); selectedCells.add(td); updateStatsBar(); }
+function clearSelection() { selectedCells.forEach(td => td.classList.remove('cell-selected')); selectedCells.clear(); document.getElementById('selectionStatsBar').classList.remove('visible'); }
+function updateStatsBar() {
+    let sum = 0, count = 0, hasValidNumber = false;
+    selectedCells.forEach(td => { 
+        let rawVal = ""; let input = td.querySelector('input'); 
+        if (input) { rawVal = input.value; } else { rawVal = td.innerText; } 
+        let val = parseFloat(rawVal.replace(/,/g, '').replace(/\$/g, '').trim()); 
+        if (!isNaN(val)) { sum += val; count++; hasValidNumber = true; } 
+    });
+    let bar = document.getElementById('selectionStatsBar');
+    if (hasValidNumber && count > 1) { 
+        document.getElementById('selCount').innerText = count; 
+        document.getElementById('selSum').innerText = sum.toLocaleString(undefined, {maximumFractionDigits: 2}); 
+        bar.classList.add('visible'); 
+    } 
+    else { bar.classList.remove('visible'); }
+}
+
+function handleDragStart(e) { dragSrcRow = this; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => this.classList.add('dragging'), 0); }
+function handleDragOver(e) { e.preventDefault(); let tr = this.closest('tr'); if (tr && dragSrcRow && tr !== dragSrcRow) { let b = tr.getBoundingClientRect(), o = b.y + (b.height/2); tr.classList.remove('drag-over-top','drag-over-bottom'); if (e.clientY - o > 0) tr.classList.add('drag-over-bottom'); else tr.classList.add('drag-over-top'); } return false; }
+function handleDragLeave(e) { this.classList.remove('drag-over-top', 'drag-over-bottom'); }
+function handleDrop(e) { 
+    e.stopPropagation(); e.preventDefault(); let tr = this.closest('tr'), tBody = tr.parentElement;
+    tBody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over-top', 'drag-over-bottom')); 
+    if (dragSrcRow && tr && dragSrcRow !== tr && dragSrcRow.parentElement === tBody) { 
+        let si = parseInt(dragSrcRow.id.replace(/\D/g, '')), ti = parseInt(tr.id.replace(/\D/g, '')), b = tr.getBoundingClientRect(), o = b.y + (b.height/2); 
+        if (e.clientY - o > 0) ti++; if (si < ti) ti--; reorderData(si, ti, tBody.id === 'inv-tb'); 
+    } return false; 
+}
+function handleDragEnd(e) { this.classList.remove('dragging'); this.setAttribute('draggable', 'false'); }
+
+function reorderData(si, ti, isInv = false) {
+    if (si === ti) return; 
+    let prefix = isInv ? 'inv_' : 'd_', countKey = isInv ? `invCount_${curY}` : `rowCount_${curY}`, rc = parseInt(localStorage.getItem(countKey)) || (isInv ? 30 : 65), all = [];
+    for (let i = 0; i < rc; i++) all.push(JSON.parse(localStorage.getItem(`${prefix}${curY}_${i}`)) || {});
+    let moved = all.splice(si, 1)[0]; all.splice(ti, 0, moved);
+    for (let i = 0; i < rc; i++) localStorage.setItem(`${prefix}${curY}_${i}`, JSON.stringify(all[i]));
+    if (isInv) { initInvoiceTable(); filterInvoiceTable(); } else { initTable(); filterTable(); }
+}
+
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
-    let rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    if(r === rowCount - 1 && g(c) !== "") { for(let i=0; i<10; i++) document.getElementById('tb').appendChild(createRow(rowCount++)); localStorage.setItem(`rowCount_${curY}`, rowCount); }
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     if(g(5).includes('/')) s(0, `${curY}-${g(5).split('/')[0].padStart(2,'0')}`);
-    let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7)?Math.round(net*0.05):0, total = net+tax;
-    let rem = total - (parseFloat(g(8))||0) - (parseFloat(g(12))||0);
-    s(10, tax); s(11, total); s(13, rem);
-    s(17, Math.round(net*(g(14)/100))); s(18, Math.round(net*(g(15)/100))); s(19, Math.round(net*(g(16)/100)));
     
-    // 結案自動變灰
-    let row = document.getElementById(`r${r}`);
-    if (net > 0 && rem <= 0) row.classList.add('is-settled'); else row.classList.remove('is-settled');
-
-    if(save) { let d = {}; for(let i=0; i<21; i++) d[i] = g(i); localStorage.setItem(`d_${curY}_${r}`, JSON.stringify(d)); }
+    let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
+    let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
+    
+    s(10, tax); s(11, total); s(13, rem); 
+    s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
+    
+    let row = document.getElementById(`r${r}`); 
+    if (row) { if (net > 0 && rem <= 0) row.classList.add('is-settled'); else row.classList.remove('is-settled'); }
+    
+    if(save) {
+        localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20)}));
+    }
+    
+    let ec = 0; for(let i=rc-1; i>=0; i--){ let d=JSON.parse(localStorage.getItem(`d_${curY}_${i}`))||{}; if(!d[0]&&!d[1]&&!d[2]&&!d[3]&&!d[9]) ec++; else break; }
+    if (ec <= 2 && save) { for(let i=0; i<10; i++) { document.getElementById('tb').appendChild(createRow(rc++)); } localStorage.setItem(`rowCount_${curY}`, rc); filterTable(); }
 }
 
 function handleOptChange(r, c) {
     let sel = document.getElementById(`r${r}c${c}`);
-    if (sel.value === "__ADD__") {
-        let n = prompt("新增:"); if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = "";
-    } else if (sel.value === "__DEL__") {
-        let target = prompt("刪除名稱:"); if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = "";
-    } else calc(r, c);
-}
-
-function runSettleSearch() {
-    let r = window.curRole, tb = document.getElementById('settle-tb'), tot = 0; tb.innerHTML = '';
-    let sc = document.getElementById('ssC').value.trim().toLowerCase();
-    let sm = document.getElementById('ssM').value.trim().padStart(2,'0');
-    let pIdx = (r==='公司'?14:(r==='老闆'?15:16)), aIdx = (r==='公司'?17:(r==='老闆'?18:19));
-    document.getElementById('sP').innerText = r+"抽%"; document.getElementById('sA').innerText = r+"金額";
-    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    for(let i=0; i<count; i++) {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {}; 
-        let val = parseFloat(d[aIdx])||0;
-        let rowCust = (d[2]||"").toLowerCase();
-        let rowMonth = (d[0]||"").split('-')[1] || "";
-        if(val > 0 && (!sc || rowCust.includes(sc)) && (!sm || sm==='00' || rowMonth === sm)) {
-            tb.innerHTML += `<tr><td>${d[0]||''}</td><td>${d[1]||''}</td><td>${d[2]||''}</td><td>${d[3]||''}</td><td>${(parseFloat(d[9])||0).toLocaleString()}</td><td>${d[pIdx]||0}%</td><td>${val.toLocaleString()}</td></tr>`; tot += val;
-        }
-    }
-    document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
+    if (sel.value === "__ADD__") { let n = prompt("新增:"); if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
+    else if (sel.value === "__DEL__") { let target = prompt("刪除名稱:"); if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
+    else calc(r, c);
 }
 
 function updateMonthlyReport() {
@@ -278,20 +886,19 @@ function updateMonthlyReport() {
             let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
             if(d[0] === mStr) { n+=parseFloat(d[9])||0; t+=parseFloat(d[11])||0; r+=(parseFloat(d[8])||0)+(parseFloat(d[12])||0); re+=parseFloat(d[13])||0; c1+=parseFloat(d[17])||0; c2+=parseFloat(d[18])||0; c3+=parseFloat(d[19])||0; ct++; }
         }
-        if(ct > 0) rt.innerHTML += `<tr><td>${m}月</td><td>${n.toLocaleString()}</td><td>${t.toLocaleString()}</td><td>${r.toLocaleString()}</td><td>${re.toLocaleString()}</td><td>${c1.toLocaleString()}</td><td>${c2.toLocaleString()}</td><td>${c3.toLocaleString()}</td><td>${ct}</td></tr>`;
-    }
-}
-
-async function cloudSync(mode) {
-    const btn = document.getElementById('cloudSaveBtn');
-    if (mode === 'SAVE') {
-        btn.innerText = "⏳ 同步中...";
-        let fullData = {}; for(let i=0; i<localStorage.length; i++){ let k = localStorage.key(i); if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_')) fullData[k] = localStorage.getItem(k); }
-        try { await fetch(CLOUD_API, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'vB_Backup', value: JSON.stringify(fullData) }) }); alert("✅ 指令已送出！"); } catch(e) { alert("❌ 失敗"); }
-        btn.innerText = "☁️ 雲端同步";
-    } else {
-        if(!confirm("載入雲端？")) return;
-        try { const res = await fetch(`${CLOUD_API}?key=vB_Backup`); const cloudJson = await res.json(); const data = (typeof cloudJson === 'string') ? JSON.parse(cloudJson) : cloudJson; Object.keys(data).forEach(k => localStorage.setItem(k, data[k])); alert("✅ 載入成功！"); location.reload(); } catch(e) { alert("❌ 載入失敗"); }
+        if(ct > 0) {
+            rt.innerHTML += `<tr>
+                <td class="calc-cell">${m}月</td>
+                <td class="calc-cell">${n.toLocaleString()}</td>
+                <td class="calc-cell">${t.toLocaleString()}</td>
+                <td class="calc-cell">${r.toLocaleString()}</td>
+                <td class="calc-cell">${re.toLocaleString()}</td>
+                <td class="calc-cell">${c1.toLocaleString()}</td>
+                <td class="calc-cell">${c2.toLocaleString()}</td>
+                <td class="calc-cell">${c3.toLocaleString()}</td>
+                <td class="calc-cell">${ct}</td>
+            </tr>`;
+        }
     }
 }
 
@@ -299,25 +906,108 @@ function exportData() { let b = new Blob([JSON.stringify(localStorage)], {type:'
 
 document.addEventListener('keydown', function(e) {
     if (!e.target.matches('input, select')) return;
-    let id = e.target.id;
-    if (!id.startsWith('r') || !id.includes('c')) return;
-    let parts = id.split('c'), r = parseInt(parts[0].substring(1)), c = parseInt(parts[1]), nextId = null;
-    if (e.key === 'ArrowUp') nextId = `r${r-1}c${c}`;
-    else if (e.key === 'ArrowDown' || e.key === 'Enter') { 
-        nextId = `r${r+1}c${c}`; 
-        let maxR = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-        if(r === maxR - 1 && e.key === 'Enter') calc(r, c);
-    } else if (e.key === 'ArrowLeft') {
-        if (e.target.tagName === 'INPUT' && e.target.type === 'text' && e.target.selectionStart > 0) return;
-        nextId = `r${r}c${c-1}`;
-    } else if (e.key === 'ArrowRight') {
-        if (e.target.tagName === 'INPUT' && e.target.type === 'text' && e.target.selectionStart < e.target.value.length) return;
-        nextId = `r${r}c${c+1}`;
-    }
+    let id = e.target.id, isInv = id.startsWith('inv_r'), prefix = isInv ? 'inv_r' : 'r';
+    if (!id.startsWith(prefix) || !id.includes('c')) return;
+    let parts = id.replace(prefix, '').split('c'), r = parseInt(parts[0]), c = parseInt(parts[1]), nextId = null;
+    if (e.shiftKey) return; 
+    if (e.key === 'ArrowUp') nextId = `${prefix}${r-1}c${c}`;
+    else if (e.key === 'ArrowDown' || e.key === 'Enter') { nextId = `${prefix}${r+1}c${c}`; }
+    else if (e.key === 'ArrowLeft' && (e.target.selectionStart === 0 || e.target.tagName==='SELECT')) nextId = `${prefix}${r}c${c-1}`;
+    else if (e.key === 'ArrowRight' && (e.target.selectionStart === e.target.value.length || e.target.tagName==='SELECT')) nextId = `${prefix}${r}c${c+1}`;
     if (nextId) { let el = document.getElementById(nextId); if (el) { e.preventDefault(); el.focus(); if(el.tagName==='INPUT') el.select(); } }
 });
 
-window.onload = () => { applyTheme(curY); document.getElementById('yDisp').innerText = curY; initTable(); renderYearList(); };
+// 將全域函數暴露
+window.exportData = exportData;
+window.switchSlide = switchSlide;
+window.manageVip = manageVip;
+window.runSettleSearch = runSettleSearch;
+
+window.onload = () => { 
+    migrateRitaToYiminjia(); 
+    applyTheme(curY); 
+    document.getElementById('yDisp').innerText = curY; 
+    initTable(); 
+    initInvoiceTable();
+    renderYearList(); 
+    renderDashboard();
+};
+</script>
+
+<!-- ======================================================== -->
+<!-- 🚀 Google Firebase 雲端引擎 -->
+<!-- ======================================================== -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDllqltvIctsNWUuLW75kLUtcRnTjXdvBs",
+      authDomain: "jaran-money.firebaseapp.com",
+      projectId: "jaran-money",
+      storageBucket: "jaran-money.firebasestorage.app",
+      messagingSenderId: "616171972475",
+      appId: "1:616171972475:web:980452f45898a03b4ebfde"
+    };
+
+    let app, auth, db, currentUser = null;
+
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        signInAnonymously(auth).catch((error) => {
+            console.error("Firebase 登入失敗:", error);
+            alert("⚠️ 無法連線至 Firebase，請確認您已在 Firebase 控制台的 Authentication 開啟了「匿名登入 (Anonymous)」。");
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) { console.log("🔥 Firebase 已成功連線！", user.uid); }
+        });
+    } catch (err) { console.error("Firebase 初始化失敗:", err); }
+
+    window.cloudSync = async function(mode) {
+        if (!app || !auth || !db) { alert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
+        if (!currentUser) { alert("⏳ 正在與 Firebase 雲端建立安全連線...請稍等幾秒後再試！"); return; }
+
+        const btn = document.getElementById('cloudSaveBtn');
+        const originalText = btn.innerText;
+        const docRef = doc(db, 'system_data', 'default_backup');
+
+        if (mode === 'SAVE') {
+            btn.innerText = "🔥 正在上傳雲端...";
+            let fullData = {};
+            for(let i=0; i<localStorage.length; i++){
+                let k = localStorage.key(i);
+                if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_')) {
+                    fullData[k] = localStorage.getItem(k);
+                }
+            }
+            try {
+                await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
+                alert("🔥 搬家成功！\n您的資料已經完美轉移到您自己的 Google Firebase 雲端上了！");
+            } catch(e) {
+                console.error("上傳錯誤:", e);
+                alert("❌ 上傳失敗！請確認您已經在 Firebase > Firestore Database 中，將權限設定為「以測試模式開始」。");
+            }
+            btn.innerText = "🔥 搬家至 Firebase";
+        } else {
+            if(!confirm("⚠️ 注意：這將會清除畫面上目前的資料，並從 Firebase 下載最新的備份蓋過去。\n確定要執行嗎？")) return;
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const cloudData = JSON.parse(docSnap.data().data);
+                    localStorage.clear(); 
+                    Object.keys(cloudData).forEach(k => localStorage.setItem(k, cloudData[k]));
+                    alert("✅ 載入成功！資料已同步為雲端最新版本。");
+                    location.reload(); 
+                } else { alert("🤷‍♂️ 雲端資料庫目前是空的！\n請先在有資料的電腦上點擊「🔥 搬家至 Firebase」。"); }
+            } catch(e) { console.error("下載錯誤:", e); alert("❌ 載入失敗！請確認您的網路連線與資料庫設定。"); }
+        }
+    };
 </script>
 </body>
 </html>
