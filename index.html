@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.3</title>
+    <title>杰冉宇宙營收表 v01.4</title>
     
     <!-- 引入 html2pdf 引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -251,6 +251,9 @@
         .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
         .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
 
+        /* 🔥 [v01.4/v01.5] 點擊長條圖游標互動 */
+        #barChart { cursor: default; transition: cursor 0.2s; }
+
         .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
         .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 320px; text-align: center; border: 1px solid var(--glass-border); }
         
@@ -277,7 +280,6 @@
         
         #pdf-loading-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); z-index: 9999999; display: none; align-items: center; justify-content: center; flex-direction: column; }
         
-        /* 🔥 新增：獨立選擇客戶按鈕 (一客戶一格) 的樣式 */
         .client-chip {
             padding: 10px 20px; border-radius: 50px; background: rgba(0,0,0,0.04); font-size: 13px; font-weight: 800; color: var(--mid); cursor: pointer; transition: all 0.2s; border: 2px solid transparent; margin: 5px; display: inline-block;
         }
@@ -326,7 +328,7 @@
     }
 </script>
 
-<!-- 🔥 基礎提示視窗 -->
+<!-- 基礎提示視窗 -->
 <div id="ui-modal" class="custom-modal">
     <div class="custom-modal-content">
         <h3 id="ui-modal-title" style="margin-top:0; color:var(--text-main); font-weight: 900;">提示</h3>
@@ -339,7 +341,7 @@
     </div>
 </div>
 
-<!-- 🔥 [v01.3 新增] 專屬多選客戶的懸浮彈窗 -->
+<!-- 專屬多選客戶的懸浮彈窗 -->
 <div id="client-filter-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 500px; width: 90%;">
         <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">👥 選擇結算客戶 (可多選)</h3>
@@ -379,7 +381,7 @@
             <button id="simpleBatchBtn" class="sync-btn" style="display:none; color:#00D26A; border: 1px solid rgba(0, 210, 106, 0.2);" onclick="simpleBatchResolve()">⚡ 批次結清</button>
         </div>
         
-        <!-- 🔥 終極分潤結算過濾系統：專屬按鈕觸發懸浮彈窗 -->
+        <!-- 🔥 分潤結算過濾系統：專屬按鈕觸發懸浮彈窗 -->
         <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 15px;">
             <div class="status-dropdown-container">
                 <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
@@ -414,7 +416,6 @@
             <button class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="setBankBalance()">💰 設定起始本金</button>
         </div>
         
-        <!-- 🚨 防跑版：強迫按鈕排成一列 -->
         <div class="role-btn-group" id="roleBtns">
             <button class="role-btn active" onclick="setRole('公司', this)">公司</button>
             <button class="role-btn" onclick="setRole('老闆', this)">老闆</button>
@@ -454,7 +455,7 @@
             </div>
         </div>
         
-        <!-- Slide 1: 分潤結算 (🔥 保證絕對只有 6 欄) -->
+        <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
@@ -574,7 +575,8 @@
                         <div class="chart-canvas-wrap"><canvas id="pieChart"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <div class="chart-title" id="db-bar-title">👆 每月營收趨勢 (未稅)</div>
+                        <!-- 🔥 [v01.4/v01.5] 點擊長條圖下鑽標題與返回按鈕 -->
+                        <div class="chart-title" id="db-bar-title">👆 點擊長條圖查看各月明細 (未稅)</div>
                         <div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div>
                     </div>
                 </div>
@@ -723,11 +725,6 @@ document.addEventListener('click', function(e) {
         let dd = document.getElementById('invVipDropdown');
         if(dd) dd.style.display = 'none';
     }
-
-    if (!e.target.closest('#bankTypeDropdown') && !e.target.classList.contains('bank-type-select')) {
-        let bd = document.getElementById('bankTypeDropdown');
-        if(bd) bd.style.display = 'none';
-    }
 });
 
 const contextMenu = document.getElementById('customContextMenu');
@@ -860,6 +857,15 @@ function switchSlide(idx, el) {
     if(idx === 6) { filterBankTable(); updateBankDashboard(); }
 }
 
+function selectDashboardMonth(val, text, el) {
+    document.getElementById('dbMonthFilter').value = val;
+    document.getElementById('dbFilterText').innerText = text;
+    document.querySelectorAll('#dbFilterMenu .db-custom-option').forEach(o => o.classList.remove('active'));
+    if(el) el.classList.add('active');
+    document.getElementById('dbFilterMenu').classList.remove('active');
+    renderDashboard();
+}
+
 function renderDashboard() {
     let filterMonth = document.getElementById('dbMonthFilter').value; 
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
@@ -901,7 +907,10 @@ function renderDashboard() {
     document.getElementById('kpi-rev').innerText = "$ " + totalRevGross.toLocaleString();
     document.getElementById('kpi-col').innerText = "$ " + totalCol.toLocaleString();
     document.getElementById('kpi-pen').innerText = "$ " + totalPen.toLocaleString();
-    document.getElementById('db-bar-title').innerText = filterMonth === 'all' ? '👆 每月營收趨勢 (未稅)' : `👆 ${parseInt(filterMonth)}月份：各客戶營收貢獻排行`;
+    
+    document.getElementById('db-bar-title').innerHTML = filterMonth === 'all' 
+        ? '👆 點擊長條圖查看各月明細 (未稅)' 
+        : `👆 ${parseInt(filterMonth)}月份：各客戶營收貢獻排行 <span style="font-size:12px; color:var(--primary); cursor:pointer; background:rgba(0,122,255,0.1); padding:4px 8px; border-radius:50px; margin-left:10px;" onclick="document.querySelector('#dbFilterMenu .db-custom-option').click();">🔙 回全年度</span>`;
 
     if(chartPie) chartPie.destroy();
     if(chartBar) chartBar.destroy();
@@ -912,14 +921,57 @@ function renderDashboard() {
         data: { labels: Object.keys(typeData), datasets: [{ data: Object.values(typeData), backgroundColor: colors, borderWidth: 0, hoverOffset: 15 }] },
         options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', weight: 'bold' } } }, tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } } }
     });
+    
     let barLabels = [], barValues = [];
     if (filterMonth === 'all') { barLabels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']; barValues = monthlyArray; } 
     else { let sortedClients = Object.entries(clientData).sort((a,b) => b[1] - a[1]); barLabels = sortedClients.map(x => x[0]); barValues = sortedClients.map(x => x[1]); }
+    
     let ctxBar = document.getElementById('barChart').getContext('2d');
+    
+    let barOptions = { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { 
+            legend: { display: false }, 
+            tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } 
+        }, 
+        scales: { 
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } }, 
+            x: { grid: { display: false }, border: { display: false } } 
+        } 
+    };
+
+    if (filterMonth === 'all') {
+        barOptions.onClick = (e, elements) => {
+            if (elements.length > 0) {
+                let idx = elements[0].index;
+                let m = String(idx + 1).padStart(2, '0');
+                let text = (idx + 1) + '月';
+                let options = document.querySelectorAll('#dbFilterMenu .db-custom-option');
+                let targetEl = Array.from(options).find(opt => opt.innerText === text);
+                if (targetEl) {
+                    selectDashboardMonth(m, text, targetEl);
+                }
+            }
+        };
+        barOptions.onHover = (e, elements) => {
+            e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+        };
+    }
+
     chartBar = new Chart(ctxBar, {
         type: 'bar',
-        data: { labels: barLabels, datasets: [{ label: '營收 (未稅)', data: barValues, backgroundColor: filterMonth === 'all' ? '#34C759' : '#007AFF', borderRadius: 8 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, border: { display: false } }, x: { grid: { display: false }, border: { display: false } } } }
+        data: { 
+            labels: barLabels, 
+            datasets: [{ 
+                label: '營收 (未稅)', 
+                data: barValues, 
+                backgroundColor: filterMonth === 'all' ? '#34C759' : '#007AFF', 
+                borderRadius: 8,
+                hoverBackgroundColor: filterMonth === 'all' ? '#28A745' : '#0056b3'
+            }] 
+        },
+        options: barOptions
     });
 }
 
@@ -1008,7 +1060,6 @@ function setSettleSort(type, el) {
     runSettleSearch();
 }
 
-// 🔥 終極分潤結算多選客戶：點擊按鈕彈出中央懸浮視窗
 let selectedSettleClients = new Set();
 let availableMonthClients = [];
 
@@ -1163,7 +1214,7 @@ function runSettleSearch() {
     document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
 }
 
-// 🚨 🌟 終極絕對不切邊、不白紙 PDF 生成引擎 (隱藏網頁避免被卡斷，不再串接客戶名稱)
+// 🚨 🌟 終極絕對不切邊、不白紙 PDF 生成引擎 (獨立隱藏標籤，100% 滿版，乾淨標題)
 function downloadSettlePDF() {
     const btn = document.getElementById('exportSettlePdfBtn');
     let originalText = btn.innerHTML;
@@ -1179,7 +1230,6 @@ function downloadSettlePDF() {
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let matched = [];
 
-    // 🔥 始終使用夥伴資料列印
     let empPIdx = 16; 
     let empAIdx = 19; 
 
@@ -1227,12 +1277,11 @@ function downloadSettlePDF() {
     let oldWrapper = document.getElementById('temp-pdf-export-wrapper');
     if (oldWrapper) document.body.removeChild(oldWrapper);
 
-    // 🚀 取消強制寬度，讓表格自然填滿 100%，避免產生大片空白
     let printWrapper = document.createElement('div');
     printWrapper.id = 'temp-pdf-export-wrapper';
     printWrapper.style.cssText = 'width: 100%; background: white; padding: 40px; box-sizing: border-box; color: #1D1D1F; font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;';
     
-    // 💡 標題恢復純淨版：杰冉宇宙 2026年 XX月 - 夥伴分潤對帳單
+    // 💡 標題恢復乾淨版，只有：杰冉宇宙 2026年 XX月 - 夥伴分潤對帳單
     printWrapper.innerHTML = `
         <h2 style="text-align: center; margin-bottom: 30px; font-weight: 900; font-size: 28px; letter-spacing: 1px;">杰冉宇宙 ${curY}年 ${monthStr} - 夥伴分潤對帳單</h2>
         <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 15px;">
@@ -1790,7 +1839,6 @@ async function setBankBalance() {
     }
 }
 
-
 let isSelecting = false; let selectedCells = new Set(); let dragStartCell = null;
 document.addEventListener('mousedown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.closest('.drag-handle')) return;
@@ -1857,7 +1905,20 @@ function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    if(c === 5 && g(5).includes('/') && (!g(0) || g(0).trim() === "")) s(0, `${curY}-${g(5).split('/')[0].padStart(2,'0')}`);
+    
+    if(c === 5) {
+        let v = g(5).trim();
+        if (v === "") {
+            s(0, "");
+        } else {
+            let separator = v.includes('/') ? '/' : (v.includes('-') ? '-' : null);
+            if (separator) {
+                let m = v.split(separator)[0].replace(/\D/g, '');
+                if (m) s(0, `${curY}-${m.padStart(2,'0')}`);
+            }
+        }
+    }
+    
     let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
     let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
     s(10, tax); s(11, total); s(13, rem); 
