@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.5</title>
+    <title>杰冉宇宙營收表 v01.13</title>
     
     <!-- 引入 html2pdf 引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -46,7 +46,7 @@
 
         .header-section { height: 90px; padding: 0 40px; display: flex; align-items: center; flex-shrink: 0; z-index: 100; position: relative; }
         
-        /* 🚨 [v01.3 修復] 標題強制不折行 */
+        /* 🚨 標題強制不折行 */
         .page-title { font-size: 28px; font-weight: 900; cursor: pointer; user-select: none; margin-right: 40px; letter-spacing: -0.5px; transition: color 0.3s; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0; display: inline-block; min-width: max-content; }
         .page-title:hover { color: var(--primary); text-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3); }
         
@@ -92,7 +92,7 @@
         .status-option:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
         .status-option.active { background: var(--primary); color: white; }
 
-        /* 🚨 [v01.3 修復] 角色按鈕強制橫向、不折行 */
+        /* 🚨 角色按鈕強制橫向、不折行 */
         .role-btn-group { display: none; gap: 8px; margin-left: auto; padding-left: 24px; border-left: 2px solid rgba(0,0,0,0.08); height: 40px; align-items: center; flex-shrink: 0; flex-wrap: nowrap !important; }
         .role-btn { border: 1px solid transparent; padding: 8px 24px !important; border-radius: 50px; font-size: 14px; font-weight: 900; cursor: pointer; background: rgba(255,255,255,0.5); color: var(--mid); transition: 0.3s; backdrop-filter: blur(10px); white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 80px; letter-spacing: 2px; }
         .role-btn:hover { background: rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -143,27 +143,26 @@
 
         td input.inv-invalid { color: #FF3B30 !important; font-weight: 900 !important; background: rgba(255, 59, 48, 0.08) !important; }
 
-        /* 銀行帳本專屬高質感樣式 */
         .bank-amount-input { font-size: 18px !important; font-weight: 900 !important; background: rgba(255,255,255,0.8) !important; border: 2px solid rgba(0,0,0,0.05) !important; border-radius: 12px !important; padding: 8px !important; height: 38px !important; transition: all 0.3s ease; }
         .bank-amount-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 15px rgba(0,122,255,0.2) !important; background: #fff !important; }
         
-        .bank-type-select {
-            border: 1px solid rgba(0,0,0,0.08);
-            border-radius: 10px;
-            background: transparent;
-            height: 34px;
-            width: 80%;
-            margin: 0 auto;
+        .bank-type-toggle {
             display: flex;
             align-items: center;
             justify-content: center;
+            height: 34px;
+            width: 80%;
+            margin: 0 auto;
+            border-radius: 10px;
             font-weight: 800;
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
             font-size: 13px;
+            border: 1px solid transparent;
         }
-        .type-empty { color: var(--light); }
+        .bank-type-toggle:hover { opacity: 0.8; }
+        .type-empty { color: var(--light); background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
         .type-income { color: #00D26A; background: rgba(0,210,106,0.08); border-color: rgba(0,210,106,0.3);}
         .type-expense { color: #FF3B30; background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.3);}
 
@@ -253,7 +252,6 @@
         .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
         .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
 
-        /* 🔥 [v01.4/v01.5] 點擊長條圖游標互動 */
         #barChart { cursor: default; transition: cursor 0.2s; }
 
         .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
@@ -357,6 +355,28 @@
     </div>
 </div>
 
+<!-- 🔥 [v01.13 新增] 數據中心客戶案件明細彈窗 -->
+<div id="client-details-modal" class="custom-modal">
+    <div class="custom-modal-content" style="max-width: 600px; width: 90%;">
+        <h3 id="client-details-title" style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">客戶案件明細</h3>
+        <div style="max-height: 50vh; overflow-y: auto; padding: 0 10px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px;">
+                <thead style="background: rgba(0,0,0,0.02);">
+                    <tr>
+                        <th style="padding: 12px; border-bottom: 2px solid var(--primary); color: var(--mid); font-weight: 800; width: 20%;">編號</th>
+                        <th style="padding: 12px; border-bottom: 2px solid var(--primary); color: var(--mid); font-weight: 800; width: 55%;">案名</th>
+                        <th style="padding: 12px; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 800; width: 25%;">未稅額</th>
+                    </tr>
+                </thead>
+                <tbody id="client-details-tb"></tbody>
+            </table>
+        </div>
+        <div class="custom-modal-actions" style="margin-top: 25px;">
+            <button class="custom-modal-btn btn-confirm" onclick="document.getElementById('client-details-modal').classList.remove('active')">關閉明細</button>
+        </div>
+    </div>
+</div>
+
 <div class="selection-stats-bar" id="selectionStatsBar">
     <div class="stat-item"><span class="stat-label">計數</span><span class="stat-value" id="selCount">0</span></div>
     <div class="stat-item" style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 15px;"><span class="stat-label">加總</span><span class="stat-value" id="selSum">0</span></div>
@@ -383,7 +403,7 @@
             <button id="simpleBatchBtn" class="sync-btn" style="display:none; color:#00D26A; border: 1px solid rgba(0, 210, 106, 0.2);" onclick="simpleBatchResolve()">⚡ 批次結清</button>
         </div>
         
-        <!-- 🔥 分潤結算過濾系統：專屬按鈕觸發懸浮彈窗 -->
+        <!-- 分潤結算過濾系統：專屬按鈕觸發懸浮彈窗 -->
         <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 15px;">
             <div class="status-dropdown-container">
                 <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
@@ -418,7 +438,6 @@
             <button class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="setBankBalance()">💰 設定起始本金</button>
         </div>
         
-        <!-- 🚨 防跑版：強迫按鈕排成一列 -->
         <div class="role-btn-group" id="roleBtns">
             <button class="role-btn active" onclick="setRole('公司', this)">公司</button>
             <button class="role-btn" onclick="setRole('老闆', this)">老闆</button>
@@ -487,7 +506,31 @@
                             <tbody id="settle-tb"></tbody>
                         </table>
                     </div>
-                    <div id="settle-bar" style="height:80px; display:none; align-items:center; justify-content:flex-end; padding:0 40px; border-top:1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.5); backdrop-filter: blur(10px);"><div id="settle-total-val" style="color:var(--primary); font-size:26px; font-weight:900;">結算總額：$ 0</div></div>
+                    <div id="settle-bar" style="height:80px; display:flex; align-items:center; justify-content:flex-end; padding:0 40px; border-top:1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.5); backdrop-filter: blur(10px);"><div id="settle-total-val" style="color:var(--primary); font-size:26px; font-weight:900;">結算總額：$ 0</div></div>
+                </div>
+
+                <div id="settle-export-content" style="display: none; background: white; padding: 40px; color: #1D1D1F; font-family: 'Inter', sans-serif;">
+                    <h2 id="settle-export-title" style="text-align: center; font-weight: 900; font-size: 28px; margin-bottom: 20px; letter-spacing: 1px;">對帳單</h2>
+                    <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; table-layout: fixed;">
+                        <thead style="background: #F4F7F6;">
+                            <tr>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF;">年月</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF;">編號</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF;">客戶</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; text-align: center;">案名</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; color: #007AFF;">夥伴 %</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; color: #007AFF;">金額 $</th>
+                            </tr>
+                        </thead>
+                        <tbody id="settle-export-tb"></tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6" style="text-align: right; padding-top: 30px; font-size: 22px; font-weight: 900; color: #007AFF; border: none;">
+                                    <span id="settle-export-total">結算總額：$ 0</span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
@@ -578,7 +621,6 @@
                         <div class="chart-canvas-wrap"><canvas id="pieChart"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <!-- 🔥 [v01.5] 點擊長條圖下鑽標題與返回按鈕 -->
                         <div class="chart-title" id="db-bar-title">👆 點擊長條圖查看各月明細 (未稅)</div>
                         <div class="chart-canvas-wrap"><canvas id="barChart"></canvas></div>
                     </div>
@@ -728,6 +770,11 @@ document.addEventListener('click', function(e) {
         let dd = document.getElementById('invVipDropdown');
         if(dd) dd.style.display = 'none';
     }
+
+    if (!e.target.closest('#bankTypeDropdown') && !e.target.classList.contains('bank-type-select')) {
+        let bd = document.getElementById('bankTypeDropdown');
+        if(bd) bd.style.display = 'none';
+    }
 });
 
 const contextMenu = document.getElementById('customContextMenu');
@@ -869,6 +916,46 @@ function selectDashboardMonth(val, text, el) {
     renderDashboard();
 }
 
+function showClientProjects(monthStr, clientName) {
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    let tb = document.getElementById('client-details-tb');
+    tb.innerHTML = '';
+    let total = 0;
+    
+    for(let i=0; i<count; i++) {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
+        if (!hasData) continue;
+        
+        let rawMonth = d[0] ? d[0].split('-')[1] : "";
+        let rowMonthPad = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : null;
+        let rowClient = d[2] ? d[2].trim() : "";
+        
+        let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
+        
+        if (rowMonthPad === monthStr && rowClient === clientName && (net > 0 || d[3] || d[1])) {
+            tb.innerHTML += `
+                <tr>
+                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); color: var(--light); font-weight: 600;">${d[1]||''}</td>
+                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); font-weight: 800; color: var(--text-main);">${d[3]||''}</td>
+                    <td style="padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); font-weight: 900; color: var(--primary);">${net.toLocaleString()}</td>
+                </tr>
+            `;
+            total += net;
+        }
+    }
+    
+    tb.innerHTML += `
+        <tr>
+            <td colspan="2" style="padding: 16px 12px; text-align: right; font-weight: 900; color: var(--mid); font-size: 16px;">總計：</td>
+            <td style="padding: 16px 12px; font-weight: 900; color: #D32F2F; font-size: 18px;">$ ${total.toLocaleString()}</td>
+        </tr>
+    `;
+    
+    document.getElementById('client-details-title').innerText = `${parseInt(monthStr)}月份 - ${clientName} 案件明細`;
+    document.getElementById('client-details-modal').classList.add('active');
+}
+
 function renderDashboard() {
     let filterMonth = document.getElementById('dbMonthFilter').value; 
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
@@ -886,7 +973,6 @@ function renderDashboard() {
         let rawMonth = d[0] ? d[0].split('-')[1] : "";
         let rowMonthPad = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : null;
         
-        // 🚨 [v01.5 修復] 允許 0 元免費案件進入數據中心，只要有案名 (d[3]) 或編號 (d[1]) 就列入統計
         if (hasData && (net > 0 || d[3] || d[1])) {
             if (filterMonth !== 'all' && rowMonthPad !== filterMonth) continue;
             totalProjects++;
@@ -956,6 +1042,18 @@ function renderDashboard() {
                 if (targetEl) {
                     selectDashboardMonth(m, text, targetEl);
                 }
+            }
+        };
+        barOptions.onHover = (e, elements) => {
+            e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+        };
+    } else {
+        // 🔥 [v01.13] 單月客戶長條圖點擊下鑽明細
+        barOptions.onClick = (e, elements) => {
+            if (elements.length > 0) {
+                let idx = elements[0].index;
+                let clientName = barLabels[idx];
+                showClientProjects(filterMonth, clientName);
             }
         };
         barOptions.onHover = (e, elements) => {
@@ -1081,16 +1179,14 @@ function checkMonthClients() {
 
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let monthClients = new Set();
-    let role = window.curRole;
-    let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
 
     for(let i=0; i<count; i++) {
         let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-        let val = parseFloat(d[aIdx])||0;
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         let rawMonth = (d[0]||"").split('-')[1] || "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
 
-        if (val > 0 && rowMonth === sm && d[2] && d[2].trim() !== "") {
+        if (hasData && rowMonth === sm && d[2] && d[2].trim() !== "") {
             monthClients.add(d[2].trim());
         }
     }
@@ -1175,7 +1271,7 @@ function runSettleSearch() {
 
     for(let i=0; i<count; i++) {
         let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-        let val = parseFloat(d[aIdx])||0;
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         
         let rawMonth = (d[0]||"").split('-')[1] || "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1192,7 +1288,7 @@ function runSettleSearch() {
         let cName = d[2] ? d[2].trim() : "";
         let isClientMatch = selectedSettleClients.size === 0 || selectedSettleClients.has(cName);
 
-        if(val > 0 && matchStatus && isMonthMatch && isClientMatch) {
+        if(hasData && matchStatus && isMonthMatch && isClientMatch) {
             matched.push(d);
         }
     }
@@ -1205,20 +1301,20 @@ function runSettleSearch() {
     });
 
     matched.forEach(d => {
+        let rowVal = parseFloat(d[aIdx]) || 0;
         tb.innerHTML += `<tr>
             <td class="calc-cell" style="padding:10px;">${d[0]||''}</td>
             <td class="calc-cell" style="padding:10px;">${d[1]||''}</td>
             <td class="calc-cell" style="padding:10px; font-weight:800;">${d[2]||''}</td>
             <td class="calc-cell" style="text-align:center; padding:10px;">${d[3]||''}</td>
             <td class="calc-cell" style="padding:10px; color:var(--primary); font-weight:800;">${d[pIdx]||0}%</td>
-            <td class="calc-cell" style="padding:10px; font-weight:900; color:var(--primary);">${(parseFloat(d[aIdx])||0).toLocaleString()}</td>
+            <td class="calc-cell" style="padding:10px; font-weight:900; color:var(--primary);">${rowVal.toLocaleString()}</td>
         </tr>`;
-        tot += parseFloat(d[aIdx])||0;
+        tot += rowVal;
     });
     document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
 }
 
-// 🚨 [v01.3 修復] PDF 引擎，絕對寬度滿版，不白紙，乾淨標題
 function downloadSettlePDF() {
     const btn = document.getElementById('exportSettlePdfBtn');
     let originalText = btn.innerHTML;
@@ -1230,17 +1326,19 @@ function downloadSettlePDF() {
     let sm = smRaw ? smRaw.replace(/\D/g, '').padStart(2, '0') : '00';
     let monthStr = (sm !== '00') ? `${sm}月` : '全部月份';
 
+    let pdfTitle = `杰冉宇宙 ${curY}年 ${monthStr} - 夥伴分潤對帳單`;
+
     let statusF = document.getElementById('ssStatus').value;
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let matched = [];
 
-    // 始終使用夥伴資料列印
     let empPIdx = 16; 
     let empAIdx = 19; 
 
     for(let i=0; i<count; i++) {
         let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-        let val = parseFloat(d[empAIdx])||0; 
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
+        
         let rawMonth = (d[0]||"").split('-')[1] || "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
         let rawUnpaid = d[13], unpaid = 0;
@@ -1252,7 +1350,7 @@ function downloadSettlePDF() {
         let cName = d[2] ? d[2].trim() : "";
         let isClientMatch = selectedSettleClients.size === 0 || selectedSettleClients.has(cName);
         
-        if(val > 0 && isMonthMatch && isClientMatch) matched.push(d);
+        if(hasData && isMonthMatch && isClientMatch) matched.push(d);
     }
 
     matched.sort((a, b) => {
@@ -1262,105 +1360,61 @@ function downloadSettlePDF() {
         else { if (cA !== cB) return cA.localeCompare(cB, 'zh-Hant'); if (mA !== mB) return mA.localeCompare(mB); return iA.localeCompare(iB); }
     });
 
-    let tbodyHtml = '';
+    document.getElementById('settle-export-title').innerText = pdfTitle;
+    let printTb = document.getElementById('settle-export-tb');
+    printTb.innerHTML = '';
     let totalSum = 0;
 
     matched.forEach(d => {
-        totalSum += parseFloat(d[empAIdx]) || 0;
-        tbodyHtml += `
+        let rowVal = parseFloat(d[empAIdx]) || 0;
+        totalSum += rowVal;
+        printTb.innerHTML += `
             <tr>
-                <td style="padding: 16px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[0]||''}</td>
-                <td style="padding: 16px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[1]||''}</td>
-                <td style="padding: 16px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${d[2]||''}</td>
-                <td style="padding: 16px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${d[3]||''}</td>
-                <td style="padding: 16px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${d[empPIdx]||0}%</td>
-                <td style="padding: 16px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${(parseFloat(d[empAIdx])||0).toLocaleString()}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[0]||''}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[1]||''}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${d[2]||''}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${d[3]||''}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${d[empPIdx]||0}%</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${rowVal.toLocaleString()}</td>
             </tr>
         `;
     });
 
-    let oldWrapper = document.getElementById('temp-pdf-export-wrapper');
-    if (oldWrapper) document.body.removeChild(oldWrapper);
+    document.getElementById('settle-export-total').innerText = `結算總額：$ ${totalSum.toLocaleString()}`;
 
-    let printWrapper = document.createElement('div');
-    printWrapper.id = 'temp-pdf-export-wrapper';
-    // 🚨 修正：直接強制 100% 滿版，不設定固定 px，解決右側空白問題
-    printWrapper.style.cssText = 'width: 100%; background: white; padding: 40px; box-sizing: border-box; color: #1D1D1F; font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif; position: absolute; top: 0; left: 0; z-index: 9999999;';
-    
-    // 💡 標題恢復乾淨版，只有：杰冉宇宙 2026年 XX月 - 夥伴分潤對帳單
-    printWrapper.innerHTML = `
-        <h2 style="text-align: center; margin-bottom: 30px; font-weight: 900; font-size: 28px; letter-spacing: 1px;">杰冉宇宙 ${curY}年 ${monthStr} - 夥伴分潤對帳單</h2>
-        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 15px;">
-            <thead>
-                <tr>
-                    <th style="padding: 16px; background: #F4F7F6; border-bottom: 2px solid #007AFF; color: #6E6E73; font-weight: 800;">年月</th>
-                    <th style="padding: 16px; background: #F4F7F6; border-bottom: 2px solid #007AFF; color: #6E6E73; font-weight: 800;">編號</th>
-                    <th style="padding: 16px; background: #F4F7F6; border-bottom: 2px solid #007AFF; color: #6E6E73; font-weight: 800;">客戶</th>
-                    <th style="padding: 16px; background: #F4F7F6; border-bottom: 2px solid #007AFF; text-align: center; color: #6E6E73; font-weight: 800;">案名</th>
-                    <th style="padding: 16px; background: #F4F7F6; border-bottom: 2px solid #007AFF; color: #007AFF; font-weight: 800;">夥伴 %</th>
-                    <th style="padding: 16px; background: #F4F7F6; border-bottom: 2px solid #007AFF; color: #007AFF; font-weight: 800;">金額 $</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${tbodyHtml}
-            </tbody>
-        </table>
-        <div style="text-align: right; margin-top: 30px; font-size: 24px; font-weight: 900; color: #007AFF;">結算總額：$ ${totalSum.toLocaleString()}</div>
-    `;
+    const viewArea = document.getElementById('settle-view-area');
+    const printArea = document.getElementById('settle-export-content');
+    const controls = document.getElementById('settle-controls');
 
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalHtmlOverflow = document.documentElement.style.overflow;
+    viewArea.style.display = 'none';
+    controls.style.display = 'none';
+    printArea.style.display = 'block';
+
+    let opt = { 
+        margin:       [0.4, 0.4, 0.4, 0.4],
+        filename:     `${curY}年_${monthStr}_夥伴分潤對帳單.pdf`,
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } 
+    };
     
-    document.querySelectorAll('body > div:not(#temp-pdf-export-wrapper):not(#pdf-loading-overlay)').forEach(el => {
-        if(el.style) {
-            el.setAttribute('data-original-display', el.style.display || '');
-            el.style.display = 'none';
-        }
+    html2pdf().set(opt).from(printArea).save().then(() => { 
+        printArea.style.display = 'none';
+        viewArea.style.display = 'flex';
+        controls.style.display = 'flex';
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+    }).catch(err => {
+        console.error(err);
+        printArea.style.display = 'none';
+        viewArea.style.display = 'flex';
+        controls.style.display = 'flex';
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+        alert("匯出 PDF 時發生錯誤。");
     });
-
-    document.body.style.overflow = 'visible';
-    document.documentElement.style.overflow = 'visible';
-    window.scrollTo(0,0);
-    
-    document.body.appendChild(printWrapper);
-
-    setTimeout(() => {
-        let opt = { 
-            margin:       0.4,
-            filename:     `${curY}年_${monthStr}_夥伴分潤對帳單.pdf`,
-            image:        { type: 'jpeg', quality: 1 },
-            html2canvas:  { scale: 2, useCORS: true, scrollY: 0 }, 
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } 
-        };
-        
-        html2pdf().set(opt).from(printWrapper).save().then(() => { 
-            document.body.removeChild(printWrapper);
-            document.body.style.overflow = originalBodyOverflow;
-            document.documentElement.style.overflow = originalHtmlOverflow;
-            document.querySelectorAll('body > div[data-original-display]').forEach(el => {
-                el.style.display = el.getAttribute('data-original-display');
-                el.removeAttribute('data-original-display');
-            });
-            
-            btn.innerHTML = originalText;
-            btn.style.pointerEvents = 'auto';
-            btn.style.opacity = '1';
-        }).catch(err => {
-            console.error(err);
-            document.body.removeChild(printWrapper);
-            document.body.style.overflow = originalBodyOverflow;
-            document.documentElement.style.overflow = originalHtmlOverflow;
-            document.querySelectorAll('body > div[data-original-display]').forEach(el => {
-                el.style.display = el.getAttribute('data-original-display');
-                el.removeAttribute('data-original-display');
-            });
-            
-            btn.innerHTML = originalText;
-            btn.style.pointerEvents = 'auto';
-            btn.style.opacity = '1';
-            alert("匯出 PDF 時發生錯誤。");
-        });
-    }, 500);
 }
 
 function runQuoteSearch() { 
@@ -1841,7 +1895,6 @@ async function setBankBalance() {
         await uiAlert(`✅ 起始本金已設定為 $${num.toLocaleString()}，總餘額已自動更新！`);
     }
 }
-
 
 let isSelecting = false; let selectedCells = new Set(); let dragStartCell = null;
 document.addEventListener('mousedown', function(e) {
