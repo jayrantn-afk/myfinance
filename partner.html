@@ -30,7 +30,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* 頂級毛玻璃質感 */
         .glass-panel {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(20px);
@@ -51,7 +50,6 @@
             transform: translateY(0);
         }
         
-        /* 氣泡按鈕支援多選狀態 */
         .fav-bubble {
             padding: 6px 16px;
             border-radius: 50px;
@@ -189,8 +187,12 @@
         </div>
 
         <div class="glass-panel rounded-3xl overflow-hidden relative z-10">
-            <div class="px-8 py-6 border-b border-white/50 bg-white/30">
+            <div class="px-8 py-5 border-b border-white/50 bg-white/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h3 class="font-bold text-gray-800 text-lg">收益明細列表</h3>
+                <div class="flex gap-2">
+                    <button id="btn-filter-pending" onclick="toggleStatusFilter('待結算')" class="px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-all text-orange-500 border-orange-200 bg-white/50 hover:bg-orange-50">待結算</button>
+                    <button id="btn-filter-settled" onclick="toggleStatusFilter('已分潤')" class="px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-all text-green-600 border-green-200 bg-white/50 hover:bg-green-50">已分潤</button>
+                </div>
             </div>
             
             <div class="overflow-x-auto no-scrollbar p-2">
@@ -250,9 +252,39 @@
         window.selectedMonth = 'all';
         window.activeFavClients = new Set(); 
         window.favClients = JSON.parse(localStorage.getItem('partner_fav_clients')) || ['小花', '醫敏家', '瑞瑞', '漢恩'];
+        
+        // 🚨 狀態過濾變數：'all', '待結算', '已分潤'
+        window.statusFilter = 'all';
 
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('zh-TW', { minimumFractionDigits: 0 }).format(amount);
+        };
+
+        // --- 狀態過濾 UI 邏輯 ---
+        window.toggleStatusFilter = function(status) {
+            if (window.statusFilter === status) {
+                window.statusFilter = 'all'; // 若重複點擊則取消篩選
+            } else {
+                window.statusFilter = status;
+            }
+            updateStatusButtonsUI();
+            renderView();
+        };
+
+        window.updateStatusButtonsUI = function() {
+            const btnPending = document.getElementById('btn-filter-pending');
+            const btnSettled = document.getElementById('btn-filter-settled');
+            
+            // 重置樣式
+            btnPending.className = "px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-all text-orange-500 border-orange-200 bg-white/50 hover:bg-orange-50";
+            btnSettled.className = "px-4 py-1.5 rounded-full text-sm font-bold border-2 transition-all text-green-600 border-green-200 bg-white/50 hover:bg-green-50";
+
+            // 套用選中樣式
+            if (window.statusFilter === '待結算') {
+                btnPending.className = "px-4 py-1.5 rounded-full text-sm font-black border-2 transition-all bg-orange-100 text-orange-700 border-orange-400 shadow-sm transform scale-105";
+            } else if (window.statusFilter === '已分潤') {
+                btnSettled.className = "px-4 py-1.5 rounded-full text-sm font-black border-2 transition-all bg-green-100 text-green-700 border-green-400 shadow-sm transform scale-105";
+            }
         };
 
         window.toggleDropdown = function(menuId) {
@@ -415,7 +447,7 @@
                         backgroundColor: bgColors,
                         borderWidth: 2,
                         borderColor: '#ffffff',
-                        hoverOffset: 12 // 設定 hover 時放大凸出的程度
+                        hoverOffset: 12
                     }]
                 },
                 options: {
@@ -423,43 +455,23 @@
                     maintainAspectRatio: false,
                     cutout: '60%',
                     plugins: {
-                        // 🚨 核心優化：新增 legend 的 onHover 與 onLeave 事件，達成連動高亮
                         legend: { 
                             position: 'right', 
-                            labels: { 
-                                usePointStyle: true, 
-                                padding: 12, 
-                                font: { family: 'Inter', weight: 'bold', size: 12 } 
-                            },
+                            labels: { usePointStyle: true, padding: 12, font: { family: 'Inter', weight: 'bold', size: 12 } },
                             onHover: function(e, legendItem, legend) {
                                 const chart = legend.chart;
-                                // 讓左側圖表區塊高亮浮現
                                 chart.setActiveElements([{ datasetIndex: 0, index: legendItem.index }]);
-                                // 觸發 Tooltip 顯示
                                 chart.tooltip.setActiveElements([{ datasetIndex: 0, index: legendItem.index }], { x: 0, y: 0 });
                                 chart.update();
                             },
                             onLeave: function(e, legendItem, legend) {
                                 const chart = legend.chart;
-                                // 滑鼠移開後恢復原狀
                                 chart.setActiveElements([]);
                                 chart.tooltip.setActiveElements([]);
                                 chart.update();
                             }
                         },
-                        tooltip: { 
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-                            titleColor: '#002FA7', 
-                            bodyColor: '#1D1D1F', 
-                            borderColor: 'rgba(0, 47, 167, 0.1)', 
-                            borderWidth: 1, 
-                            padding: 12, 
-                            callbacks: { 
-                                label: function(context) { 
-                                    return ' NT$ ' + context.raw.toLocaleString(); 
-                                } 
-                            } 
-                        }
+                        tooltip: { backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: '#002FA7', bodyColor: '#1D1D1F', borderColor: 'rgba(0, 47, 167, 0.1)', borderWidth: 1, padding: 12, callbacks: { label: function(context) { return ' NT$ ' + context.raw.toLocaleString(); } } }
                     }
                 }
             });
@@ -479,10 +491,20 @@
                 const matchSearch = searchKeyword === '' || (d.clientName && d.clientName.toLowerCase().includes(searchKeyword));
                 const matchFav = window.activeFavClients.size === 0 || window.activeFavClients.has(d.clientName);
                 
-                return matchYear && matchMonth && matchSearch && matchFav;
+                // 🚨 新增：過濾狀態
+                const matchStatus = window.statusFilter === 'all' || d.status === window.statusFilter;
+                
+                return matchYear && matchMonth && matchSearch && matchFav && matchStatus;
             });
 
-            filteredData.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+            // 🚨 排序：優先以編號 A-Z 排序，若編號相同則按年月(新到舊)
+            filteredData.sort((a, b) => {
+                const idA = (a.clientNumber || '').toString().toLowerCase();
+                const idB = (b.clientNumber || '').toString().toLowerCase();
+                if (idA < idB) return -1;
+                if (idA > idB) return 1;
+                return (b.date || '').localeCompare(a.date || '');
+            });
 
             let htmlContent = '';
             let totalAccumulated = 0;
@@ -521,6 +543,8 @@
             });
 
             tableBody.innerHTML = htmlContent;
+            
+            // 🚨 如果有選擇過濾狀態，總金額可以維持原本的計算或只顯示過濾後。這裡邏輯是依賴 filteredData 加總，符合過濾結果。
             totalRevenueEl.textContent = formatCurrency(totalAccumulated);
             pendingRevenueEl.textContent = formatCurrency(totalPending);
             combinedRevenueEl.textContent = formatCurrency(combinedAccumulated);
