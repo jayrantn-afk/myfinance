@@ -30,6 +30,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
+        /* 頂級毛玻璃質感 */
         .glass-panel {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(20px);
@@ -50,6 +51,7 @@
             transform: translateY(0);
         }
         
+        /* 氣泡按鈕支援多選狀態 */
         .fav-bubble {
             padding: 6px 16px;
             border-radius: 50px;
@@ -335,7 +337,7 @@
             
             pieChartTitle.innerText = isAggregatedView 
                 ? '業主總收入佔比 (年度聚合，顯示總金額)' 
-                : '業主收入佔比 (各月追蹤，區分已分潤/待結算)'; // 🚨 改為已分潤
+                : '業主收入佔比 (各月追蹤，區分已分潤/待結算)';
 
             let clientStats = {};
             filteredData.forEach(d => {
@@ -346,7 +348,6 @@
                 const amt = d.amount || 0;
                 clientStats[name].total += amt;
                 
-                // 🚨 這裡也改為判斷 '已分潤'
                 if (d.status === '已分潤') {
                     clientStats[name].settled += amt;
                 } else {
@@ -383,7 +384,7 @@
                     }
                 } else {
                     if (stats.settled > 0) {
-                        labels.push(`${clientName} (已分潤)`); // 🚨 圖表文字改為已分潤
+                        labels.push(`${clientName} (已分潤)`);
                         dataValues.push(stats.settled);
                         bgColors.push(colors.base);
                     }
@@ -414,7 +415,7 @@
                         backgroundColor: bgColors,
                         borderWidth: 2,
                         borderColor: '#ffffff',
-                        hoverOffset: 10
+                        hoverOffset: 12 // 設定 hover 時放大凸出的程度
                     }]
                 },
                 options: {
@@ -422,8 +423,43 @@
                     maintainAspectRatio: false,
                     cutout: '60%',
                     plugins: {
-                        legend: { position: 'right', labels: { usePointStyle: true, padding: 12, font: { family: 'Inter', weight: 'bold', size: 12 } } },
-                        tooltip: { backgroundColor: 'rgba(255, 255, 255, 0.95)', titleColor: '#002FA7', bodyColor: '#1D1D1F', borderColor: 'rgba(0, 47, 167, 0.1)', borderWidth: 1, padding: 12, callbacks: { label: function(context) { return ' NT$ ' + context.raw.toLocaleString(); } } }
+                        // 🚨 核心優化：新增 legend 的 onHover 與 onLeave 事件，達成連動高亮
+                        legend: { 
+                            position: 'right', 
+                            labels: { 
+                                usePointStyle: true, 
+                                padding: 12, 
+                                font: { family: 'Inter', weight: 'bold', size: 12 } 
+                            },
+                            onHover: function(e, legendItem, legend) {
+                                const chart = legend.chart;
+                                // 讓左側圖表區塊高亮浮現
+                                chart.setActiveElements([{ datasetIndex: 0, index: legendItem.index }]);
+                                // 觸發 Tooltip 顯示
+                                chart.tooltip.setActiveElements([{ datasetIndex: 0, index: legendItem.index }], { x: 0, y: 0 });
+                                chart.update();
+                            },
+                            onLeave: function(e, legendItem, legend) {
+                                const chart = legend.chart;
+                                // 滑鼠移開後恢復原狀
+                                chart.setActiveElements([]);
+                                chart.tooltip.setActiveElements([]);
+                                chart.update();
+                            }
+                        },
+                        tooltip: { 
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                            titleColor: '#002FA7', 
+                            bodyColor: '#1D1D1F', 
+                            borderColor: 'rgba(0, 47, 167, 0.1)', 
+                            borderWidth: 1, 
+                            padding: 12, 
+                            callbacks: { 
+                                label: function(context) { 
+                                    return ' NT$ ' + context.raw.toLocaleString(); 
+                                } 
+                            } 
+                        }
                     }
                 }
             });
@@ -465,10 +501,8 @@
             filteredData.forEach((data) => {
                 const amount = data.amount || 0;
                 combinedAccumulated += amount; 
-                // 🚨 這裡改為判斷 '已分潤'
                 if (data.status === '已分潤') totalAccumulated += amount; else totalPending += amount;
 
-                // 🚨 標籤顯示改為 '已分潤'
                 const statusHtml = data.status === '已分潤' 
                     ? `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-green-100 text-green-700 border border-green-200 shadow-sm">已分潤</span>`
                     : `<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-orange-100 text-orange-700 border border-orange-200 shadow-sm">待結算</span>`;
