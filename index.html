@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>杰冉宇宙營收表 v01.13</title>
     
-    <!-- 引入 html2pdf 引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- 引入 Chart.js 繪圖引擎 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 引入 Flatpickr 精美日期選擇器 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -46,7 +43,6 @@
 
         .header-section { height: 90px; padding: 0 40px; display: flex; align-items: center; flex-shrink: 0; z-index: 100; position: relative; }
         
-        /* 🚨 標題強制不折行 */
         .page-title { font-size: 28px; font-weight: 900; cursor: pointer; user-select: none; margin-right: 40px; letter-spacing: -0.5px; transition: color 0.3s; white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0; display: inline-block; min-width: max-content; }
         .page-title:hover { color: var(--primary); text-shadow: 0 0 15px rgba(var(--primary-rgb), 0.3); }
         
@@ -92,7 +88,6 @@
         .status-option:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
         .status-option.active { background: var(--primary); color: white; }
 
-        /* 🚨 角色按鈕強制橫向、不折行 */
         .role-btn-group { display: none; gap: 8px; margin-left: auto; padding-left: 24px; border-left: 2px solid rgba(0,0,0,0.08); height: 40px; align-items: center; flex-shrink: 0; flex-wrap: nowrap !important; }
         .role-btn { border: 1px solid transparent; padding: 8px 24px !important; border-radius: 50px; font-size: 14px; font-weight: 900; cursor: pointer; background: rgba(255,255,255,0.5); color: var(--mid); transition: 0.3s; backdrop-filter: blur(10px); white-space: nowrap !important; word-break: keep-all !important; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 80px; letter-spacing: 2px; }
         .role-btn:hover { background: rgba(255,255,255,0.9); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -113,7 +108,7 @@
         .table-scroll { flex: 1; overflow: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; }
         
-        #mainTable { min-width: 1430px; table-layout: fixed; }
+        #mainTable { min-width: 1500px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
@@ -289,7 +284,6 @@
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
 
-<!-- 發票與銀行帳本共用的自訂下拉選單系統 -->
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="bankTypeDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 120px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px;">
@@ -328,7 +322,6 @@
     }
 </script>
 
-<!-- 基礎提示視窗 -->
 <div id="ui-modal" class="custom-modal">
     <div class="custom-modal-content">
         <h3 id="ui-modal-title" style="margin-top:0; color:var(--text-main); font-weight: 900;">提示</h3>
@@ -341,12 +334,10 @@
     </div>
 </div>
 
-<!-- 專屬多選客戶的懸浮彈窗 -->
 <div id="client-filter-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 500px; width: 90%;">
         <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">👥 選擇結算客戶 (可多選)</h3>
         <div id="client-chip-grid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 30px; max-height: 40vh; overflow-y: auto; padding: 10px;">
-            <!-- 實體按鈕動態生成在這裡 -->
         </div>
         <div class="custom-modal-actions">
             <button class="custom-modal-btn btn-cancel" onclick="document.getElementById('client-filter-modal').classList.remove('active')">取消</button>
@@ -355,7 +346,6 @@
     </div>
 </div>
 
-<!-- 🔥 [v01.13 新增] 數據中心客戶案件明細彈窗 -->
 <div id="client-details-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 600px; width: 90%;">
         <h3 id="client-details-title" style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">客戶案件明細</h3>
@@ -403,7 +393,6 @@
             <button id="simpleBatchBtn" class="sync-btn" style="display:none; color:#00D26A; border: 1px solid rgba(0, 210, 106, 0.2);" onclick="simpleBatchResolve()">⚡ 批次結清</button>
         </div>
         
-        <!-- 分潤結算過濾系統：專屬按鈕觸發懸浮彈窗 -->
         <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 15px;">
             <div class="status-dropdown-container">
                 <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
@@ -448,7 +437,6 @@
 
 <div class="viewport">
     <div class="slider-container" id="mainSlider">
-        <!-- Slide 0: 案件明細 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
@@ -470,14 +458,13 @@
                 </div>
                 <div class="table-scroll" id="input-view">
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
             </div>
         </div>
         
-        <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
@@ -535,10 +522,8 @@
             </div>
         </div>
 
-        <!-- Slide 2: 月報統計 -->
         <div class="page-content"><div class="white-card"><div class="table-scroll"><table id="reportTable"><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>夥伴分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
 
-        <!-- Slide 3: 報價系統 -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
                 <div class="quote-placeholder" id="quote-placeholder">🧾<br>請輸入搜尋條件產生報價單</div>
@@ -550,7 +535,6 @@
             </div>
         </div>
 
-        <!-- Slide 4: 發票管理 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
@@ -573,7 +557,6 @@
             </div>
         </div>
 
-        <!-- Slide 5: 📊 營運數據中心 -->
         <div class="page-content">
             <div class="dashboard-container">
                 <div class="dashboard-header">
@@ -628,7 +611,6 @@
             </div>
         </div>
 
-        <!-- Slide 6: 🏦 銀行帳本 -->
         <div class="page-content">
             <div class="white-card">
                 <div style="display: flex; justify-content: space-between; padding: 25px 30px; background: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(0,0,0,0.05);">
@@ -1048,7 +1030,6 @@ function renderDashboard() {
             e.native.target.style.cursor = elements.length ? 'pointer' : 'default';
         };
     } else {
-        // 🔥 [v01.13] 單月客戶長條圖點擊下鑽明細
         barOptions.onClick = (e, elements) => {
             if (elements.length > 0) {
                 let idx = elements[0].index;
@@ -1463,10 +1444,11 @@ function createRow(r) {
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
-    for(let c=0; c<21; c++) {
+    
+    for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
-        if(c===7) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
+        if(c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
         else if(c===4 || c===6) {
             let ops = (opts[c]||[]).map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
             td.innerHTML = `<select id="r${r}c${c}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${ops}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
@@ -1982,7 +1964,7 @@ function calc(r, c, save=true) {
     s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
     let row = document.getElementById(`r${r}`); if (row) { if (net > 0 && rem <= 0) row.classList.add('is-settled'); else row.classList.remove('is-settled'); }
     if(save) {
-        localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20)}));
+        localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)}));
         let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = JSON.parse(localStorage.getItem(`d_${curY}_${i}`))||{}; if(!dr[0]&&!dr[1]&&!dr[2]&&!dr[3]&&!dr[9]) ec++; else break; }
         if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('tb').appendChild(createRow(rc++)); } localStorage.setItem(`rowCount_${curY}`, rc); }
         filterTable(); 
@@ -2074,9 +2056,6 @@ window.onload = () => {
         const btn = document.getElementById('cloudSaveBtn');
         const docRef = doc(db, 'system_data', 'default_backup');
         
-        // 安全取得目前年份 (避免抓不到全域變數的問題)
-        let currentY = localStorage.getItem('vB_Y') || '2026';
-
         if (mode === 'SAVE') {
             let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
             if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
@@ -2090,36 +2069,36 @@ window.onload = () => {
                 }
             }
 
-            // --- 👇 這是為夥伴新增的安全過濾邏輯 👇 ---
             let partnerSafeData = [];
-            let rowCount = parseInt(localStorage.getItem(`rowCount_${currentY}`)) || 65;
+            let yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
             
-            for(let r=0; r<rowCount; r++) {
-                let d = JSON.parse(localStorage.getItem(`d_${currentY}_${r}`)) || {};
-                let partnerAmt = parseFloat(d[19]) || 0; // 欄位19為夥伴金額
-                
-                if(d[3] && partnerAmt > 0) { // 有案名且夥伴金額大於0才同步
-                    let unpaid = parseFloat(String(d[13]).replace(/,/g,'')) || 0;
-                    partnerSafeData.push({
-                        date: d[0] || '未定',
-                        projectName: d[3] || '',
-                        percent: d[16] || 0, // 欄位16為夥伴%
-                        amount: partnerAmt,
-                        status: unpaid <= 0 ? '已結算' : '待結算'
-                    });
+            for (let y of yList) {
+                let rowCount = parseInt(localStorage.getItem(`rowCount_${y}`)) || 65;
+                for(let r=0; r<rowCount; r++) {
+                    let d = JSON.parse(localStorage.getItem(`d_${y}_${r}`)) || {};
+                    let partnerAmt = parseFloat(d[19]) || 0; 
+                    
+                    if(d[3] && partnerAmt > 0) { 
+                        partnerSafeData.push({
+                            date: d[0] || '未定',
+                            clientNumber: d[1] || 'N/A', 
+                            clientName: d[2] || '未填寫', 
+                            projectName: d[3] || '',
+                            percent: d[16] || 0,
+                            amount: partnerAmt,
+                            // 🚨 上傳給夥伴的狀態，直接改名為「已分潤」，並嚴格聽從 d[21] 有沒有打勾
+                            status: d[21] === true ? '已分潤' : '待結算'
+                        });
+                    }
                 }
             }
-            // --- 👆 安全過濾邏輯結束 👆 ---
 
             try {
-                // 1. 儲存原本的完整備份
                 await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
-                
-                // 2. 儲存夥伴的安全閹割版資料
                 const partnerDocRef = doc(db, 'system_data', 'partner_view');
                 await setDoc(partnerDocRef, { data: JSON.stringify(partnerSafeData), lastUpdate: new Date().toISOString() });
 
-                await uiAlert("🔥 搬家成功！\n您的資料已經完美轉移到您的 Google Firebase 雲端上了！\n(夥伴的分潤報表也已同步更新)");
+                await uiAlert("🔥 搬家成功！\n資料已備份！夥伴報表將會根據您是否有勾選『付夥伴』來顯示『已分潤』或『待結算』！");
             } catch(e) { 
                 console.error("上傳錯誤:", e); 
                 await uiAlert("❌ 上傳失敗！請檢查網路連線。"); 
