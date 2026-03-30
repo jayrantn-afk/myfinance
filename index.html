@@ -2073,20 +2073,59 @@ window.onload = () => {
         if (!currentUser) { await uiAlert("⏳ 正在與 Firebase 雲端建立安全連線...請稍等幾秒後再試！"); return; }
         const btn = document.getElementById('cloudSaveBtn');
         const docRef = doc(db, 'system_data', 'default_backup');
+        
+        // 安全取得目前年份 (避免抓不到全域變數的問題)
+        let currentY = localStorage.getItem('vB_Y') || '2026';
+
         if (mode === 'SAVE') {
             let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
             if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
             btn.innerText = "🔥 正在上傳雲端...";
+            
             let fullData = {};
             for(let i=0; i<localStorage.length; i++){
                 let k = localStorage.key(i);
-                if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_') || k.startsWith('bank_') || k.startsWith('bankCount_')) fullData[k] = localStorage.getItem(k);
+                if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_') || k.startsWith('bank_') || k.startsWith('bankCount_')) {
+                    fullData[k] = localStorage.getItem(k);
+                }
             }
+
+            // --- 👇 這是為夥伴新增的安全過濾邏輯 👇 ---
+            let partnerSafeData = [];
+            let rowCount = parseInt(localStorage.getItem(`rowCount_${currentY}`)) || 65;
+            
+            for(let r=0; r<rowCount; r++) {
+                let d = JSON.parse(localStorage.getItem(`d_${currentY}_${r}`)) || {};
+                let partnerAmt = parseFloat(d[19]) || 0; // 欄位19為夥伴金額
+                
+                if(d[3] && partnerAmt > 0) { // 有案名且夥伴金額大於0才同步
+                    let unpaid = parseFloat(String(d[13]).replace(/,/g,'')) || 0;
+                    partnerSafeData.push({
+                        date: d[0] || '未定',
+                        projectName: d[3] || '',
+                        percent: d[16] || 0, // 欄位16為夥伴%
+                        amount: partnerAmt,
+                        status: unpaid <= 0 ? '已結算' : '待結算'
+                    });
+                }
+            }
+            // --- 👆 安全過濾邏輯結束 👆 ---
+
             try {
+                // 1. 儲存原本的完整備份
                 await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
-                await uiAlert("🔥 搬家成功！\n您的資料已經完美轉移到您的 Google Firebase 雲端上了！");
-            } catch(e) { console.error("上傳錯誤:", e); await uiAlert("❌ 上傳失敗！請確認資料庫設定。"); }
+                
+                // 2. 儲存夥伴的安全閹割版資料
+                const partnerDocRef = doc(db, 'system_data', 'partner_view');
+                await setDoc(partnerDocRef, { data: JSON.stringify(partnerSafeData), lastUpdate: new Date().toISOString() });
+
+                await uiAlert("🔥 搬家成功！\n您的資料已經完美轉移到您的 Google Firebase 雲端上了！\n(夥伴的分潤報表也已同步更新)");
+            } catch(e) { 
+                console.error("上傳錯誤:", e); 
+                await uiAlert("❌ 上傳失敗！請檢查網路連線。"); 
+            }
             btn.innerText = "🔥 搬家至 Firebase";
+            
         } else {
             if(!(await uiConfirm("⚠️ 注意：這將會清除目前資料並從雲端載入備份。\n確定要執行嗎？"))) return;
             try {
