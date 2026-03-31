@@ -455,7 +455,7 @@
         btn.innerHTML = '<span>⏳</span> 教練思考中...';
 
         try {
-            const promptText = `請分析以下飲食內容的總熱量與蛋白質。飲食內容：『${textInput}』。請精確估算，並只回傳純 JSON 格式，格式如下：{"name": "簡短統整食物名稱", "calories": 整數總熱量大卡, "protein": 整數總蛋白質克數}`;
+            const promptText = `你現在是一位嚴格且專業的台灣健身教練與營養師。這是一張食物的照片，請仔細辨識裡面的食材與份量，並以台灣常見的餐飲標準，給出最精準、偏向嚴格（寧可稍微高估熱量也不要低估）的數值。請只回傳純 JSON 格式，格式如下：{"name": "詳細的食物名稱", "calories": 整數熱量大卡, "protein": 整數蛋白質克數}`;
             
             const requestBody = {
                 contents: [{ parts: [{ text: promptText }] }],
@@ -529,7 +529,7 @@
         scanLine.classList.add('active');
 
         try {
-            const promptText = "這是一張食物的照片。請分析這張圖片，並估算它的熱量與蛋白質。請只回傳 JSON 格式，格式如下：{\"name\": \"簡短食物名稱\", \"calories\": 整數熱量大卡, \"protein\": 整數蛋白質克數}";
+            const promptText = `你現在是一位嚴格且專業的台灣健身教練與營養師。這是一張食物的照片，請仔細辨識裡面的食材與份量，並以台灣常見的餐飲標準，給出最精準、偏向嚴格（寧可稍微高估熱量也不要低估）的數值。請只回傳純 JSON 格式，格式如下：{"name": "詳細的食物名稱", "calories": 整數熱量大卡, "protein": 整數蛋白質克數}`;
 
             const requestBody = {
                 contents: [{
