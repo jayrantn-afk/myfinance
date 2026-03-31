@@ -370,8 +370,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    // ✨ 這裡多匯入了一個 getRedirectResult
-    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    // ✨ 換回 signInWithPopup
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCQYyBrDA4NhrHCJJKABpnZIbMUbKNkquA",
@@ -392,12 +392,7 @@
         provider = new GoogleAuthProvider();
     } catch (e) { console.error("Firebase 初始化失敗", e); }
 
-    // ✨ 關鍵防護網：用來接住跳轉回來的使用者資料！
     if (auth) {
-        getRedirectResult(auth).catch((error) => {
-            console.error("跳轉登入攔截失敗", error);
-        });
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUserUid = user.uid;
@@ -413,17 +408,23 @@
         });
     }
 
-    // ✨ 登入按鈕綁定跳轉功能
+    // ✨ 強化版彈出視窗登入
     window.signInWithGoogle = function() { 
-        document.querySelector('.btn-google').innerHTML = '跳轉中請稍候...';
-        signInWithRedirect(auth, provider); 
+        const btn = document.querySelector('.btn-google');
+        btn.innerHTML = '⏳ 登入連線中...';
+        
+        signInWithPopup(auth, provider).catch((error) => { 
+            console.error(error);
+            btn.innerHTML = '使用 Google 帳號登入';
+            // ✨ 如果失敗，會彈出精準的原因警告你
+            alert("登入被阻擋！\n請確認：\n1. 您使用的是純 Safari 或 Chrome (請勿在 LINE 內開啟)。\n2. 您的手機沒有開啟「阻擋彈出式視窗」。"); 
+        }); 
     };
     
     window.logOutUser = function() { signOut(auth).then(() => { location.reload(); }); };
     window.syncWithFirebase = async function(data) { if (!db || !currentUserUid) return; try { await setDoc(doc(db, "weight_users", currentUserUid), data); } catch(e) { console.error("Firebase 儲存失敗", e); } }
     window.loadFromFirebase = async function() { if (!db || !currentUserUid) return null; try { const docSnap = await getDoc(doc(db, "weight_users", currentUserUid)); return docSnap.exists() ? docSnap.data() : null; } catch(e) { return null; } }
 </script>
-
 <script>
     // ==========================================
     // ✨ 填入你完全正確的新金鑰
