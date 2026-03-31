@@ -370,7 +370,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCQYyBrDA4NhrHCJJKABpnZIbMUbKNkquA",
@@ -407,7 +407,11 @@
         });
     }
 
-    window.signInWithGoogle = function() { signInWithPopup(auth, provider).catch((error) => { alert("登入失敗，請確認網域已加入白名單。"); }); };
+    window.signInWithGoogle = function() { 
+    signInWithRedirect(auth, provider).catch((error) => { 
+        alert("登入跳轉失敗，請確認網路連線。"); 
+    }); 
+};
     window.logOutUser = function() { signOut(auth).then(() => { location.reload(); }); };
     window.syncWithFirebase = async function(data) { if (!db || !currentUserUid) return; try { await setDoc(doc(db, "weight_users", currentUserUid), data); } catch(e) { console.error("Firebase 儲存失敗", e); } }
     window.loadFromFirebase = async function() { if (!db || !currentUserUid) return null; try { const docSnap = await getDoc(doc(db, "weight_users", currentUserUid)); return docSnap.exists() ? docSnap.data() : null; } catch(e) { return null; } }
