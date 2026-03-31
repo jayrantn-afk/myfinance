@@ -148,7 +148,6 @@
 
         .chart-container { height: 110px; background-color: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 25px; padding: 10px; position: relative; }
         .chart-canvas { width: 100%; height: 100%; }
-        /* 更新為真實標籤 */
         .chart-labels { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 5px; padding: 0 5px; }
 
         .bottom-metrics { display: flex; justify-content: space-between; gap: 15px; }
@@ -191,6 +190,46 @@
         .custom-select-options div:hover { background: rgba(252, 163, 17, 0.15); color: #fca311; font-weight: bold; }
         @keyframes slideDownGlass { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ==================== ✨ 照片上傳與 AI 掃描專屬 UI ==================== */
+        .image-upload-area {
+            width: 100%; height: 200px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: var(--border-radius-input);
+            background: rgba(0, 0, 0, 0.2);
+            position: relative; overflow: hidden;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            margin-bottom: 15px; transition: all 0.3s ease;
+        }
+        .image-upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(252, 163, 17, 0.05);
+            box-shadow: 0 0 15px rgba(252, 163, 17, 0.2);
+        }
+        .upload-placeholder { text-align: center; color: var(--text-muted); transition: opacity 0.3s; }
+        .upload-placeholder span { font-size: 40px; display: block; margin-bottom: 10px; }
+        .image-preview {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; display: none; z-index: 1;
+        }
+        
+        /* 雷射掃描動畫 */
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: #fca311; box-shadow: 0 0 15px #fca311, 0 0 30px #fca311;
+            display: none; z-index: 10;
+        }
+        .scan-line.active {
+            display: block;
+            animation: scanAnim 2s infinite linear;
+        }
+        @keyframes scanAnim {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        /* ==================================================================== */
+
         /* 按鈕 */
         button {
             width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none;
@@ -199,7 +238,9 @@
         }
         button:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(252, 163, 17, 0.5); }
         button:focus { outline: none; box-shadow: 0 0 15px rgba(252, 163, 17, 0.8); }
-        button.btn-ai { background-color: var(--secondary-color); padding: 12px; font-size: 14px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        button.btn-ai { background-color: var(--secondary-color); font-size: 16px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;}
         button.btn-ai:hover { background-color: #0b7dda; box-shadow: 0 6px 15px rgba(33, 150, 243, 0.5); }
         button.btn-logout { background-color: rgba(244, 67, 54, 0.2); color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.3); margin-top: 30px; box-shadow: none; }
         button.btn-logout:hover { background-color: rgba(244, 67, 54, 0.4); color: #fff; }
@@ -334,23 +375,42 @@
 
         <div id="foodTab" class="tab-content">
             <div class="glass-input-card">
-                <h2>飲食紀錄 (AI 輔助)</h2>
+                <h2>📸 AI 相機辨識估算</h2>
+                
+                <input type="file" id="foodImageInput" accept="image/*" capture="environment" style="display: none;" onchange="previewFoodImage(event)">
+                
+                <div class="image-upload-area" onclick="document.getElementById('foodImageInput').click()">
+                    <div id="imagePreview" class="image-preview"></div>
+                    <div class="scan-line" id="scanLine"></div>
+                    
+                    <div class="upload-placeholder" id="uploadPlaceholder">
+                        <span>📷</span>
+                        <p>點擊開啟相機或上傳食物照片</p>
+                    </div>
+                </div>
+
+                <button class="btn-ai" id="btnAnalyzeAI" onclick="analyzeFoodImage()">
+                    <span>✨</span> AI 視覺掃描分析
+                </button>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 25px 0;"></div>
+
+                <h2>手動確認與紀錄</h2>
                 <div class="form-group">
-                    <label>食物名稱</label>
-                    <input type="text" id="foodName" placeholder="例如：雞胸肉、滷肉飯...">
-                    <button class="btn-ai" onclick="simulateAI()">✨ AI 智能估算熱量</button>
+                    <label>食物名稱 / 內容</label>
+                    <input type="text" id="foodName" placeholder="AI 掃描後將自動填寫，或可手動輸入">
                 </div>
                 <div style="display: flex; gap: 15px;">
                     <div class="form-group" style="flex: 1;">
-                        <label>蛋白質 (g)</label>
+                        <label>蛋白質估算 (g)</label>
                         <input type="number" id="foodProtein" placeholder="克" min="0" oninput="if(this.value < 0) this.value = '';">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>熱量 (kcal)</label>
+                        <label>熱量估算 (kcal)</label>
                         <input type="number" id="foodCalories" placeholder="大卡" min="0" oninput="if(this.value < 0) this.value = '';">
                     </div>
                 </div>
-                <button onclick="addFood()">加入飲食紀錄</button>
+                <button onclick="addFood()">加入今日飲食</button>
                 
                 <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">當日飲食清單</h3>
                 <ul class="log-list" id="foodList"></ul>
@@ -360,7 +420,6 @@
         <div id="workoutTab" class="tab-content">
             <div class="glass-input-card">
                 <h2>運動紀錄</h2>
-                
                 <div class="form-group">
                     <label>運動類型</label>
                     <div class="custom-select-wrapper" onclick="toggleCustomSelect(this)">
@@ -373,13 +432,11 @@
                         <input type="hidden" id="workoutType" value="weightlifting">
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label>運動時間 (分鐘)</label>
                     <input type="number" id="workoutDuration" placeholder="輸入分鐘數" min="0" oninput="if(this.value < 0) this.value = '';">
                 </div>
                 <button onclick="addWorkout()">加入運動紀錄</button>
-    
                 <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">當日運動清單</h3>
                 <ul class="log-list" id="workoutList"></ul>
             </div>
@@ -389,7 +446,6 @@
             <div class="glass-input-card">
                 <h2>個人資料與目標</h2>
                 <div style="text-align: center; margin-bottom: 15px; color: var(--primary-color); font-size: 12px;" id="userEmailDisplay"></div>
-                
                 <div class="form-group">
                     <label>性別</label>
                     <div class="custom-select-wrapper" onclick="toggleCustomSelect(this)">
@@ -401,7 +457,6 @@
                         <input type="hidden" id="gender" value="male">
                     </div>
                 </div>
-
                 <div style="display: flex; gap: 15px;">
                     <div class="form-group" style="flex: 1;">
                         <label>年齡</label>
@@ -422,7 +477,6 @@
                         <input type="number" id="targetWeightInput" placeholder="公斤" step="0.01" min="1" oninput="if(this.value < 0) this.value = '';">
                     </div>
                 </div>
-                
                 <div class="form-group">
                     <label>日常活動量</label>
                     <div class="custom-select-wrapper" onclick="toggleCustomSelect(this)">
@@ -436,9 +490,7 @@
                         <input type="hidden" id="activity" value="1.2">
                     </div>
                 </div>
-
                 <button onclick="calculateAndSaveProfile()">計算 TDEE 並更新</button>
-
                 <button class="btn-logout" onclick="window.logOutUser()">登出帳號</button>
             </div>
         </div>
@@ -528,9 +580,8 @@
 
     window.syncWithFirebase = async function(data) {
         if (!db || !currentUserUid) return;
-        try {
-            await setDoc(doc(db, "weight_users", currentUserUid), data);
-        } catch(e) { console.error("❌ Firebase 儲存失敗", e); }
+        try { await setDoc(doc(db, "weight_users", currentUserUid), data); } 
+        catch(e) { console.error("❌ Firebase 儲存失敗", e); }
     }
 
     window.loadFromFirebase = async function() {
@@ -548,16 +599,13 @@
         consumedCals: 0, consumedProtein: 0, burnedCals: 0
     };
 
-    // ✨ 真實日期邏輯：抓取今天是星期幾
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
     
     document.addEventListener('DOMContentLoaded', () => {
-        // 設定一打開網頁時的預設狀態 (今日)
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         const currentDayStr = daysOfWeek[todayObj.getDay()];
         
-        // 自動啟動正確的星期圈圈
         document.querySelectorAll('.week-day-circle').forEach(el => {
             el.classList.remove('active');
             if(el.innerText === currentDayStr) el.classList.add('active');
@@ -565,7 +613,6 @@
         
         document.getElementById('displayDayName').innerText = `星期${currentDayStr}`;
         document.getElementById('todayDate').innerText = `${todayObj.getMonth() + 1}月 ${todayObj.getDate()}日`;
-        
         drawWeightChart();
     });
 
@@ -580,9 +627,79 @@
             if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
             if(appData.currentWeight > 0) document.getElementById('weightValue').innerText = appData.currentWeight.toFixed(2);
             updateDashboard();
-            drawWeightChart(); // 載入資料後重繪圖表
+            drawWeightChart(); 
         }
     };
+
+    // ✨ 圖片預覽功能
+    let isImageUploaded = false;
+    function previewFoodImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewEl = document.getElementById('imagePreview');
+                previewEl.style.backgroundImage = `url('${e.target.result}')`;
+                previewEl.style.display = 'block';
+                document.getElementById('uploadPlaceholder').style.opacity = '0'; // 隱藏文字但保留空間
+                isImageUploaded = true;
+                
+                // 重置按鈕狀態
+                const btn = document.getElementById('btnAnalyzeAI');
+                btn.innerHTML = '<span>✨</span> AI 視覺掃描分析';
+                btn.disabled = false;
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // ✨ AI 視覺辨識模擬動畫與邏輯
+    function analyzeFoodImage() {
+        if (!isImageUploaded) {
+            alert("請先點擊上方區域拍照或上傳食物照片！");
+            return;
+        }
+
+        const btn = document.getElementById('btnAnalyzeAI');
+        const scanLine = document.getElementById('scanLine');
+        
+        // 啟動動畫與鎖定按鈕
+        btn.disabled = true;
+        btn.innerHTML = '<span>🔍</span> 視覺模型分析中...';
+        scanLine.classList.add('active');
+
+        // 模擬 2.5 秒的 API 請求等待時間
+        setTimeout(() => {
+            // 停止動畫
+            scanLine.classList.remove('active');
+            btn.innerHTML = '<span>✅</span> 掃描完成';
+
+            // 隨機產生逼真的食物數據
+            const mockFoods = [
+                { name: "香煎雞胸肉健康餐盤", cal: 420, pro: 35 },
+                { name: "經典牛肉起司漢堡", cal: 650, pro: 28 },
+                { name: "清炒鮭魚義大利麵", cal: 580, pro: 32 },
+                { name: "酪梨生菜沙拉", cal: 320, pro: 12 },
+                { name: "日式炸豬排定食", cal: 850, pro: 25 }
+            ];
+            const randomFood = mockFoods[Math.floor(Math.random() * mockFoods.length)];
+
+            // 自動填入輸入框
+            document.getElementById('foodName').value = randomFood.name;
+            document.getElementById('foodCalories').value = randomFood.cal;
+            document.getElementById('foodProtein').value = randomFood.pro;
+
+            alert("這是前端 UI 模擬效果！未來只要將此按鈕綁定至真實的 Google Gemini Vision API，即可讓 AI 真正辨識您的照片。");
+            
+            // 3秒後恢復按鈕
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<span>✨</span> 重新掃描分析';
+            }, 3000);
+
+        }, 2500);
+    }
+
 
     function toggleCustomSelect(element) {
         document.querySelectorAll('.custom-select-wrapper').forEach(el => { if (el !== element) el.classList.remove('open'); });
@@ -598,7 +715,6 @@
         }
     });
 
-    // ✨ 真實點擊計算日期邏輯
     let currentSelectedDay = ''; 
     function selectDay(element, dayName) {
         document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active'));
@@ -607,17 +723,14 @@
         document.getElementById('displayDayName').innerText = `星期${dayName}`;
         currentSelectedDay = dayName;
 
-        // 計算點擊的星期與今天的日期差
         let currentNorm = todayObj.getDay() === 0 ? 7 : todayObj.getDay();
         let targetNorm = dayMap[dayName] === 0 ? 7 : dayMap[dayName];
         let diff = targetNorm - currentNorm;
         
         let targetDate = new Date(todayObj);
         targetDate.setDate(todayObj.getDate() + diff);
-        
         document.getElementById('todayDate').innerText = `${targetDate.getMonth() + 1}月 ${targetDate.getDate()}日`;
 
-        // 判斷是否為今日 (因為我們現在只儲存當日數據)
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if (dayName !== daysOfWeek[todayObj.getDay()]) {
             document.getElementById('displayConsumed').innerText = '0';
@@ -654,19 +767,14 @@
         
         document.getElementById('startWeightValue').innerText = startWeight.toFixed(2);
         
-        updateDashboard();
-        drawWeightChart(); // 更新目標時也重繪圖表
-        triggerSync(); 
-        
+        updateDashboard(); drawWeightChart(); triggerSync(); 
         alert(`設定成功！您的每日 TDEE 約為 ${appData.tdee} 大卡。`);
         switchTab('weight', document.querySelectorAll('.nav-item')[0]);
     }
 
     function recordWeight() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
-        if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) {
-            alert("您目前正在檢視其他日期，請切換回「今日」再進行記錄。"); return;
-        }
+        if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("您目前正在檢視其他日期，請切換回「今日」再進行記錄。"); return; }
 
         const weightInput = parseFloat(document.getElementById('weightInput').value);
         if(isNaN(weightInput) || weightInput <= 0) { alert("請輸入有效的體重數字！"); return; }
@@ -676,24 +784,8 @@
         document.getElementById('weightValue').innerText = weightInput.toFixed(2);
         document.getElementById('weightInput').value = '';
 
-        updateDashboard();
-        drawWeightChart(); 
-        triggerSync(); 
+        updateDashboard(); drawWeightChart(); triggerSync(); 
         alert("今日體重已記錄，並同步至雲端！");
-    }
-
-    function simulateAI() {
-        const foodName = document.getElementById('foodName').value.trim();
-        if(!foodName) { alert("請先輸入食物名稱喔！"); return; }
-        let estimate = { calories: 0, protein: 0 };
-        if(foodName.includes("胸")) { estimate = { calories: 165, protein: 31 }; }
-        else if(foodName.includes("飯")) { estimate = { calories: 280, protein: 5 }; }
-        else if(foodName.includes("蛋")) { estimate = { calories: 75, protein: 6 }; }
-        else if(foodName.includes("菜")) { estimate = { calories: 60, protein: 2 }; }
-        else if(foodName.includes("肉")) { estimate = { calories: 250, protein: 26 }; }
-        else { estimate.calories = Math.floor(Math.random() * 200) + 150; estimate.protein = Math.floor(Math.random() * 15) + 5; alert(`自動預估，請確認。`); }
-        document.getElementById('foodCalories').value = estimate.calories;
-        document.getElementById('foodProtein').value = estimate.protein;
     }
 
     function addFood() {
@@ -710,7 +802,14 @@
         const li = document.createElement('li'); li.className = 'log-item';
         li.innerHTML = `<div class="log-details"><strong>${name}</strong><span class="log-macros">蛋白質: ${protein}g</span></div><div style="font-weight: bold; color: var(--text-main);">${cals} kcal</div>`;
         document.getElementById('foodList').prepend(li);
-        document.getElementById('foodName').value = ''; document.getElementById('foodCalories').value = ''; document.getElementById('foodProtein').value = '';
+        
+        // 重置所有輸入與預覽狀態
+        document.getElementById('foodName').value = ''; 
+        document.getElementById('foodCalories').value = ''; 
+        document.getElementById('foodProtein').value = '';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.opacity = '1';
+        isImageUploaded = false;
 
         updateDashboard(); triggerSync(); alert("已加入飲食清單！");
     }
@@ -757,7 +856,6 @@
         }
     }
 
-    // ✨ 真實圖表渲染邏輯：只顯示「初始」到「目前」
     function drawWeightChart() {
         const canvas = document.getElementById('weightChartCanvas');
         if (!canvas) return;
@@ -769,15 +867,11 @@
         const height = canvas.height;
         
         ctx.clearRect(0, 0, width, height);
-
-        // 如果還沒設定初始體重，就畫空的
         if (!appData.startWeight || appData.startWeight === 0) return;
 
         let wStart = appData.startWeight;
         let wCurrent = appData.currentWeight > 0 ? appData.currentWeight : wStart;
         const chartData = [wStart, wCurrent];
-
-        // 計算最大最小值以置中圖表 (留點上下邊距)
         const dataMin = Math.min(...chartData) - 1;
         const dataMax = Math.max(...chartData) + 1;
         
@@ -786,14 +880,11 @@
         ctx.lineJoin = 'round';
         ctx.beginPath();
         
-        // 只有兩個點 (最左邊與最右邊)
         const xStep = width / (chartData.length - 1);
-        
         chartData.forEach((val, i) => {
             const x = i * xStep;
             const y = height - ((val - dataMin) / (dataMax - dataMin) * height);
-            if(i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
+            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         
         ctx.stroke();
@@ -801,10 +892,7 @@
         chartData.forEach((val, i) => {
             const x = i * xStep;
             const y = height - ((val - dataMin) / (dataMax - dataMin) * height);
-            ctx.beginPath();
-            ctx.arc(x, y, 5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
+            ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
         });
     }
 </script>
