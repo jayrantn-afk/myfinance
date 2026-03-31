@@ -94,7 +94,6 @@
         .custom-select-options div { padding: 14px; cursor: pointer; transition: background 0.2s, color 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); }
         .custom-select-options div:last-child { border-bottom: none; }
         .custom-select-options div:hover { background: rgba(252, 163, 17, 0.15); color: #fca311; font-weight: bold; }
-        @keyframes slideDownGlass { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 相機與雷射動畫 */
         .image-upload-area { width: 100%; height: 200px; border: 2px dashed rgba(255, 255, 255, 0.3); border-radius: var(--border-radius-input); background: rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; cursor: pointer; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; transition: all 0.3s ease; }
@@ -106,22 +105,32 @@
         .scan-line.active { display: block; animation: scanAnim 2s infinite linear; }
         @keyframes scanAnim { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
-        /* 按鈕 */
+        /* 按鈕與運動切換 */
         button { width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: var(--border-radius-input); cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s ease; margin-top: 10px; border: var(--glass-border); box-shadow: 0 4px 10px rgba(252, 163, 17, 0.3); }
         button:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(252, 163, 17, 0.5); }
-        button:focus { outline: none; box-shadow: 0 0 15px rgba(252, 163, 17, 0.8); }
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
         button.btn-ai { background-color: var(--secondary-color); font-size: 16px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;}
         button.btn-ai:hover { background-color: #0b7dda; box-shadow: 0 6px 15px rgba(33, 150, 243, 0.5); }
         button.btn-logout { background-color: rgba(244, 67, 54, 0.2); color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.3); margin-top: 30px; box-shadow: none; }
-        button.btn-logout:hover { background-color: rgba(244, 67, 54, 0.4); color: #fff; }
 
-        /* 列表樣式 */
+        /* ✨ 運動類型切換按鈕 */
+        .toggle-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .toggle-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); margin-top: 0; box-shadow: none; padding: 12px; }
+        .toggle-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); box-shadow: 0 4px 10px rgba(252, 163, 17, 0.3); }
+
+        /* ✨ 列表與操作 Icon */
         .log-list { list-style: none; margin-top: 15px; }
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 12px; font-size: 14px; transition: all 0.2s; }
         .log-item:hover { background: rgba(255,255,255,0.1); }
-        .log-details { display: flex; flex-direction: column; }
+        .log-details { display: flex; flex-direction: column; flex: 1; padding-right: 10px;}
         .log-macros { font-size: 12px; color: #777; margin-top: 2px; }
+        .log-actions { display: flex; align-items: center; gap: 12px; }
+        .log-value { font-weight: bold; width: 65px; text-align: right; }
+        .icon-btn { cursor: pointer; opacity: 0.6; transition: opacity 0.2s, transform 0.2s; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { opacity: 1; transform: scale(1.1); }
+        .icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
+        .icon-edit { color: #4fc3f7; }
+        .icon-delete { color: #ff7b7b; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeInTab 0.3s ease; }
@@ -222,7 +231,6 @@
 
         <div id="foodTab" class="tab-content">
             <div class="glass-input-card">
-                
                 <h2>⌨️ AI 文字教練估算</h2>
                 <div class="form-group">
                     <textarea id="aiTextInput" rows="2" placeholder="直接打字告訴我你吃了什麼？&#10;例如：一個排骨便當跟一杯微糖珍奶"></textarea>
@@ -271,22 +279,22 @@
         <div id="workoutTab" class="tab-content">
             <div class="glass-input-card">
                 <h2>運動紀錄</h2>
+                
+                <div class="toggle-group">
+                    <button id="btnToggleWeight" class="toggle-btn active" onclick="switchWorkoutType('🏋️ 重訓')">🏋️ 重量訓練</button>
+                    <button id="btnToggleCardio" class="toggle-btn" onclick="switchWorkoutType('🏃 有氧')">🏃 有氧運動</button>
+                </div>
+                <input type="hidden" id="workoutCategory" value="🏋️ 重訓">
+
                 <div class="form-group">
-                    <label>運動類型</label>
-                    <div class="custom-select-wrapper" onclick="toggleCustomSelect(this)">
-                        <div class="custom-select-display" id="workoutTypeDisplay">🏋️ 重量訓練 (約 5 kcal/分)</div>
-                        <div class="custom-select-options">
-                            <div onclick="selectCustomOption('workoutType', 'weightlifting', '🏋️ 重量訓練 (約 5 kcal/分)')">🏋️ 重量訓練 (約 5 kcal/分)</div>
-                            <div onclick="selectCustomOption('workoutType', 'cardio', '🏃 跑步/有氧 (約 8 kcal/分)')">🏃 跑步/有氧 (約 8 kcal/分)</div>
-                            <div onclick="selectCustomOption('workoutType', 'yoga', '🧘 瑜珈/伸展 (約 3 kcal/分)')">🧘 瑜珈/伸展 (約 3 kcal/分)</div>
-                        </div>
-                        <input type="hidden" id="workoutType" value="weightlifting">
-                    </div>
+                    <label id="workoutItemLabel">重訓項目與細節</label>
+                    <input type="text" id="workoutItemName" placeholder="例如：機械胸推 4組、深蹲 50kg...">
                 </div>
                 <div class="form-group">
-                    <label>運動時間 (分鐘)</label>
-                    <input type="number" id="workoutDuration" placeholder="輸入分鐘數" min="0" oninput="if(this.value < 0) this.value = '';">
+                    <label>消耗熱量估算 (kcal)</label>
+                    <input type="number" id="workoutItemCals" placeholder="輸入消耗大卡" min="0" oninput="if(this.value < 0) this.value = '';">
                 </div>
+                
                 <button onclick="addWorkout()">加入運動紀錄</button>
                 <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">當日運動清單</h3>
                 <ul class="log-list" id="workoutList"></ul>
@@ -370,7 +378,6 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    // ✨ 換回 signInWithPopup
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -408,16 +415,12 @@
         });
     }
 
-    // ✨ 強化版彈出視窗登入
     window.signInWithGoogle = function() { 
         const btn = document.querySelector('.btn-google');
         btn.innerHTML = '⏳ 登入連線中...';
-        
         signInWithPopup(auth, provider).catch((error) => { 
-            console.error(error);
             btn.innerHTML = '使用 Google 帳號登入';
-            // ✨ 如果失敗，會彈出精準的原因警告你
-            alert("登入被阻擋！\n請確認：\n1. 您使用的是純 Safari 或 Chrome (請勿在 LINE 內開啟)。\n2. 您的手機沒有開啟「阻擋彈出式視窗」。"); 
+            alert("登入被阻擋！\n請確認：\n1. 您使用的是純 Safari 或 Chrome (請勿在 LINE 內開啟)。\n2. 手機沒有開啟「阻擋彈出式視窗」。"); 
         }); 
     };
     
@@ -425,13 +428,14 @@
     window.syncWithFirebase = async function(data) { if (!db || !currentUserUid) return; try { await setDoc(doc(db, "weight_users", currentUserUid), data); } catch(e) { console.error("Firebase 儲存失敗", e); } }
     window.loadFromFirebase = async function() { if (!db || !currentUserUid) return null; try { const docSnap = await getDoc(doc(db, "weight_users", currentUserUid)); return docSnap.exists() ? docSnap.data() : null; } catch(e) { return null; } }
 </script>
+
 <script>
-    // ==========================================
-    // ✨ 填入你完全正確的新金鑰
-    // ==========================================
+    // 金鑰
     const GEMINI_API_KEY = "AIzaSyCQWawCtDA17Bf7vh_IRuaHQQin0ABJ1Fo";
 
-    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, consumedCals: 0, consumedProtein: 0, burnedCals: 0 };
+    // ✨ 新增了 foodLogs 和 workoutLogs 陣列，讓你的明細永遠存雲端！
+    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, consumedCals: 0, consumedProtein: 0, burnedCals: 0, foodLogs: [], workoutLogs: [], age: '', height: '', gender: 'male', activity: 1.2 };
+    
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
     
@@ -448,11 +452,15 @@
         const cloudData = await window.loadFromFirebase();
         if (cloudData) {
             appData = cloudData; 
+            // 初始化確保陣列存在 (防呆)
+            if(!appData.foodLogs) appData.foodLogs = [];
+            if(!appData.workoutLogs) appData.workoutLogs = [];
+            
             if(appData.startWeight > 0) { document.getElementById('startWeightInput').value = appData.startWeight; document.getElementById('startWeightValue').innerText = appData.startWeight.toFixed(2); }
             if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
             if(appData.currentWeight > 0) document.getElementById('weightValue').innerText = appData.currentWeight.toFixed(2);
             
-            // ✨ 新增：把雲端的年齡、身高、性別自動填回格子裡
+            // 自動填入個人資料
             if(appData.age) document.getElementById('age').value = appData.age;
             if(appData.height) document.getElementById('height').value = appData.height;
             if(appData.gender) selectCustomOption('gender', appData.gender, appData.gender === 'male' ? '男性' : '女性');
@@ -464,146 +472,87 @@
                 selectCustomOption('activity', appData.activity, actText);
             }
             
+            // ✨ 渲染雲端抓下來的歷史明細
+            renderFoodLogs();
+            renderWorkoutLogs();
             updateDashboard(); drawWeightChart(); 
         }
     };
 
-    // ========================================================
-    // ✨ AI 區塊 1：文字教練估算邏輯 (已升級為活著的 2.5 模型)
-    // ========================================================
+    // AI 教練 (文字)
     async function analyzeFoodTextReal() {
         const textInput = document.getElementById('aiTextInput').value.trim();
         if(!textInput) { alert("請先輸入你吃了什麼！"); return; }
-        
         const btn = document.getElementById('btnAnalyzeTextAI');
-        btn.disabled = true;
-        btn.innerHTML = '<span>⏳</span> 教練思考中...';
-
+        btn.disabled = true; btn.innerHTML = '<span>⏳</span> 教練思考中...';
         try {
-            const promptText = `你是一位專業嚴格的健身營養師。請「完全根據」以下內容估算：『${textInput}』。請特別遵守：1. 絕對不要自行腦補沒提到的食物（沒寫飯就不能算飯！）。2. 必須高度重視使用者的「特殊烹調方式」（例如去皮、過水去油、水煮），並大幅扣除相應的油脂熱量。請精準估算，並只回傳純 JSON 格式：{"name": "根據輸入統整的真實內容", "calories": 總熱量大卡整數, "protein": 總蛋白質克數整數}`;
-            
-            const requestBody = {
-                contents: [{ parts: [{ text: promptText }] }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
-
-            // ⚠️ 這裡已經改為 gemini-2.5-flash
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody)
-            });
-
+            const promptText = `請精準分析以下台灣日常飲食的熱量與蛋白質：『${textInput}』。請遵守：1. 以台灣便當一般份量計算。2. 絕對不能自行加入沒提到的食物（沒寫飯就不能算飯）。3. 有寫去皮或水煮，請務必扣除油脂熱量。請只回傳純 JSON 格式：{"name": "簡短統整食物名稱", "calories": 整數總熱量大卡, "protein": 整數總蛋白質克數}`;
+            const requestBody = { contents: [{ parts: [{ text: promptText }] }], generationConfig: { responseMimeType: "application/json" } };
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
             if (!response.ok) throw new Error("API 請求發生錯誤");
-            const data = await response.json();
-            const aiText = data.candidates[0].content.parts[0].text;
-            const result = JSON.parse(aiText);
-
-            document.getElementById('foodName').value = result.name;
-            document.getElementById('foodCalories').value = result.calories;
-            document.getElementById('foodProtein').value = result.protein;
-
-            btn.innerHTML = '<span>✅</span> 分析完成';
-            document.getElementById('aiTextInput').value = ''; 
-        } catch (e) {
-            console.error(e);
-            btn.innerHTML = '<span>❌</span> 分析失敗';
-            alert("文字分析失敗，請確認網路連線或稍後再試。");
-        } finally {
-            setTimeout(() => { btn.disabled = false; btn.innerHTML = '<span>✨</span> 送出給 AI 教練分析'; }, 3000);
-        }
+            const data = await response.json(); const aiText = data.candidates[0].content.parts[0].text; const result = JSON.parse(aiText);
+            document.getElementById('foodName').value = result.name; document.getElementById('foodCalories').value = result.calories; document.getElementById('foodProtein').value = result.protein;
+            btn.innerHTML = '<span>✅</span> 分析完成'; document.getElementById('aiTextInput').value = ''; 
+        } catch (e) { btn.innerHTML = '<span>❌</span> 分析失敗'; alert("文字分析失敗，請確認網路連線或稍後再試。"); } 
+        finally { setTimeout(() => { btn.disabled = false; btn.innerHTML = '<span>✨</span> 送出給 AI 教練分析'; }, 3000); }
     }
 
-    // ========================================================
-    // ✨ AI 區塊 2：相機視覺估算邏輯 (已升級為活著的 2.5 模型)
-    // ========================================================
-    let isImageUploaded = false;
-    let currentImageBase64 = "";
-    let currentMimeType = "image/jpeg";
-
+    // AI 教練 (相機)
+    let isImageUploaded = false; let currentImageBase64 = ""; let currentMimeType = "image/jpeg";
     function previewFoodImage(event) {
         const file = event.target.files[0];
         if (file) {
-            currentMimeType = file.type;
-            const reader = new FileReader();
+            currentMimeType = file.type; const reader = new FileReader();
             reader.onload = function(e) {
-                const previewEl = document.getElementById('imagePreview');
-                previewEl.style.backgroundImage = `url('${e.target.result}')`;
-                previewEl.style.display = 'block';
-                document.getElementById('uploadPlaceholder').style.opacity = '0';
-                isImageUploaded = true;
-                
-                currentImageBase64 = e.target.result.split(',')[1];
-                
-                const btn = document.getElementById('btnAnalyzeAI');
-                btn.innerHTML = '<span>✨</span> AI 視覺掃描分析';
-                btn.disabled = false;
+                const previewEl = document.getElementById('imagePreview'); previewEl.style.backgroundImage = `url('${e.target.result}')`; previewEl.style.display = 'block';
+                document.getElementById('uploadPlaceholder').style.opacity = '0'; isImageUploaded = true; currentImageBase64 = e.target.result.split(',')[1];
+                const btn = document.getElementById('btnAnalyzeAI'); btn.innerHTML = '<span>✨</span> AI 視覺掃描分析'; btn.disabled = false;
             }
             reader.readAsDataURL(file);
         }
     }
-
     async function analyzeFoodImageReal() {
-        if (!isImageUploaded || !currentImageBase64) {
-            alert("請先點擊上方區域拍照或上傳食物照片！"); return;
-        }
-
-        const btn = document.getElementById('btnAnalyzeAI');
-        const scanLine = document.getElementById('scanLine');
-        
-        btn.disabled = true;
-        btn.innerHTML = '<span>🔍</span> Gemini 視覺模型分析中...';
-        scanLine.classList.add('active');
-
+        if (!isImageUploaded || !currentImageBase64) { alert("請先點擊上方區域拍照或上傳食物照片！"); return; }
+        const btn = document.getElementById('btnAnalyzeAI'); const scanLine = document.getElementById('scanLine');
+        btn.disabled = true; btn.innerHTML = '<span>🔍</span> Gemini 視覺模型分析中...'; scanLine.classList.add('active');
         try {
-            const promptText = `你是一位專業嚴格的健身營養師。請仔細辨識這張圖片中「真正出現」的食材。請特別遵守：1. 絕對不要自行腦補沒出現的食物（沒看到飯就絕對不能算飯！）。2. 仔細觀察烹調方式，若是水煮或去油餐盒，請精準給出低脂熱量。請只回傳 JSON 格式：{"name": "詳細且真實的食物內容", "calories": 總熱量大卡整數, "protein": 總蛋白質克數整數}`;
-
-            const requestBody = {
-                contents: [{
-                    parts: [
-                        { text: promptText },
-                        { inlineData: { mimeType: currentMimeType, data: currentImageBase64 } }
-                    ]
-                }],
-                generationConfig: { responseMimeType: "application/json" }
-            };
-
-            // ⚠️ 這裡已經改為 gemini-2.5-flash
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody)
-            });
-
+            const promptText = `請精準分析這張食物照片的熱量與蛋白質。請遵守：1. 以台灣便當一般份量計算。2. 只計算畫面中真正出現的食物（沒看到飯就不能算飯）。3. 若看起來是低脂烹調，請扣除相應熱量。請只回傳純 JSON 格式：{"name": "簡短食物名稱", "calories": 整數熱量大卡, "protein": 整數蛋白質克數}`;
+            const requestBody = { contents: [{ parts: [ { text: promptText }, { inlineData: { mimeType: currentMimeType, data: currentImageBase64 } } ] }], generationConfig: { responseMimeType: "application/json" } };
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
             if (!response.ok) throw new Error("API 請求發生錯誤");
-
-            const data = await response.json();
-            const aiText = data.candidates[0].content.parts[0].text;
-            const result = JSON.parse(aiText);
-
-            document.getElementById('foodName').value = result.name;
-            document.getElementById('foodCalories').value = result.calories;
-            document.getElementById('foodProtein').value = result.protein;
-
-            scanLine.classList.remove('active');
-            btn.innerHTML = '<span>✅</span> 掃描完成';
-
-        } catch (error) {
-            console.error(error);
-            scanLine.classList.remove('active');
-            btn.innerHTML = '<span>❌</span> 辨識失敗，請重試';
-            alert("AI 辨識失敗！已修正格式問題，如果仍失敗請確認照片檔案不要太大。");
-        } finally {
-            setTimeout(() => { btn.disabled = false; btn.innerHTML = '<span>✨</span> 重新掃描分析'; }, 3000);
-        }
+            const data = await response.json(); const aiText = data.candidates[0].content.parts[0].text; const result = JSON.parse(aiText);
+            document.getElementById('foodName').value = result.name; document.getElementById('foodCalories').value = result.calories; document.getElementById('foodProtein').value = result.protein;
+            scanLine.classList.remove('active'); btn.innerHTML = '<span>✅</span> 掃描完成';
+        } catch (error) { scanLine.classList.remove('active'); btn.innerHTML = '<span>❌</span> 辨識失敗，請重試'; } 
+        finally { setTimeout(() => { btn.disabled = false; btn.innerHTML = '<span>✨</span> 重新掃描分析'; }, 3000); }
     }
-    // ========================================================
 
+    // 選單切換
     function toggleCustomSelect(element) { document.querySelectorAll('.custom-select-wrapper').forEach(el => { if (el !== element) el.classList.remove('open'); }); element.classList.toggle('open'); }
     function selectCustomOption(inputId, value, text) { document.getElementById(inputId).value = value; document.getElementById(inputId + 'Display').innerText = text; }
     document.addEventListener('click', (e) => { if (!e.target.closest('.custom-select-wrapper')) { document.querySelectorAll('.custom-select-wrapper').forEach(el => el.classList.remove('open')); } });
+
+    // ✨ 運動面板專屬切換
+    window.switchWorkoutType = function(type) {
+        document.getElementById('btnToggleWeight').classList.remove('active');
+        document.getElementById('btnToggleCardio').classList.remove('active');
+        document.getElementById('workoutCategory').value = type;
+        
+        if (type === '🏋️ 重訓') {
+            document.getElementById('btnToggleWeight').classList.add('active');
+            document.getElementById('workoutItemLabel').innerText = '重訓項目與細節';
+            document.getElementById('workoutItemName').placeholder = '例如：機械胸推 4組、深蹲 50kg...';
+        } else {
+            document.getElementById('btnToggleCardio').classList.add('active');
+            document.getElementById('workoutItemLabel').innerText = '有氧項目與時間';
+            document.getElementById('workoutItemName').placeholder = '例如：跑步機 30分鐘、快走 3km...';
+        }
+    };
 
     let currentSelectedDay = ''; 
     function selectDay(element, dayName) {
         document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active')); element.classList.add('active');
         document.getElementById('displayDayName').innerText = `星期${dayName}`; currentSelectedDay = dayName;
-
         let currentNorm = todayObj.getDay() === 0 ? 7 : todayObj.getDay(); let targetNorm = dayMap[dayName] === 0 ? 7 : dayMap[dayName];
         let diff = targetNorm - currentNorm; let targetDate = new Date(todayObj); targetDate.setDate(todayObj.getDate() + diff);
         document.getElementById('todayDate').innerText = `${targetDate.getMonth() + 1}月 ${targetDate.getDate()}日`;
@@ -624,16 +573,15 @@
         const targetWeight = parseFloat(document.getElementById('targetWeightInput').value); const activity = parseFloat(document.getElementById('activity').value);
         if(!age || !height || !startWeight || !targetWeight) { alert("請填寫完整的基礎資料與體重目標！"); return; }
         
-        // ✨ 新增：把基本資料也存進 appData 準備上傳
         appData.startWeight = startWeight; appData.targetWeight = targetWeight;
         appData.age = age; appData.height = height; appData.gender = gender; appData.activity = activity;
         
         let bmr = (gender === 'male') ? (10 * startWeight) + (6.25 * height) - (5 * age) + 5 : (10 * startWeight) + (6.25 * height) - (5 * age) - 161;
         appData.tdee = Math.round(bmr * activity);
         document.getElementById('startWeightValue').innerText = startWeight.toFixed(2);
-        
         updateDashboard(); drawWeightChart(); triggerSync(); alert(`設定成功！`); switchTab('weight', document.querySelectorAll('.nav-item')[0]);
     }
+
     function recordWeight() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回「今日」再進行記錄。"); return; }
@@ -644,36 +592,112 @@
         updateDashboard(); drawWeightChart(); triggerSync(); alert("記錄成功！");
     }
 
+    // ✨ 渲染飲食清單 (加上質感 SVG Icon)
+    function renderFoodLogs() {
+        const list = document.getElementById('foodList'); list.innerHTML = '';
+        appData.foodLogs.forEach(log => {
+            const li = document.createElement('li'); li.className = 'log-item';
+            li.innerHTML = `
+                <div class="log-details"><strong>${log.name}</strong><span class="log-macros">蛋白質: ${log.protein}g</span></div>
+                <div class="log-actions">
+                    <span class="log-value" style="color: var(--text-main);">${log.cals} kcal</span>
+                    <span class="icon-btn icon-edit" onclick="editFood(${log.id})" title="編輯">
+                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </span>
+                    <span class="icon-btn icon-delete" onclick="deleteFood(${log.id})" title="刪除">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </span>
+                </div>`;
+            list.prepend(li);
+        });
+    }
+
+    // ✨ 加入飲食 (寫入陣列)
     function addFood() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回今日再進行記錄。"); return; }
         const name = document.getElementById('foodName').value || "未命名食物";
         const cals = parseFloat(document.getElementById('foodCalories').value); const protein = parseFloat(document.getElementById('foodProtein').value);
         if(isNaN(cals) || isNaN(protein)) { alert("請確認數值！"); return; }
+        
         appData.consumedCals += cals; appData.consumedProtein += protein;
-        const li = document.createElement('li'); li.className = 'log-item';
-        li.innerHTML = `<div class="log-details"><strong>${name}</strong><span class="log-macros">蛋白質: ${protein}g</span></div><div style="font-weight: bold; color: var(--text-main);">${cals} kcal</div>`;
-        document.getElementById('foodList').prepend(li);
+        appData.foodLogs.push({ id: Date.now(), name, cals, protein }); // 存入明細
         
         document.getElementById('foodName').value = ''; document.getElementById('foodCalories').value = ''; document.getElementById('foodProtein').value = '';
         document.getElementById('imagePreview').style.display = 'none'; document.getElementById('uploadPlaceholder').style.opacity = '1';
         isImageUploaded = false; currentImageBase64 = "";
         
-        updateDashboard(); triggerSync(); alert("已加入飲食清單！");
+        renderFoodLogs(); updateDashboard(); triggerSync(); alert("已加入飲食清單！");
     }
 
+    // ✨ 編輯/刪除 飲食
+    window.deleteFood = function(id) {
+        if(!confirm("確定要刪除這筆飲食紀錄嗎？")) return;
+        const idx = appData.foodLogs.findIndex(x => x.id === id);
+        if(idx > -1) { appData.consumedCals -= appData.foodLogs[idx].cals; appData.consumedProtein -= appData.foodLogs[idx].protein; appData.foodLogs.splice(idx, 1); renderFoodLogs(); updateDashboard(); triggerSync(); }
+    }
+    window.editFood = function(id) {
+        const idx = appData.foodLogs.findIndex(x => x.id === id);
+        if(idx > -1) {
+            const log = appData.foodLogs[idx];
+            document.getElementById('foodName').value = log.name; document.getElementById('foodCalories').value = log.cals; document.getElementById('foodProtein').value = log.protein;
+            appData.consumedCals -= log.cals; appData.consumedProtein -= log.protein; appData.foodLogs.splice(idx, 1);
+            renderFoodLogs(); updateDashboard(); triggerSync(); window.scrollTo({ top: document.getElementById('foodTab').offsetTop, behavior: 'smooth' });
+        }
+    }
+
+    // ✨ 渲染運動清單 (加上質感 SVG Icon)
+    function renderWorkoutLogs() {
+        const list = document.getElementById('workoutList'); list.innerHTML = '';
+        appData.workoutLogs.forEach(log => {
+            const li = document.createElement('li'); li.className = 'log-item';
+            li.innerHTML = `
+                <div class="log-details"><strong>${log.category}</strong><span class="log-macros">${log.name}</span></div>
+                <div class="log-actions">
+                    <span class="log-value" style="color: var(--primary-color);">-${log.cals} kcal</span>
+                    <span class="icon-btn icon-edit" onclick="editWorkout(${log.id})" title="編輯">
+                        <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                    </span>
+                    <span class="icon-btn icon-delete" onclick="deleteWorkout(${log.id})" title="刪除">
+                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                    </span>
+                </div>`;
+            list.prepend(li);
+        });
+    }
+
+    // ✨ 加入運動 (全新自由輸入邏輯)
     function addWorkout() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回今日再進行記錄。"); return; }
-        const typeValue = document.getElementById('workoutType').value; const typeName = document.getElementById('workoutTypeDisplay').innerText;
-        const duration = parseFloat(document.getElementById('workoutDuration').value);
-        if(isNaN(duration) || duration <= 0) { alert("請輸入有效時間！"); return; }
-        let burnRate = 5; if(typeValue === 'cardio') burnRate = 8; if(typeValue === 'yoga') burnRate = 3;
-        const burned = duration * burnRate; appData.burnedCals += burned;
-        const li = document.createElement('li'); li.className = 'log-item';
-        li.innerHTML = `<div class="log-details"><strong>${typeName.split(' ')[1]}</strong><span class="log-macros">${duration} 分鐘</span></div><div style="font-weight: bold; color: var(--primary-color);">-${burned} kcal</div>`;
-        document.getElementById('workoutList').prepend(li); document.getElementById('workoutDuration').value = '';
-        updateDashboard(); triggerSync(); alert("已加入運動清單！");
+        
+        const category = document.getElementById('workoutCategory').value;
+        const name = document.getElementById('workoutItemName').value || "未命名運動";
+        const cals = parseFloat(document.getElementById('workoutItemCals').value);
+        if(isNaN(cals) || cals <= 0) { alert("請輸入有效的消耗熱量大卡！"); return; }
+        
+        appData.burnedCals += cals;
+        appData.workoutLogs.push({ id: Date.now(), category, name, cals }); // 存入明細
+        
+        document.getElementById('workoutItemName').value = ''; document.getElementById('workoutItemCals').value = '';
+        renderWorkoutLogs(); updateDashboard(); triggerSync(); alert("已加入運動清單！");
+    }
+
+    // ✨ 編輯/刪除 運動
+    window.deleteWorkout = function(id) {
+        if(!confirm("確定要刪除這筆運動紀錄嗎？")) return;
+        const idx = appData.workoutLogs.findIndex(x => x.id === id);
+        if(idx > -1) { appData.burnedCals -= appData.workoutLogs[idx].cals; appData.workoutLogs.splice(idx, 1); renderWorkoutLogs(); updateDashboard(); triggerSync(); }
+    }
+    window.editWorkout = function(id) {
+        const idx = appData.workoutLogs.findIndex(x => x.id === id);
+        if(idx > -1) {
+            const log = appData.workoutLogs[idx];
+            switchWorkoutType(log.category); // 切換回對應的按鈕
+            document.getElementById('workoutItemName').value = log.name; document.getElementById('workoutItemCals').value = log.cals;
+            appData.burnedCals -= log.cals; appData.workoutLogs.splice(idx, 1);
+            renderWorkoutLogs(); updateDashboard(); triggerSync(); window.scrollTo({ top: document.getElementById('workoutTab').offsetTop, behavior: 'smooth' });
+        }
     }
 
     function updateDashboard() {
