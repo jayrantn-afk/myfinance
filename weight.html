@@ -3,135 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的智能體重管理大師 - 會員登入版</title>
+    <title>我的智能體重管理大師 - 真實AI版</title>
     <style>
         :root {
-            --primary-color: #fca311; /* 橘色主題 */
+            --primary-color: #fca311; 
             --primary-hover: #e89610;
             --secondary-color: #2196F3;
-            
-            /* 深藍色背景 */
             --bg-color: #0a192f;
-            
-            /* Glassmorphism 霧面質感變量 */
             --glass-bg: rgba(255, 255, 255, 0.05); 
             --glass-border: 1px solid rgba(255, 255, 255, 0.1); 
             --glass-blur: blur(12px); 
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); 
-            
             --dark-card-bg: #14213d; 
             --text-main: #fff; 
             --text-muted: #bbb;
             --text-on-dark: #fff;
-            
             --border-radius-card: 20px;
             --border-radius-input: 12px;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'PingFang TC', 'Microsoft JhengHei', 'Segoe UI', sans-serif;
-            -webkit-font-smoothing: antialiased; 
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; -webkit-font-smoothing: antialiased; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; }
 
-        body {
-            background-color: var(--bg-color); 
-            color: var(--text-main);
-            line-height: 1.6;
-        }
-
-        /* 滿版響應式容器 */
         .app-wrapper {
-            max-width: 600px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background-color: var(--bg-color);
-            position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.1);
-            padding-bottom: 90px; 
-            display: none; 
+            max-width: 600px; margin: 0 auto; min-height: 100vh; background-color: var(--bg-color);
+            position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.1); padding-bottom: 90px; display: none; 
         }
 
-        /* 登入畫面樣式 */
-        .login-screen {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            padding: 20px;
-        }
-
-        .login-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: var(--glass-border);
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
-            padding: 40px 30px;
-            border-radius: 24px;
-            box-shadow: var(--glass-shadow);
-            text-align: center;
-            width: 100%;
-            max-width: 400px;
-        }
-
+        /* 登入畫面 */
+        .login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .login-card { background: rgba(255, 255, 255, 0.05); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 40px 30px; border-radius: 24px; box-shadow: var(--glass-shadow); text-align: center; width: 100%; max-width: 400px; }
         .login-card h1 { color: var(--primary-color); font-size: 24px; margin-bottom: 10px; }
         .login-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
-
-        .btn-google {
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            background-color: white; color: #333; border: none; padding: 14px;
-            border-radius: var(--border-radius-input); font-size: 16px; font-weight: bold;
-            cursor: pointer; width: 100%; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255,255,255,0.1);
-        }
+        .btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; background-color: white; color: #333; border: none; padding: 14px; border-radius: var(--border-radius-input); font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255,255,255,0.1); }
         .btn-google:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.2); }
         .btn-google img { width: 20px; height: 20px; }
 
-        /* 頂部區域 */
-        .top-region {
-            height: 180px; background-color: var(--primary-color); padding: 20px;
-            text-align: center; position: relative; border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px; display: flex; justify-content: center; align-items: flex-start;
-        }
+        /* 頂部與儀表板 */
+        .top-region { height: 180px; background-color: var(--primary-color); padding: 20px; text-align: center; position: relative; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; display: flex; justify-content: center; align-items: flex-start; }
         .header-title { position: relative; z-index: 1; font-size: 20px; font-weight: bold; color: #fff; margin-top: 20px; letter-spacing: 1px; opacity: 0.9; }
+        .fixed-dashboard-card { background-color: var(--dark-card-bg); border-radius: var(--border-radius-card); padding: 25px 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.4); color: var(--text-on-dark); margin: -90px 20px 20px 20px; position: relative; z-index: 10; }
 
-        /* 固定數據 Banner 卡片 */
-        .fixed-dashboard-card {
-            background-color: var(--dark-card-bg); border-radius: var(--border-radius-card);
-            padding: 25px 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.4); color: var(--text-on-dark);
-            margin: -90px 20px 20px 20px; position: relative; z-index: 10;
-        }
-
-        /* 霧面質感卡片 */
-        .glass-input-card {
-            background: var(--glass-bg); border: var(--glass-border);
-            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
-            padding: 25px 20px; border-radius: var(--border-radius-input);
-            box-shadow: var(--glass-shadow); margin: 0 20px 20px 20px;
-        }
+        .glass-input-card { background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 25px 20px; border-radius: var(--border-radius-input); box-shadow: var(--glass-shadow); margin: 0 20px 20px 20px; }
         .glass-input-card h2 { font-size: 18px; margin-bottom: 25px; color: var(--text-main); border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 12px; }
 
-        /* 深色儀表板細節 */
         .date-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .date-day { font-size: 24px; font-weight: bold; }
         .date-period { font-size: 14px; opacity: 0.8; }
-
-        /* 星期導航列 */
         .week-nav { display: flex; justify-content: space-between; margin-bottom: 25px; }
-        .week-day-circle { 
-            width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; 
-            font-size: 14px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        }
+        .week-day-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s ease; }
         .week-day-circle:hover { background-color: rgba(255,255,255,0.1); }
-        .week-day-circle.active { 
-            background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); 
-            font-weight: bold; box-shadow: 0 0 12px rgba(252, 163, 17, 0.5); transform: translateY(-2px);
-        }
+        .week-day-circle.active { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: bold; box-shadow: 0 0 12px rgba(252, 163, 17, 0.5); transform: translateY(-2px); }
 
         .top-metrics { display: flex; align-items: center; margin-bottom: 25px; gap: 20px; }
         .weight-ring-container { width: 100px; height: 100px; position: relative; }
@@ -140,7 +62,6 @@
         .weight-ring-content { position: relative; z-index: 1; text-align: center; }
         .percent-achieved { font-size: 22px; font-weight: bold; }
         .ring-label { font-size: 12px; opacity: 0.7; }
-        
         .weight-details { flex: 1; }
         .metric-item { margin-bottom: 12px; }
         .weight-value { font-size: 22px; font-weight: bold; }
@@ -155,91 +76,41 @@
         .metric-value-large { font-size: 20px; font-weight: bold; margin-bottom: 2px;}
         .metric-label-muted { font-size: 11px; opacity: 0.7; }
 
-        /* 輸入框共用樣式 */
+        /* 表單與自訂選單 */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: var(--text-muted); opacity: 0.9;}
-        
-        input {
-            width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); 
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input);
-            font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield;
-        }
+        input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input::placeholder { color: rgba(255, 255, 255, 0.3); }
         input:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: #fca311; box-shadow: 0 0 10px rgba(252, 163, 17, 0.6); }
 
-        /* 懸浮霧面選單 */
         .custom-select-wrapper { position: relative; user-select: none; }
-        .custom-select-display {
-            width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); 
-            backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; color: var(--text-main);
-            cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease;
-        }
+        .custom-select-display { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; color: var(--text-main); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
         .custom-select-display::after { content: '▼'; font-size: 10px; opacity: 0.5; transition: transform 0.3s; }
         .custom-select-wrapper.open .custom-select-display { background: rgba(255, 255, 255, 0.15); border-color: #fca311; box-shadow: 0 0 10px rgba(252, 163, 17, 0.6); }
         .custom-select-wrapper.open .custom-select-display::after { transform: rotate(180deg); color: #fca311; opacity: 1; }
-        .custom-select-options {
-            position: absolute; top: 100%; left: 0; right: 0; background: rgba(10, 25, 47, 0.95); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid #fca311; 
-            border-radius: var(--border-radius-input); margin-top: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-            display: none; z-index: 100; overflow: hidden;
-        }
+        .custom-select-options { position: absolute; top: 100%; left: 0; right: 0; background: rgba(10, 25, 47, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid #fca311; border-radius: var(--border-radius-input); margin-top: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: none; z-index: 100; overflow: hidden; }
         .custom-select-wrapper.open .custom-select-options { display: block; animation: slideDownGlass 0.2s ease forwards; }
         .custom-select-options div { padding: 14px; cursor: pointer; transition: background 0.2s, color 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); }
         .custom-select-options div:last-child { border-bottom: none; }
         .custom-select-options div:hover { background: rgba(252, 163, 17, 0.15); color: #fca311; font-weight: bold; }
         @keyframes slideDownGlass { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ==================== ✨ 照片上傳與 AI 掃描專屬 UI ==================== */
-        .image-upload-area {
-            width: 100%; height: 200px;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            border-radius: var(--border-radius-input);
-            background: rgba(0, 0, 0, 0.2);
-            position: relative; overflow: hidden;
-            cursor: pointer; display: flex; justify-content: center; align-items: center;
-            margin-bottom: 15px; transition: all 0.3s ease;
-        }
-        .image-upload-area:hover {
-            border-color: var(--primary-color);
-            background: rgba(252, 163, 17, 0.05);
-            box-shadow: 0 0 15px rgba(252, 163, 17, 0.2);
-        }
+        /* 相機與雷射動畫 */
+        .image-upload-area { width: 100%; height: 200px; border: 2px dashed rgba(255, 255, 255, 0.3); border-radius: var(--border-radius-input); background: rgba(0, 0, 0, 0.2); position: relative; overflow: hidden; cursor: pointer; display: flex; justify-content: center; align-items: center; margin-bottom: 15px; transition: all 0.3s ease; }
+        .image-upload-area:hover { border-color: var(--primary-color); background: rgba(252, 163, 17, 0.05); box-shadow: 0 0 15px rgba(252, 163, 17, 0.2); }
         .upload-placeholder { text-align: center; color: var(--text-muted); transition: opacity 0.3s; }
         .upload-placeholder span { font-size: 40px; display: block; margin-bottom: 10px; }
-        .image-preview {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover; background-position: center; display: none; z-index: 1;
-        }
-        
-        /* 雷射掃描動畫 */
-        .scan-line {
-            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
-            background: #fca311; box-shadow: 0 0 15px #fca311, 0 0 30px #fca311;
-            display: none; z-index: 10;
-        }
-        .scan-line.active {
-            display: block;
-            animation: scanAnim 2s infinite linear;
-        }
-        @keyframes scanAnim {
-            0% { top: 0; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-        /* ==================================================================== */
+        .image-preview { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; display: none; z-index: 1; }
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #fca311; box-shadow: 0 0 15px #fca311, 0 0 30px #fca311; display: none; z-index: 10; }
+        .scan-line.active { display: block; animation: scanAnim 2s infinite linear; }
+        @keyframes scanAnim { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
 
         /* 按鈕 */
-        button {
-            width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none;
-            border-radius: var(--border-radius-input); cursor: pointer; font-size: 16px; font-weight: bold;
-            transition: all 0.3s ease; margin-top: 10px; border: var(--glass-border); box-shadow: 0 4px 10px rgba(252, 163, 17, 0.3);
-        }
+        button { width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: var(--border-radius-input); cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s ease; margin-top: 10px; border: var(--glass-border); box-shadow: 0 4px 10px rgba(252, 163, 17, 0.3); }
         button:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(252, 163, 17, 0.5); }
         button:focus { outline: none; box-shadow: 0 0 15px rgba(252, 163, 17, 0.8); }
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-        
         button.btn-ai { background-color: var(--secondary-color); font-size: 16px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;}
         button.btn-ai:hover { background-color: #0b7dda; box-shadow: 0 6px 15px rgba(33, 150, 243, 0.5); }
         button.btn-logout { background-color: rgba(244, 67, 54, 0.2); color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.3); margin-top: 30px; box-shadow: none; }
@@ -257,21 +128,12 @@
         @keyframes fadeInTab { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 底部導航欄 */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px;
-            height: 80px; background: rgba(10, 25, 47, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            display: flex; justify-content: space-around; align-items: center; border-top-left-radius: 20px;
-            border-top-right-radius: 20px; z-index: 100; box-shadow: 0 -8px 25px rgba(0,0,0,0.3);
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 600px; height: 80px; background: rgba(10, 25, 47, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; border-top-left-radius: 20px; border-top-right-radius: 20px; z-index: 100; box-shadow: 0 -8px 25px rgba(0,0,0,0.3); }
         .nav-item { text-align: center; cursor: pointer; transition: all 0.3s; opacity: 0.5; width: 25%; color: white; position: relative; }
         .nav-item.active { color: var(--primary-color); opacity: 1; }
-        .nav-item.active::after {
-            content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
-            width: 30px; height: 3px; background-color: var(--primary-color); border-radius: 2px; box-shadow: 0 0 10px var(--primary-color);
-        }
+        .nav-item.active::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background-color: var(--primary-color); border-radius: 2px; box-shadow: 0 0 10px var(--primary-color); }
         .nav-icon { margin-bottom: 6px; font-size: 22px; }
         .nav-label { font-size: 12px; font-weight: bold; }
-
     </style>
 </head>
 <body>
@@ -331,32 +193,17 @@
 
         <div class="chart-container">
             <canvas class="chart-canvas" id="weightChartCanvas"></canvas>
-            <div class="chart-labels">
-                <span>初始體重</span>
-                <span>目前體重</span>
-            </div>
+            <div class="chart-labels"><span>初始體重</span><span>目前體重</span></div>
         </div>
 
         <div class="bottom-metrics">
             <div class="metric-group">
-                <div class="metric-item">
-                    <div class="metric-value-large" id="displayTDEE">0</div>
-                    <div class="metric-label-muted">每日 TDEE (kcal)</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value-large" id="displayConsumed">0</div>
-                    <div class="metric-label-muted">已攝取</div>
-                </div>
+                <div class="metric-item"><div class="metric-value-large" id="displayTDEE">0</div><div class="metric-label-muted">每日 TDEE (kcal)</div></div>
+                <div class="metric-item"><div class="metric-value-large" id="displayConsumed">0</div><div class="metric-label-muted">已攝取</div></div>
             </div>
             <div class="metric-group">
-                <div class="metric-item">
-                    <div class="metric-value-large" id="displayBurned">0</div>
-                    <div class="metric-label-muted">運動消耗</div>
-                </div>
-                <div class="metric-item">
-                    <div class="metric-value-large" id="displayRemaining">0</div>
-                    <div class="metric-label-muted">剩餘額度 (赤字)</div>
-                </div>
+                <div class="metric-item"><div class="metric-value-large" id="displayBurned">0</div><div class="metric-label-muted">運動消耗</div></div>
+                <div class="metric-item"><div class="metric-value-large" id="displayRemaining">0</div><div class="metric-label-muted">剩餘額度 (赤字)</div></div>
             </div>
         </div>
     </div>
@@ -375,21 +222,17 @@
 
         <div id="foodTab" class="tab-content">
             <div class="glass-input-card">
-                <h2>📸 AI 相機辨識估算</h2>
+                <h2>📸 Gemini AI 視覺辨識估算</h2>
                 
                 <input type="file" id="foodImageInput" accept="image/*" capture="environment" style="display: none;" onchange="previewFoodImage(event)">
                 
                 <div class="image-upload-area" onclick="document.getElementById('foodImageInput').click()">
                     <div id="imagePreview" class="image-preview"></div>
                     <div class="scan-line" id="scanLine"></div>
-                    
-                    <div class="upload-placeholder" id="uploadPlaceholder">
-                        <span>📷</span>
-                        <p>點擊開啟相機或上傳食物照片</p>
-                    </div>
+                    <div class="upload-placeholder" id="uploadPlaceholder"><span>📷</span><p>點擊開啟相機或上傳食物照片</p></div>
                 </div>
 
-                <button class="btn-ai" id="btnAnalyzeAI" onclick="analyzeFoodImage()">
+                <button class="btn-ai" id="btnAnalyzeAI" onclick="analyzeFoodImageReal()">
                     <span>✨</span> AI 視覺掃描分析
                 </button>
 
@@ -498,27 +341,19 @@
 
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('weight', this)">
-            <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4-12v2H8V8h8zm0 4v2H8v-2h8zm0 4v2H8v-2h8z"/></svg>
-            </div>
+            <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm4-12v2H8V8h8zm0 4v2H8v-2h8zm0 4v2H8v-2h8z"/></svg></div>
             <div class="nav-label">首頁/體重</div>
         </div>
         <div class="nav-item" onclick="switchTab('food', this)">
-            <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2C10.67 2 10 2.67 10 3.5V6H9V3.5C9 2.67 8.33 2 7.5 2S6 2.67 6 3.5V6H5V3.5C5 2.67 4.33 2 3.5 2S2 2.67 2 3.5V8c0 2.07 1.63 3.75 3.6 3.96l.9 8.54c.05.5.47.88.97.88h3.06c.5 0 .92-.38.97-.88l.9-8.54c1.97-.21 3.6-1.89 3.6-3.96V3.5c0-.83-.67-1.5-1.5-1.5zm.5 16H8.97l-.63-6h2.32l-.66 6zM15.5 2c-.83 0-1.5.67-1.5 1.5V11c0 2.21 1.79 4 4 4v5c0 .55.45 1 1 1s1-.45 1-1v-5c2.21 0 4-1.79 4-4V3.5c0-.83-.67-1.5-1.5-1.5S21.33 2.67 21.33 3.5V11c0 1.1-.9 2-2 2s-2-.9-2-2V3.5c0-.83-.67-1.5-1.5-1.5z"/></svg>
-            </div>
+            <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11.5 2C10.67 2 10 2.67 10 3.5V6H9V3.5C9 2.67 8.33 2 7.5 2S6 2.67 6 3.5V6H5V3.5C5 2.67 4.33 2 3.5 2S2 2.67 2 3.5V8c0 2.07 1.63 3.75 3.6 3.96l.9 8.54c.05.5.47.88.97.88h3.06c.5 0 .92-.38.97-.88l.9-8.54c1.97-.21 3.6-1.89 3.6-3.96V3.5c0-.83-.67-1.5-1.5-1.5zm.5 16H8.97l-.63-6h2.32l-.66 6zM15.5 2c-.83 0-1.5.67-1.5 1.5V11c0 2.21 1.79 4 4 4v5c0 .55.45 1 1 1s1-.45 1-1v-5c2.21 0 4-1.79 4-4V3.5c0-.83-.67-1.5-1.5-1.5S21.33 2.67 21.33 3.5V11c0 1.1-.9 2-2 2s-2-.9-2-2V3.5c0-.83-.67-1.5-1.5-1.5z"/></svg></div>
             <div class="nav-label">飲食</div>
         </div>
         <div class="nav-item" onclick="switchTab('workout', this)">
-            <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-4v2l4-3-4-3v2H8v2h4zm0-8v2H8V6h4zm-4 4v2H8v-2h4zm0 4v2H8v-2h4z"/></svg>
-            </div>
+            <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-4v2l4-3-4-3v2H8v2h4zm0-8v2H8V6h4zm-4 4v2H8v-2h4zm0 4v2H8v-2h4z"/></svg></div>
             <div class="nav-label">運動</div>
         </div>
         <div class="nav-item" onclick="switchTab('profile', this)">
-            <div class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            </div>
+            <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
             <div class="nav-label">個人資料</div>
         </div>
     </div>
@@ -547,9 +382,7 @@
         db = getFirestore(app);
         auth = getAuth(app);
         provider = new GoogleAuthProvider();
-    } catch (e) {
-        console.error("Firebase 初始化失敗", e);
-    }
+    } catch (e) { console.error("Firebase 初始化失敗", e); }
 
     if (auth) {
         onAuthStateChanged(auth, (user) => {
@@ -567,50 +400,26 @@
         });
     }
 
-    window.signInWithGoogle = function() {
-        signInWithPopup(auth, provider).catch((error) => {
-            console.error("登入失敗", error);
-            alert("登入失敗，請確認網域已加入白名單。");
-        });
-    };
-
-    window.logOutUser = function() {
-        signOut(auth).then(() => { location.reload(); });
-    };
-
-    window.syncWithFirebase = async function(data) {
-        if (!db || !currentUserUid) return;
-        try { await setDoc(doc(db, "weight_users", currentUserUid), data); } 
-        catch(e) { console.error("❌ Firebase 儲存失敗", e); }
-    }
-
-    window.loadFromFirebase = async function() {
-        if (!db || !currentUserUid) return null;
-        try {
-            const docSnap = await getDoc(doc(db, "weight_users", currentUserUid));
-            return docSnap.exists() ? docSnap.data() : null;
-        } catch(e) { return null; }
-    }
+    window.signInWithGoogle = function() { signInWithPopup(auth, provider).catch((error) => { alert("登入失敗，請確認網域已加入白名單。"); }); };
+    window.logOutUser = function() { signOut(auth).then(() => { location.reload(); }); };
+    window.syncWithFirebase = async function(data) { if (!db || !currentUserUid) return; try { await setDoc(doc(db, "weight_users", currentUserUid), data); } catch(e) { console.error("Firebase 儲存失敗", e); } }
+    window.loadFromFirebase = async function() { if (!db || !currentUserUid) return null; try { const docSnap = await getDoc(doc(db, "weight_users", currentUserUid)); return docSnap.exists() ? docSnap.data() : null; } catch(e) { return null; } }
 </script>
 
 <script>
-    let appData = {
-        tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0,
-        consumedCals: 0, consumedProtein: 0, burnedCals: 0
-    };
+    // ==========================================
+    // ⚠️ 這裡填入你在 Google AI Studio 申請的金鑰
+    // ==========================================
+    const GEMINI_API_KEY = "AIzaSyDsI2K4Ez4XhHgARpWfHBgR2oEig6ZX4qY";
 
+    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, consumedCals: 0, consumedProtein: 0, burnedCals: 0 };
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
     
     document.addEventListener('DOMContentLoaded', () => {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         const currentDayStr = daysOfWeek[todayObj.getDay()];
-        
-        document.querySelectorAll('.week-day-circle').forEach(el => {
-            el.classList.remove('active');
-            if(el.innerText === currentDayStr) el.classList.add('active');
-        });
-        
+        document.querySelectorAll('.week-day-circle').forEach(el => { el.classList.remove('active'); if(el.innerText === currentDayStr) el.classList.add('active'); });
         document.getElementById('displayDayName').innerText = `星期${currentDayStr}`;
         document.getElementById('todayDate').innerText = `${todayObj.getMonth() + 1}月 ${todayObj.getDate()}日`;
         drawWeightChart();
@@ -620,19 +429,17 @@
         const cloudData = await window.loadFromFirebase();
         if (cloudData) {
             appData = cloudData; 
-            if(appData.startWeight > 0) {
-                document.getElementById('startWeightInput').value = appData.startWeight;
-                document.getElementById('startWeightValue').innerText = appData.startWeight.toFixed(2);
-            }
+            if(appData.startWeight > 0) { document.getElementById('startWeightInput').value = appData.startWeight; document.getElementById('startWeightValue').innerText = appData.startWeight.toFixed(2); }
             if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
             if(appData.currentWeight > 0) document.getElementById('weightValue').innerText = appData.currentWeight.toFixed(2);
-            updateDashboard();
-            drawWeightChart(); 
+            updateDashboard(); drawWeightChart(); 
         }
     };
 
-    // ✨ 圖片預覽功能
+    // ✨ 圖片預覽與 Base64 轉換
     let isImageUploaded = false;
+    let currentImageBase64 = "";
+
     function previewFoodImage(event) {
         const file = event.target.files[0];
         if (file) {
@@ -641,10 +448,12 @@
                 const previewEl = document.getElementById('imagePreview');
                 previewEl.style.backgroundImage = `url('${e.target.result}')`;
                 previewEl.style.display = 'block';
-                document.getElementById('uploadPlaceholder').style.opacity = '0'; // 隱藏文字但保留空間
+                document.getElementById('uploadPlaceholder').style.opacity = '0';
                 isImageUploaded = true;
                 
-                // 重置按鈕狀態
+                // 擷取逗號後面的 Base64 原始字串給 Gemini 使用
+                currentImageBase64 = e.target.result.split(',')[1];
+                
                 const btn = document.getElementById('btnAnalyzeAI');
                 btn.innerHTML = '<span>✨</span> AI 視覺掃描分析';
                 btn.disabled = false;
@@ -653,249 +462,173 @@
         }
     }
 
-    // ✨ AI 視覺辨識模擬動畫與邏輯
-    function analyzeFoodImage() {
-        if (!isImageUploaded) {
-            alert("請先點擊上方區域拍照或上傳食物照片！");
-            return;
+    // ✨ 真實呼叫 Gemini 1.5 Flash API
+    async function analyzeFoodImageReal() {
+        if (!isImageUploaded || !currentImageBase64) {
+            alert("請先點擊上方區域拍照或上傳食物照片！"); return;
+        }
+        if (GEMINI_API_KEY === "請在這裡填寫你的Gemini_API_Key" || !GEMINI_API_KEY) {
+            alert("請先在 HTML 原始碼約第 730 行填入真實的 Gemini API 金鑰！"); return;
         }
 
         const btn = document.getElementById('btnAnalyzeAI');
         const scanLine = document.getElementById('scanLine');
         
-        // 啟動動畫與鎖定按鈕
         btn.disabled = true;
-        btn.innerHTML = '<span>🔍</span> 視覺模型分析中...';
+        btn.innerHTML = '<span>🔍</span> Gemini 視覺模型分析中...';
         scanLine.classList.add('active');
 
-        // 模擬 2.5 秒的 API 請求等待時間
-        setTimeout(() => {
-            // 停止動畫
+        try {
+            // 嚴謹的 Prompt，要求 AI 只回傳純 JSON
+            const promptText = "這是一張食物的照片。請分析這張圖片，並估算它的熱量與蛋白質。請『只』回傳一個 JSON 格式的字串，不要包含任何 Markdown 標記，格式如下：{\"name\": \"繁體中文食物名稱\", \"calories\": 整數熱量大卡, \"protein\": 整數蛋白質克數}";
+
+            const requestBody = {
+                contents: [{
+                    parts: [
+                        { text: promptText },
+                        { inlineData: { mimeType: "image/jpeg", data: currentImageBase64 } }
+                    ]
+                }]
+            };
+
+            // 呼叫 Google 官方 REST API
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) throw new Error("API 請求發生錯誤");
+
+            const data = await response.json();
+            
+            // 清理 AI 可能附帶的 Markdown 標籤 (```json) 並解析
+            const aiText = data.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const result = JSON.parse(aiText);
+
+            // 填入畫面
+            document.getElementById('foodName').value = result.name;
+            document.getElementById('foodCalories').value = result.calories;
+            document.getElementById('foodProtein').value = result.protein;
+
             scanLine.classList.remove('active');
             btn.innerHTML = '<span>✅</span> 掃描完成';
 
-            // 隨機產生逼真的食物數據
-            const mockFoods = [
-                { name: "香煎雞胸肉健康餐盤", cal: 420, pro: 35 },
-                { name: "經典牛肉起司漢堡", cal: 650, pro: 28 },
-                { name: "清炒鮭魚義大利麵", cal: 580, pro: 32 },
-                { name: "酪梨生菜沙拉", cal: 320, pro: 12 },
-                { name: "日式炸豬排定食", cal: 850, pro: 25 }
-            ];
-            const randomFood = mockFoods[Math.floor(Math.random() * mockFoods.length)];
-
-            // 自動填入輸入框
-            document.getElementById('foodName').value = randomFood.name;
-            document.getElementById('foodCalories').value = randomFood.cal;
-            document.getElementById('foodProtein').value = randomFood.pro;
-
-            alert("這是前端 UI 模擬效果！未來只要將此按鈕綁定至真實的 Google Gemini Vision API，即可讓 AI 真正辨識您的照片。");
-            
-            // 3秒後恢復按鈕
+        } catch (error) {
+            console.error(error);
+            scanLine.classList.remove('active');
+            btn.innerHTML = '<span>❌</span> 辨識失敗，請重試';
+            alert("AI 辨識失敗，可能是圖片不夠清晰、或者是 API 連線問題。");
+        } finally {
             setTimeout(() => {
                 btn.disabled = false;
                 btn.innerHTML = '<span>✨</span> 重新掃描分析';
             }, 3000);
-
-        }, 2500);
-    }
-
-
-    function toggleCustomSelect(element) {
-        document.querySelectorAll('.custom-select-wrapper').forEach(el => { if (el !== element) el.classList.remove('open'); });
-        element.classList.toggle('open');
-    }
-    function selectCustomOption(inputId, value, text) {
-        document.getElementById(inputId).value = value;
-        document.getElementById(inputId + 'Display').innerText = text;
-    }
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.custom-select-wrapper')) {
-            document.querySelectorAll('.custom-select-wrapper').forEach(el => el.classList.remove('open'));
         }
-    });
+    }
+
+
+    function toggleCustomSelect(element) { document.querySelectorAll('.custom-select-wrapper').forEach(el => { if (el !== element) el.classList.remove('open'); }); element.classList.toggle('open'); }
+    function selectCustomOption(inputId, value, text) { document.getElementById(inputId).value = value; document.getElementById(inputId + 'Display').innerText = text; }
+    document.addEventListener('click', (e) => { if (!e.target.closest('.custom-select-wrapper')) { document.querySelectorAll('.custom-select-wrapper').forEach(el => el.classList.remove('open')); } });
 
     let currentSelectedDay = ''; 
     function selectDay(element, dayName) {
-        document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-        
-        document.getElementById('displayDayName').innerText = `星期${dayName}`;
-        currentSelectedDay = dayName;
+        document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active')); element.classList.add('active');
+        document.getElementById('displayDayName').innerText = `星期${dayName}`; currentSelectedDay = dayName;
 
-        let currentNorm = todayObj.getDay() === 0 ? 7 : todayObj.getDay();
-        let targetNorm = dayMap[dayName] === 0 ? 7 : dayMap[dayName];
-        let diff = targetNorm - currentNorm;
-        
-        let targetDate = new Date(todayObj);
-        targetDate.setDate(todayObj.getDate() + diff);
+        let currentNorm = todayObj.getDay() === 0 ? 7 : todayObj.getDay(); let targetNorm = dayMap[dayName] === 0 ? 7 : dayMap[dayName];
+        let diff = targetNorm - currentNorm; let targetDate = new Date(todayObj); targetDate.setDate(todayObj.getDate() + diff);
         document.getElementById('todayDate').innerText = `${targetDate.getMonth() + 1}月 ${targetDate.getDate()}日`;
 
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if (dayName !== daysOfWeek[todayObj.getDay()]) {
-            document.getElementById('displayConsumed').innerText = '0';
-            document.getElementById('displayBurned').innerText = '0';
-            document.getElementById('displayRemaining').innerText = appData.tdee > 0 ? appData.tdee : '0';
-            document.getElementById('displayRemaining').style.color = 'white';
-        } else {
-            updateDashboard();
-        }
+            document.getElementById('displayConsumed').innerText = '0'; document.getElementById('displayBurned').innerText = '0';
+            document.getElementById('displayRemaining').innerText = appData.tdee > 0 ? appData.tdee : '0'; document.getElementById('displayRemaining').style.color = 'white';
+        } else { updateDashboard(); }
     }
 
-    function switchTab(tabName, element) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.getElementById(tabName + 'Tab').classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-        element.classList.add('active');
-    }
-
+    function switchTab(tabName, element) { document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); document.getElementById(tabName + 'Tab').classList.add('active'); document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active')); element.classList.add('active'); }
     function triggerSync() { if(window.syncWithFirebase) window.syncWithFirebase(appData); }
 
     function calculateAndSaveProfile() {
-        const gender = document.getElementById('gender').value;
-        const age = parseFloat(document.getElementById('age').value);
-        const height = parseFloat(document.getElementById('height').value);
-        const startWeight = parseFloat(document.getElementById('startWeightInput').value);
-        const targetWeight = parseFloat(document.getElementById('targetWeightInput').value);
-        const activity = parseFloat(document.getElementById('activity').value);
-
+        const gender = document.getElementById('gender').value; const age = parseFloat(document.getElementById('age').value);
+        const height = parseFloat(document.getElementById('height').value); const startWeight = parseFloat(document.getElementById('startWeightInput').value);
+        const targetWeight = parseFloat(document.getElementById('targetWeightInput').value); const activity = parseFloat(document.getElementById('activity').value);
         if(!age || !height || !startWeight || !targetWeight) { alert("請填寫完整的基礎資料與體重目標！"); return; }
         appData.startWeight = startWeight; appData.targetWeight = targetWeight;
-
         let bmr = (gender === 'male') ? (10 * startWeight) + (6.25 * height) - (5 * age) + 5 : (10 * startWeight) + (6.25 * height) - (5 * age) - 161;
         appData.tdee = Math.round(bmr * activity);
-        
         document.getElementById('startWeightValue').innerText = startWeight.toFixed(2);
-        
-        updateDashboard(); drawWeightChart(); triggerSync(); 
-        alert(`設定成功！您的每日 TDEE 約為 ${appData.tdee} 大卡。`);
-        switchTab('weight', document.querySelectorAll('.nav-item')[0]);
+        updateDashboard(); drawWeightChart(); triggerSync(); alert(`設定成功！`); switchTab('weight', document.querySelectorAll('.nav-item')[0]);
     }
 
     function recordWeight() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
-        if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("您目前正在檢視其他日期，請切換回「今日」再進行記錄。"); return; }
-
+        if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回「今日」再進行記錄。"); return; }
         const weightInput = parseFloat(document.getElementById('weightInput').value);
         if(isNaN(weightInput) || weightInput <= 0) { alert("請輸入有效的體重數字！"); return; }
-        if(appData.startWeight === 0) { alert("請先前往「個人資料」設定初始體重！"); return; }
-
-        appData.currentWeight = weightInput;
-        document.getElementById('weightValue').innerText = weightInput.toFixed(2);
-        document.getElementById('weightInput').value = '';
-
-        updateDashboard(); drawWeightChart(); triggerSync(); 
-        alert("今日體重已記錄，並同步至雲端！");
+        if(appData.startWeight === 0) { alert("請先設定初始體重！"); return; }
+        appData.currentWeight = weightInput; document.getElementById('weightValue').innerText = weightInput.toFixed(2); document.getElementById('weightInput').value = '';
+        updateDashboard(); drawWeightChart(); triggerSync(); alert("記錄成功！");
     }
 
     function addFood() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回今日再進行記錄。"); return; }
-
         const name = document.getElementById('foodName').value || "未命名食物";
-        const cals = parseFloat(document.getElementById('foodCalories').value);
-        const protein = parseFloat(document.getElementById('foodProtein').value);
-
+        const cals = parseFloat(document.getElementById('foodCalories').value); const protein = parseFloat(document.getElementById('foodProtein').value);
         if(isNaN(cals) || isNaN(protein)) { alert("請確認數值！"); return; }
         appData.consumedCals += cals; appData.consumedProtein += protein;
-
         const li = document.createElement('li'); li.className = 'log-item';
         li.innerHTML = `<div class="log-details"><strong>${name}</strong><span class="log-macros">蛋白質: ${protein}g</span></div><div style="font-weight: bold; color: var(--text-main);">${cals} kcal</div>`;
         document.getElementById('foodList').prepend(li);
         
-        // 重置所有輸入與預覽狀態
-        document.getElementById('foodName').value = ''; 
-        document.getElementById('foodCalories').value = ''; 
-        document.getElementById('foodProtein').value = '';
-        document.getElementById('imagePreview').style.display = 'none';
-        document.getElementById('uploadPlaceholder').style.opacity = '1';
-        isImageUploaded = false;
-
+        document.getElementById('foodName').value = ''; document.getElementById('foodCalories').value = ''; document.getElementById('foodProtein').value = '';
+        document.getElementById('imagePreview').style.display = 'none'; document.getElementById('uploadPlaceholder').style.opacity = '1';
+        isImageUploaded = false; currentImageBase64 = "";
+        
         updateDashboard(); triggerSync(); alert("已加入飲食清單！");
     }
 
     function addWorkout() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回今日再進行記錄。"); return; }
-
-        const typeValue = document.getElementById('workoutType').value;
-        const typeName = document.getElementById('workoutTypeDisplay').innerText;
+        const typeValue = document.getElementById('workoutType').value; const typeName = document.getElementById('workoutTypeDisplay').innerText;
         const duration = parseFloat(document.getElementById('workoutDuration').value);
-
         if(isNaN(duration) || duration <= 0) { alert("請輸入有效時間！"); return; }
         let burnRate = 5; if(typeValue === 'cardio') burnRate = 8; if(typeValue === 'yoga') burnRate = 3;
         const burned = duration * burnRate; appData.burnedCals += burned;
-
         const li = document.createElement('li'); li.className = 'log-item';
         li.innerHTML = `<div class="log-details"><strong>${typeName.split(' ')[1]}</strong><span class="log-macros">${duration} 分鐘</span></div><div style="font-weight: bold; color: var(--primary-color);">-${burned} kcal</div>`;
-        document.getElementById('workoutList').prepend(li);
-        document.getElementById('workoutDuration').value = '';
-
+        document.getElementById('workoutList').prepend(li); document.getElementById('workoutDuration').value = '';
         updateDashboard(); triggerSync(); alert("已加入運動清單！");
     }
 
     function updateDashboard() {
-        document.getElementById('displayTDEE').innerText = appData.tdee;
-        document.getElementById('displayConsumed').innerText = appData.consumedCals;
-        document.getElementById('displayBurned').innerText = appData.burnedCals;
-        let remaining = appData.tdee + appData.burnedCals - appData.consumedCals;
-        if(appData.tdee === 0) remaining = 0;
-        const remainingEl = document.getElementById('displayRemaining');
-        remainingEl.innerText = remaining;
-        remainingEl.style.color = remaining < 0 ? '#ff7b7b' : 'white';
-
+        document.getElementById('displayTDEE').innerText = appData.tdee; document.getElementById('displayConsumed').innerText = appData.consumedCals;
+        document.getElementById('displayBurned').innerText = appData.burnedCals; let remaining = appData.tdee + appData.burnedCals - appData.consumedCals;
+        if(appData.tdee === 0) remaining = 0; const remainingEl = document.getElementById('displayRemaining'); remainingEl.innerText = remaining; remainingEl.style.color = remaining < 0 ? '#ff7b7b' : 'white';
         if(appData.currentWeight > 0 && appData.startWeight > 0 && appData.targetWeight > 0) {
-            const achieve = appData.startWeight - appData.currentWeight;
-            const totalTarget = appData.startWeight - appData.targetWeight;
-            let percent = (achieve / totalTarget) * 100;
-            if(isNaN(percent) || totalTarget === 0) percent = 0;
-            percent = Math.min(Math.max(0, percent), 100);
-            const roundedPercent = Math.round(percent);
-            document.getElementById('weightPercent').innerText = roundedPercent + "%";
-            document.getElementById('weightRing').style.background = `conic-gradient(var(--primary-color) ${roundedPercent}%, transparent 0%)`;
+            const achieve = appData.startWeight - appData.currentWeight; const totalTarget = appData.startWeight - appData.targetWeight;
+            let percent = (achieve / totalTarget) * 100; if(isNaN(percent) || totalTarget === 0) percent = 0; percent = Math.min(Math.max(0, percent), 100);
+            document.getElementById('weightPercent').innerText = Math.round(percent) + "%"; document.getElementById('weightRing').style.background = `conic-gradient(var(--primary-color) ${Math.round(percent)}%, transparent 0%)`;
         }
     }
 
     function drawWeightChart() {
-        const canvas = document.getElementById('weightChartCanvas');
-        if (!canvas) return;
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width - 20; 
-        canvas.height = 90;
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        ctx.clearRect(0, 0, width, height);
+        const canvas = document.getElementById('weightChartCanvas'); if (!canvas) return;
+        const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width - 20; canvas.height = 90;
+        const ctx = canvas.getContext('2d'); const width = canvas.width; const height = canvas.height; ctx.clearRect(0, 0, width, height);
         if (!appData.startWeight || appData.startWeight === 0) return;
-
-        let wStart = appData.startWeight;
-        let wCurrent = appData.currentWeight > 0 ? appData.currentWeight : wStart;
-        const chartData = [wStart, wCurrent];
-        const dataMin = Math.min(...chartData) - 1;
-        const dataMax = Math.max(...chartData) + 1;
-        
-        ctx.strokeStyle = '#4fc3f7'; 
-        ctx.lineWidth = 3;
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        
+        let wStart = appData.startWeight; let wCurrent = appData.currentWeight > 0 ? appData.currentWeight : wStart;
+        const chartData = [wStart, wCurrent]; const dataMin = Math.min(...chartData) - 1; const dataMax = Math.max(...chartData) + 1;
+        ctx.strokeStyle = '#4fc3f7'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
         const xStep = width / (chartData.length - 1);
-        chartData.forEach((val, i) => {
-            const x = i * xStep;
-            const y = height - ((val - dataMin) / (dataMax - dataMin) * height);
-            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        });
-        
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        chartData.forEach((val, i) => {
-            const x = i * xStep;
-            const y = height - ((val - dataMin) / (dataMax - dataMin) * height);
-            ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        });
+        chartData.forEach((val, i) => { const x = i * xStep; const y = height - ((val - dataMin) / (dataMax - dataMin) * height); if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+        ctx.stroke(); ctx.fillStyle = '#ffffff';
+        chartData.forEach((val, i) => { const x = i * xStep; const y = height - ((val - dataMin) / (dataMax - dataMin) * height); ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
     }
 </script>
-
 </body>
 </html>
