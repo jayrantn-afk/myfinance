@@ -370,7 +370,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getAuth, signInWithRedirect, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    // ✨ 這裡多匯入了一個 getRedirectResult
+    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCQYyBrDA4NhrHCJJKABpnZIbMUbKNkquA",
@@ -391,7 +392,12 @@
         provider = new GoogleAuthProvider();
     } catch (e) { console.error("Firebase 初始化失敗", e); }
 
+    // ✨ 關鍵防護網：用來接住跳轉回來的使用者資料！
     if (auth) {
+        getRedirectResult(auth).catch((error) => {
+            console.error("跳轉登入攔截失敗", error);
+        });
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUserUid = user.uid;
@@ -407,11 +413,12 @@
         });
     }
 
+    // ✨ 登入按鈕綁定跳轉功能
     window.signInWithGoogle = function() { 
-    signInWithRedirect(auth, provider).catch((error) => { 
-        alert("登入跳轉失敗，請確認網路連線。"); 
-    }); 
-};
+        document.querySelector('.btn-google').innerHTML = '跳轉中請稍候...';
+        signInWithRedirect(auth, provider); 
+    };
+    
     window.logOutUser = function() { signOut(auth).then(() => { location.reload(); }); };
     window.syncWithFirebase = async function(data) { if (!db || !currentUserUid) return; try { await setDoc(doc(db, "weight_users", currentUserUid), data); } catch(e) { console.error("Firebase 儲存失敗", e); } }
     window.loadFromFirebase = async function() { if (!db || !currentUserUid) return null; try { const docSnap = await getDoc(doc(db, "weight_users", currentUserUid)); return docSnap.exists() ? docSnap.data() : null; } catch(e) { return null; } }
