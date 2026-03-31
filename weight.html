@@ -451,6 +451,19 @@
             if(appData.startWeight > 0) { document.getElementById('startWeightInput').value = appData.startWeight; document.getElementById('startWeightValue').innerText = appData.startWeight.toFixed(2); }
             if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
             if(appData.currentWeight > 0) document.getElementById('weightValue').innerText = appData.currentWeight.toFixed(2);
+            
+            // ✨ 新增：把雲端的年齡、身高、性別自動填回格子裡
+            if(appData.age) document.getElementById('age').value = appData.age;
+            if(appData.height) document.getElementById('height').value = appData.height;
+            if(appData.gender) selectCustomOption('gender', appData.gender, appData.gender === 'male' ? '男性' : '女性');
+            if(appData.activity) {
+                let actText = '久坐 (幾乎不運動)';
+                if(appData.activity == 1.375) actText = '輕度活動 (1-3 天)';
+                if(appData.activity == 1.55) actText = '中度活動 (3-5 天)';
+                if(appData.activity == 1.725) actText = '高度活動 (6-7 天)';
+                selectCustomOption('activity', appData.activity, actText);
+            }
+            
             updateDashboard(); drawWeightChart(); 
         }
     };
@@ -610,13 +623,17 @@
         const height = parseFloat(document.getElementById('height').value); const startWeight = parseFloat(document.getElementById('startWeightInput').value);
         const targetWeight = parseFloat(document.getElementById('targetWeightInput').value); const activity = parseFloat(document.getElementById('activity').value);
         if(!age || !height || !startWeight || !targetWeight) { alert("請填寫完整的基礎資料與體重目標！"); return; }
+        
+        // ✨ 新增：把基本資料也存進 appData 準備上傳
         appData.startWeight = startWeight; appData.targetWeight = targetWeight;
+        appData.age = age; appData.height = height; appData.gender = gender; appData.activity = activity;
+        
         let bmr = (gender === 'male') ? (10 * startWeight) + (6.25 * height) - (5 * age) + 5 : (10 * startWeight) + (6.25 * height) - (5 * age) - 161;
         appData.tdee = Math.round(bmr * activity);
         document.getElementById('startWeightValue').innerText = startWeight.toFixed(2);
+        
         updateDashboard(); drawWeightChart(); triggerSync(); alert(`設定成功！`); switchTab('weight', document.querySelectorAll('.nav-item')[0]);
     }
-
     function recordWeight() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回「今日」再進行記錄。"); return; }
