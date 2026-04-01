@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的智能體重管理大師 - 雙軌AI版</title>
+    <title>我的智能體重管理大師 - 滿版優化版</title>
     <style>
         :root {
             --primary-color: #fca311; 
@@ -39,16 +39,15 @@
         .btn-google:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.2); }
         .btn-google img { width: 20px; height: 20px; }
 
-        /* 頂部區域縮小，讓出空間給滿版儀表板 */
+        /* 頂部標題 */
         .top-region { background-color: var(--primary-color); padding: 20px 20px 30px 20px; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
         .header-title { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 1px; opacity: 0.9; }
 
-        /* ✨ 滿版儀表板設計 */
-        .dashboard-section { padding: 20px; color: var(--text-on-dark); }
+        /* ✨ 全面滿版設計，移除小方框 */
+        .page-content { padding: 20px; color: var(--text-on-dark); }
+        .page-content h2 { font-size: 18px; margin-bottom: 20px; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; letter-spacing: 0.5px; }
 
-        .glass-input-card { background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 25px 20px; border-radius: var(--border-radius-input); box-shadow: var(--glass-shadow); margin: 0 20px 20px 20px; }
-        .glass-input-card h2 { font-size: 18px; margin-bottom: 25px; color: var(--text-main); border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 12px; }
-
+        /* 儀表板特有元素 */
         .date-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .date-day { font-size: 24px; font-weight: bold; color: var(--primary-color); }
         .date-period { font-size: 14px; opacity: 0.8; }
@@ -86,7 +85,7 @@
         input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.3); }
         input:focus, textarea:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: #fca311; box-shadow: 0 0 10px rgba(252, 163, 17, 0.6); }
 
-        /* ✨ 偽裝成按鈕的高質感日期選擇器 */
+        /* ✨ 完美修復：高質感日期選擇器 (雙重觸發防護) */
         .custom-date-btn {
             position: relative;
             background: rgba(255, 255, 255, 0.05);
@@ -98,17 +97,28 @@
             font-size: 16px;
             color: var(--primary-color);
             font-weight: bold;
+            cursor: pointer;
             transition: all 0.3s ease;
+            overflow: hidden; /* 避免隱藏的日曆溢出 */
         }
         .custom-date-btn:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--primary-color); }
-        .custom-date-btn svg { width: 22px; height: 22px; fill: var(--primary-color); margin-right: 12px; }
+        .custom-date-btn svg { width: 22px; height: 22px; fill: var(--primary-color); margin-right: 12px; pointer-events: none; }
+        .custom-date-btn .date-display { pointer-events: none; letter-spacing: 1px; }
         .custom-date-btn input[type="date"] {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; /* 完全透明，但保留點擊功能 */
+            opacity: 0; 
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        /* 關鍵修復：將原生日曆圖示強制撐滿整個按鈕，確保點擊範圍覆蓋 */
+        .custom-date-btn input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            margin: 0; padding: 0;
+            opacity: 0;
             cursor: pointer;
         }
-        .custom-date-btn .date-display { pointer-events: none; letter-spacing: 1px; }
 
         .custom-select-wrapper { position: relative; user-select: none; }
         .custom-select-display { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; color: var(--text-main); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
@@ -134,7 +144,7 @@
 
         /* ✨ 列表與操作 Icon */
         .log-list { list-style: none; margin-top: 15px; }
-        .log-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 12px; font-size: 14px; transition: all 0.2s; }
+        .log-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 12px; font-size: 14px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.02); }
         .log-item:hover { background: rgba(255,255,255,0.1); }
         .log-details { display: flex; flex-direction: column; flex: 1; padding-right: 10px;}
         .log-macros { font-size: 12px; color: #777; margin-top: 2px; }
@@ -180,7 +190,7 @@
     <div class="content-area">
         
         <div id="weightTab" class="tab-content active">
-            <div class="dashboard-section">
+            <div class="page-content">
                 <div class="date-container">
                     <div class="date-day" id="displayDayName">星期日</div>
                     <div class="date-period" id="todayDate">--月 --日</div>
@@ -234,11 +244,11 @@
                 </div>
             </div>
 
-            <div class="glass-input-card">
+            <div class="page-content" style="border-top: 5px solid rgba(0,0,0,0.2); margin-top: -10px;">
                 <h2>體重紀錄</h2>
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <div class="custom-date-btn">
+                    <div class="custom-date-btn" onclick="try{ this.querySelector('input').showPicker(); }catch(e){}">
                         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
                         <span id="weightDateDisplay" class="date-display"></span>
                         <input type="date" id="weightDate">
@@ -253,11 +263,11 @@
         </div>
 
         <div id="foodTab" class="tab-content">
-            <div class="glass-input-card" style="margin-top: 20px;">
+            <div class="page-content">
                 <h2>新增飲食紀錄</h2>
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <div class="custom-date-btn">
+                    <div class="custom-date-btn" onclick="try{ this.querySelector('input').showPicker(); }catch(e){}">
                         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
                         <span id="foodDateDisplay" class="date-display"></span>
                         <input type="date" id="foodDate">
@@ -286,11 +296,11 @@
         </div>
 
         <div id="workoutTab" class="tab-content">
-            <div class="glass-input-card" style="margin-top: 20px;">
+            <div class="page-content">
                 <h2>運動紀錄</h2>
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <div class="custom-date-btn">
+                    <div class="custom-date-btn" onclick="try{ this.querySelector('input').showPicker(); }catch(e){}">
                         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
                         <span id="workoutDateDisplay" class="date-display"></span>
                         <input type="date" id="workoutDate">
@@ -319,7 +329,7 @@
         </div>
 
         <div id="profileTab" class="tab-content">
-            <div class="glass-input-card" style="margin-top: 20px;">
+            <div class="page-content">
                 <h2>個人資料與目標</h2>
                 <div style="text-align: center; margin-bottom: 15px; color: var(--primary-color); font-size: 12px;" id="userEmailDisplay"></div>
                 <div class="form-group">
@@ -453,7 +463,6 @@
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
     
-    // 取得精確的本地日期字串 (YYYY-MM-DD)
     function getLocalDateStr(dateObj) {
         const tzoffset = dateObj.getTimezoneOffset() * 60000; 
         return (new Date(dateObj.getTime() - tzoffset)).toISOString().split('T')[0];
@@ -461,7 +470,6 @@
     
     let currentViewDateStr = getLocalDateStr(todayObj);
     
-    // ✨ 更新所有偽裝按鈕上顯示的日期文字
     function updateDateDisplays(dateStr) {
         if(document.getElementById('weightDateDisplay')) document.getElementById('weightDateDisplay').innerText = dateStr;
         if(document.getElementById('foodDateDisplay')) document.getElementById('foodDateDisplay').innerText = dateStr;
@@ -479,11 +487,9 @@
         document.getElementById('displayDayName').innerText = `星期${currentDayStr}`;
         document.getElementById('todayDate').innerText = `${todayObj.getMonth() + 1}月 ${todayObj.getDate()}日`;
         
-        // 自動載入今天日期
         syncDateInputs(currentViewDateStr);
         drawWeightChart();
 
-        // 綁定事件：當使用者從隱藏的日曆中變更日期時
         ['weightDate', 'foodDate', 'workoutDate'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
@@ -494,12 +500,10 @@
                     currentViewDateStr = newDateStr;
                     syncDateInputs(newDateStr);
 
-                    // 計算選中日期的星期與顯示字串
                     const parts = newDateStr.split('-');
                     const localDate = new Date(parts[0], parts[1]-1, parts[2]);
                     const dayName = daysOfWeek[localDate.getDay()];
                     
-                    // 同步頂部星期圈圈與日期顯示
                     document.querySelectorAll('.week-day-circle').forEach(circle => {
                         circle.classList.remove('active');
                         if(circle.innerText === dayName) circle.classList.add('active');
@@ -515,7 +519,6 @@
         });
     });
 
-    // 同步所有實際的 input[type="date"] 的值，並更新偽裝顯示
     function syncDateInputs(dateStr) {
         if(document.getElementById('weightDate')) document.getElementById('weightDate').value = dateStr;
         if(document.getElementById('foodDate')) document.getElementById('foodDate').value = dateStr;
