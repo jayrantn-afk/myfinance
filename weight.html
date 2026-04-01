@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的智能體重管理大師 - V2.01</title>
+    <title>我的體重管理大師 - V2.02</title>
     <style>
         :root {
-            /* ✨ V2.01 全新亮色系主題變數 */
+            /* V2.01 全新亮色系主題變數 */
             --primary-color: #fca311; 
             --primary-hover: #e89610;
             --secondary-color: #2196F3;
             
-            /* 背景漸層：天空藍 -> 淺紫白 (對標截圖) */
+            /* 背景漸層：天空藍 -> 淺紫白 */
             --bg-gradient: linear-gradient(160deg, #dbeafe 0%, #f3e8ff 40%, #ffffff 100%);
             
             /* 液態玻璃卡片設定 */
@@ -20,18 +20,17 @@
             --glass-blur: blur(16px); 
             --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04); 
             
-            /* 文字顏色翻轉為深色 */
+            /* 文字顏色 */
             --text-main: #2c3e50; 
             --text-muted: #7f8c8d;
             --text-on-dark: #2c3e50; 
             
             --border-radius-card: 24px;
             --border-radius-input: 16px;
-            --border-radius-pill: 9999px; /* ✨ 全圓角膠囊形狀 */
+            --border-radius-pill: 9999px; /* 全圓角膠囊形狀 */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; -webkit-font-smoothing: antialiased; }
-        /* 移除 color-scheme，讓瀏覽器回歸亮色模式的漂亮日曆 */
         body { background: var(--bg-gradient); color: var(--text-main); line-height: 1.6; min-height: 100vh; background-attachment: fixed; }
 
         .app-wrapper {
@@ -48,7 +47,7 @@
         .btn-google:hover { background-color: #fdfdfd; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
         .btn-google img { width: 20px; height: 20px; }
 
-        /* 頂部標題 (融入背景) */
+        /* 頂部標題 */
         .top-region { padding: 30px 20px 10px 20px; text-align: left; }
         .header-title { font-size: 22px; font-weight: bold; color: var(--text-main); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
 
@@ -59,19 +58,20 @@
         /* 儀表板特有元素 */
         .date-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); padding: 15px 20px; border-radius: var(--border-radius-card); box-shadow: var(--glass-shadow);}
         .date-day { font-size: 20px; font-weight: bold; color: var(--text-main); }
-        .date-period { font-size: 14px; color: var(--text-muted); background: rgba(0,0,0,0.05); padding: 4px 12px; border-radius: 12px;}
+        /* ✨ V2.02 日期大一點，粗體字，讓人好閱讀 */
+        .date-period { font-size: 20px; font-weight: 800; color: var(--text-muted); background: rgba(0,0,0,0.03); padding: 4px 12px; border-radius: 12px;}
         
         .week-nav { display: flex; justify-content: space-between; margin-bottom: 30px; padding: 0 10px;}
-        .week-day-circle { width: 38px; height: 38px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid transparent; background: rgba(255,255,255,0.5); color: var(--text-muted); cursor: pointer; transition: all 0.3s ease; font-weight: bold;}
-        .week-day-circle:hover { background-color: rgba(255,255,255,0.8); }
-        .week-day-circle.active { background-color: var(--text-main); color: #fff; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); transform: translateY(-3px); }
+        /* ✨ V2.02 星期弄點半透明 */
+        .week-day-circle { width: 38px; height: 38px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid transparent; background: rgba(255,255,255,0.5); color: var(--text-muted); cursor: pointer; transition: all 0.3s ease; font-weight: bold; opacity: 0.6; }
+        .week-day-circle:hover { background-color: rgba(255,255,255,0.8); opacity: 1; }
+        .week-day-circle.active { background-color: var(--text-main); color: #fff; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); transform: translateY(-3px); opacity: 1; }
 
         .dashboard-glass-card { background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: var(--border-radius-card); padding: 25px; box-shadow: var(--glass-shadow); margin-bottom: 25px; }
 
         .top-metrics { display: flex; align-items: center; gap: 20px; }
         .weight-ring-container { width: 110px; height: 110px; position: relative; }
         .weight-ring { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(var(--secondary-color) 0%, rgba(33, 150, 243, 0.1) 0%); display: flex; justify-content: center; align-items: center; transition: background 0.5s ease; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);}
-        /* 環狀圖中心填白 */
         .weight-ring::before { content: ''; position: absolute; width: 80%; height: 80%; background-color: #fff; border-radius: 50%; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);}
         .weight-ring-content { position: relative; z-index: 1; text-align: center; }
         .percent-achieved { font-size: 24px; font-weight: 900; color: var(--text-main);}
@@ -86,12 +86,18 @@
         .chart-canvas { width: 100%; height: 100%; }
         .chart-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 5px; }
 
+        /* ✨ V2.02 圖表切換 UI */
+        .chart-range-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.02); padding: 5px; border-radius: 20px;}
+        .range-btn { background: transparent; color: var(--text-muted); border: none; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px; transition: all 0.2s;}
+        .range-btn:hover { color: var(--text-main); }
+        .range-btn.active { background: #fff; color: var(--text-main); box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+
         .bottom-metrics { display: flex; justify-content: space-between; gap: 15px; margin-top: 20px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 20px;}
         .metric-group { flex: 1; display: flex; flex-direction: column; }
         .metric-value-large { font-size: 20px; font-weight: bold; margin-bottom: 2px; color: var(--text-main);}
         .metric-label-muted { font-size: 11px; color: var(--text-muted); }
 
-        /* 表單與輸入區塊 (亮色系調適) */
+        /* 表單與輸入區塊 */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 13px; color: var(--text-muted); padding-left: 5px;}
         input[type="text"], input[type="number"], textarea { width: 100%; padding: 16px; background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(255, 255, 255, 0.8); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; resize: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);}
@@ -137,7 +143,7 @@
         .custom-select-options div:last-child { border-bottom: none; }
         .custom-select-options div:hover { background: rgba(33, 150, 243, 0.1); color: var(--secondary-color); font-weight: bold; }
 
-        /* ✨ 膠囊按鈕 (Pill-shape) */
+        /* 膠囊按鈕 (Pill-shape) 全面啟用 */
         button { width: 100%; padding: 16px; background-color: var(--text-main); color: white; border: none; border-radius: var(--border-radius-pill); cursor: pointer; font-size: 16px; font-weight: bold; transition: all 0.3s ease; margin-top: 15px; box-shadow: 0 8px 20px rgba(44, 62, 80, 0.2); }
         button:hover { background-color: #1a252f; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(44, 62, 80, 0.3); }
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -166,10 +172,11 @@
         .icon-delete:hover { color: #e74c3c; }
 
         .tab-content { display: none; }
+        /* ✨ V2.02 優化分頁動畫，減少跳動 */
         .tab-content.active { display: block; animation: fadeInTab 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeInTab { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ✨ V2.01 液態玻璃導航列 (Apple Liquid Glass Dock) */
+        /* V2.01 液態玻璃導航列 (Apple Liquid Glass Dock) */
         .bottom-nav { 
             position: fixed; 
             bottom: 25px; /* 懸浮於底部 */
@@ -202,7 +209,7 @@
 <div id="loginScreen" class="login-screen">
     <div class="login-card">
         <h1>智能體重管理大師</h1>
-        <p>V2.01 全新體驗<br>請先登入專屬雲端保險箱</p>
+        <p>V2.02 進化版<br>請先登入專屬雲端保險箱</p>
         <button class="btn-google" onclick="window.signInWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
             使用 Google 帳號登入
@@ -214,7 +221,7 @@
     <div class="top-region">
         <div class="header-title">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--secondary-color)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-            小卡健康 <span style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; color: var(--text-muted);">V2.01</span>
+            我的體重管理大師 <span style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; color: var(--text-muted);">V2.02</span>
         </div>
     </div>
 
@@ -261,8 +268,13 @@
                     </div>
 
                     <div class="chart-container">
+                        <div class="chart-range-nav">
+                            <button class="range-btn active" onclick="switchChartRange(this, 7)">7天</button>
+                            <button class="range-btn" onclick="switchChartRange(this, 30)">30天</button>
+                            <button class="range-btn" onclick="switchChartRange(this, 365)">全部</button>
+                        </div>
                         <canvas class="chart-canvas" id="weightChartCanvas"></canvas>
-                        <div class="chart-labels"><span>初始</span><span>目前</span></div>
+                        <div class="chart-labels"><span>前次紀錄</span><span id="chartRangeLabel">過去 7 天趨勢</span><span>今日紀錄</span></div>
                     </div>
 
                     <div class="bottom-metrics">
@@ -482,10 +494,13 @@
 </script>
 
 <script>
-    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, foodLogs: [], workoutLogs: [], age: '', height: '', gender: 'male', activity: 1.2 };
+    /* ✨ V2.02 資料結構變更：增加 weightLogs，移除 currentWeight */
+    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, weightLogs: [], foodLogs: [], workoutLogs: [], age: '', height: '', gender: 'male', activity: 1.2 };
     
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
+    /* ✨ V2.02 新增：預設圖表顯示範圍 (7天) */
+    let currentChartRange = 7;
     
     function getLocalDateStr(dateObj) {
         const tzoffset = dateObj.getTimezoneOffset() * 60000; 
@@ -512,7 +527,8 @@
         document.getElementById('todayDate').innerText = `${todayObj.getMonth() + 1}月 ${todayObj.getDate()}日`;
         
         syncDateInputs(currentViewDateStr);
-        drawWeightChart();
+        /* ✨ V2.02 預設畫 7 天趨勢 */
+        drawWeightChart(appData.weightLogs, currentChartRange);
 
         ['weightDate', 'foodDate', 'workoutDate'].forEach(id => {
             const el = document.getElementById(id);
@@ -556,10 +572,11 @@
             appData = cloudData; 
             if(!appData.foodLogs) appData.foodLogs = [];
             if(!appData.workoutLogs) appData.workoutLogs = [];
+            /* ✨ V2.02 舊數據兼容：建立紀錄陣列 */
+            if(!appData.weightLogs) appData.weightLogs = [];
             
             if(appData.startWeight > 0) { document.getElementById('startWeightInput').value = appData.startWeight; document.getElementById('startWeightValue').innerText = appData.startWeight.toFixed(2); }
             if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
-            if(appData.currentWeight > 0) document.getElementById('weightValue').innerText = appData.currentWeight.toFixed(2);
             
             if(appData.age) document.getElementById('age').value = appData.age;
             if(appData.height) document.getElementById('height').value = appData.height;
@@ -574,7 +591,8 @@
             
             renderFoodLogs();
             renderWorkoutLogs();
-            updateDashboard(); drawWeightChart(); 
+            /* ✨ V2.02 畫 7 天趨勢 */
+            updateDashboard(); drawWeightChart(appData.weightLogs, currentChartRange); 
         }
     };
 
@@ -635,15 +653,60 @@
         let bmr = (gender === 'male') ? (10 * startWeight) + (6.25 * height) - (5 * age) + 5 : (10 * startWeight) + (6.25 * height) - (5 * age) - 161;
         appData.tdee = Math.round(bmr * activity);
         document.getElementById('startWeightValue').innerText = startWeight.toFixed(2);
-        updateDashboard(); drawWeightChart(); triggerSync(); alert(`設定成功！`); switchTab('weight', document.querySelectorAll('.nav-item')[0]);
+        /* ✨ V2.02 畫趨勢 */
+        updateDashboard(); drawWeightChart(appData.weightLogs, currentChartRange); triggerSync(); alert(`設定成功！`); switchTab('weight', document.querySelectorAll('.nav-item')[0]);
+    }
+
+    /* ✨ V2.02 新增：獲取所有紀錄中的最新體重 */
+    function getLatestWeight() {
+        if (!appData.weightLogs || appData.weightLogs.length === 0) return 0;
+        const sortedLogs = [...appData.weightLogs].sort((a, b) => new Date(b.date) - new Date(a.date));
+        return sortedLogs[0].weight;
+    }
+
+    /* ✨ V2.02 新增：獲取選定日期的最新體重紀錄 */
+    function getWeightForDate(dateStr) {
+        if (!appData.weightLogs) return 0;
+        const dailyLogs = appData.weightLogs.filter(log => log.date === dateStr);
+        if (dailyLogs.length === 0) return 0;
+        // 如果一天有多筆，獲取 id 最大的那筆
+        const sortedLogs = dailyLogs.sort((a, b) => b.id - a.id);
+        return sortedLogs[0].weight;
     }
 
     function recordWeight() {
         const weightInput = parseFloat(document.getElementById('weightInput').value);
+        /* ✨ V2.02 獲取用戶選取的紀錄日期 */
+        const dateInput = document.getElementById('weightDate').value;
+
         if(isNaN(weightInput) || weightInput <= 0) { alert("請輸入有效的體重數字！"); return; }
         if(appData.startWeight === 0) { alert("請先設定初始體重！"); return; }
-        appData.currentWeight = weightInput; document.getElementById('weightValue').innerText = weightInput.toFixed(2); document.getElementById('weightInput').value = '';
-        updateDashboard(); drawWeightChart(); triggerSync();
+        
+        /* ✨ V2.02 PUSH 到紀錄陣列，而不是修改單一變數 */
+        appData.weightLogs.push({ id: Date.now(), date: dateInput, weight: weightInput });
+        document.getElementById('weightInput').value = '';
+        
+        /* ✨ V2.02 更新畫布趨勢和儀表板 */
+        updateDashboard(); drawWeightChart(appData.weightLogs, currentChartRange); triggerSync(); alert("記錄成功！");
+    }
+
+    /* ✨ V2.02 新增：切換圖表顯示範圍 */
+    window.switchChartRange = function(element, numDays) {
+        // 更新按鈕狀態
+        document.querySelectorAll('.range-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        
+        // 更新目前範圍
+        currentChartRange = numDays;
+        
+        // 更新圖表標籤
+        const labelEl = document.getElementById('chartRangeLabel');
+        if (numDays === 7) labelEl.innerText = '過去 7 天趨勢';
+        else if (numDays === 30) labelEl.innerText = '過去 30 天趨勢';
+        else labelEl.innerText = '所有紀錄趨勢';
+        
+        // 重新繪圖
+        drawWeightChart(appData.weightLogs, currentChartRange);
     }
 
     function renderFoodLogs() {
@@ -776,10 +839,23 @@
             appData.workoutLogs.forEach(log => { if (log.date === currentViewDateStr) dailyBurned += log.cals; });
         }
 
+        /* ✨ V2.02 獲取選中日期紀錄的最新的體重 */
+        const weightForDate = getWeightForDate(currentViewDateStr);
+        const latestWeight = getLatestWeight(); // 用於目標計算和環狀圖
+        
         document.getElementById('displayTDEE').innerText = appData.tdee; 
         document.getElementById('displayConsumed').innerText = dailyConsumed;
         document.getElementById('displayBurned').innerText = dailyBurned; 
         
+        if (weightForDate > 0) {
+            document.getElementById('weightValue').innerText = weightForDate.toFixed(2);
+        } else if (latestWeight > 0) {
+            /* V2.02 如果該日沒紀錄，顯示最後一次紀錄，並加一個灰字提示 */
+            document.getElementById('weightValue').innerHTML = `${latestWeight.toFixed(2)} <span style="font-size:12px;color:#a0aec0;font-weight:bold;">(前次)</span>`;
+        } else {
+             document.getElementById('weightValue').innerText = '--.--';
+        }
+
         let remaining = appData.tdee + dailyBurned - dailyConsumed;
         if(appData.tdee === 0) remaining = 0; 
         
@@ -795,27 +871,66 @@
             remainingLabel.innerText = '還可以吃';
         }
         
-        if(appData.currentWeight > 0 && appData.startWeight > 0 && appData.targetWeight > 0) {
-            const achieve = appData.startWeight - appData.currentWeight; const totalTarget = appData.startWeight - appData.targetWeight;
+        /* ✨ V2.02 使用最新的紀錄計算目標達成率 */
+        if(latestWeight > 0 && appData.startWeight > 0 && appData.targetWeight > 0) {
+            const achieve = appData.startWeight - latestWeight; const totalTarget = appData.startWeight - appData.targetWeight;
             let percent = (achieve / totalTarget) * 100; if(isNaN(percent) || totalTarget === 0) percent = 0; percent = Math.min(Math.max(0, percent), 100);
             document.getElementById('weightPercent').innerText = Math.round(percent) + "%"; document.getElementById('weightRing').style.background = `conic-gradient(var(--secondary-color) ${Math.round(percent)}%, rgba(33, 150, 243, 0.1) 0%)`;
         }
     }
 
-    function drawWeightChart() {
+    /* ✨ V2.02 核心重構：全新的動態折線圖趨勢繪製 */
+    function drawWeightChart(logs, numDays) {
         const canvas = document.getElementById('weightChartCanvas'); if (!canvas) return;
         const rect = canvas.parentElement.getBoundingClientRect(); canvas.width = rect.width - 20; canvas.height = 90;
         const ctx = canvas.getContext('2d'); const width = canvas.width; const height = canvas.height; ctx.clearRect(0, 0, width, height);
-        if (!appData.startWeight || appData.startWeight === 0) return;
-        let wStart = appData.startWeight; let wCurrent = appData.currentWeight > 0 ? appData.currentWeight : wStart;
-        const chartData = [wStart, wCurrent]; const dataMin = Math.min(...chartData) - 1; const dataMax = Math.max(...chartData) + 1;
         
-        // 將圖表線條改為明亮的輔助色 (藍色)
+        if (!appData.weightLogs || appData.weightLogs.length < 1) return;
+        if (!appData.startWeight || appData.startWeight === 0) return;
+
+        // ✨ 獲取數據範圍
+        const startDate = new Date(todayObj); startDate.setDate(todayObj.getDate() - numDays);
+        /* ✨ 舊數據兼容 & 排序：確保數據按時間排序 */
+        const filteredLogs = appData.weightLogs.filter(log => new Date(log.date) >= startDate).sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        if (filteredLogs.length < 1) return;
+
+        // 如果資料庫太少，加上初始體重和今天紀錄做連線，這是一個兼容舊顯示的邏輯
+        let chartData = filteredLogs;
+        if (filteredLogs.length === 1) {
+            chartData = [{date: getLocalDateStr(startDate), weight: appData.startWeight}, ...filteredLogs];
+        }
+
+        const weights = chartData.map(log => log.weight);
+        const dataMin = Math.min(...weights) - 0.5; const dataMax = Math.max(...weights) + 0.5;
+        
+        // ✨ V2.02 修復圓點超出邊線：增加內邊距 (Padding)
+        const paddingX = 15; const paddingY = 15;
+        const drawWidth = width - 2 * paddingX; const drawHeight = height - 2 * paddingY;
+
+        // ✨ 繪製線條
         ctx.strokeStyle = '#2196F3'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
-        const xStep = width / (chartData.length - 1);
-        chartData.forEach((val, i) => { const x = i * xStep; const y = height - ((val - dataMin) / (dataMax - dataMin) * height); if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+        
+        const firstLogTime = new Date(chartData[0].date).getTime();
+        const lastLogTime = new Date(chartData[chartData.length - 1].date).getTime();
+        const timeRange = lastLogTime - firstLogTime;
+
+        chartData.forEach((log, i) => {
+            const currentTime = new Date(log.date).getTime();
+            // ✨ V2.02 X軸不再是點數百分比，而是時間百分比
+            const x = paddingX + ( (currentTime - firstLogTime) / (timeRange === 0 ? 1 : timeRange) ) * drawWidth;
+            const y = height - paddingY - ((log.weight - dataMin) / (dataMax - dataMin) * drawHeight); 
+            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); 
+        });
         ctx.stroke(); ctx.fillStyle = '#ffffff';
-        chartData.forEach((val, i) => { const x = i * xStep; const y = height - ((val - dataMin) / (dataMax - dataMin) * height); ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+
+        // ✨ 繪製數據點 (圓點)
+        chartData.forEach((log, i) => {
+            const currentTime = new Date(log.date).getTime();
+            const x = paddingX + ( (currentTime - firstLogTime) / (timeRange === 0 ? 1 : timeRange) ) * drawWidth;
+            const y = height - paddingY - ((log.weight - dataMin) / (dataMax - dataMin) * drawHeight); 
+            ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
+        });
     }
 </script>
 </body>
