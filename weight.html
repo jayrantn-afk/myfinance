@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的體重管理大師 - V2.05</title>
+    <title>我的體重管理大師 - V2.06</title>
     <style>
         :root {
             --primary-color: #fca311; 
@@ -27,11 +27,26 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; -webkit-font-smoothing: antialiased; }
-        body { background: var(--bg-gradient); color: var(--text-main); line-height: 1.6; min-height: 100vh; background-attachment: fixed; }
+        
+        /* ✨ V2.06 核心架構大改：鎖定 Body，禁止外層滾動 */
+        body { 
+            background: var(--bg-gradient); 
+            color: var(--text-main); 
+            line-height: 1.6; 
+            height: 100dvh; /* 完美適配手機動態高度 */
+            overflow: hidden; /* 終結跳動的元凶 */
+            margin: 0;
+        }
 
+        /* ✨ V2.06 Flexbox 彈性佈局 */
         .app-wrapper {
-            max-width: 600px; margin: 0 auto; min-height: 100vh; 
-            position: relative; padding-bottom: 110px; display: none; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            height: 100%; 
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+            display: none; /* 預設隱藏，登入後顯示為 flex */
         }
 
         .login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-gradient); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
@@ -42,9 +57,23 @@
         .btn-google:hover { background-color: #fdfdfd; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
         .btn-google img { width: 20px; height: 20px; }
 
-        .top-region { padding: 30px 20px 10px 20px; text-align: left; }
+        /* 頂部標題：固定不縮放 */
+        .top-region { 
+            flex-shrink: 0; 
+            padding: 30px 20px 10px 20px; 
+            text-align: left; 
+        }
         .header-title { font-size: 22px; font-weight: bold; color: var(--text-main); letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
 
+        /* ✨ V2.06 獨立的內部滾動區域 */
+        .content-area { 
+            flex: 1; /* 填滿剩餘空間 */
+            overflow-y: auto; /* 開啟內部滾動 */
+            overflow-x: hidden;
+            padding-bottom: 110px; /* 留空間給底部懸浮列 */
+            -webkit-overflow-scrolling: touch; /* 讓 iOS 滾動滑順 */
+        }
+        
         .page-content { padding: 0 20px 20px 20px; color: var(--text-on-dark); }
         .page-content h2 { font-size: 18px; margin-bottom: 20px; margin-top: 10px; color: var(--text-main); font-weight: 800; }
 
@@ -152,11 +181,12 @@
         .icon-delete:hover { color: #e74c3c; }
 
         .tab-content { display: none; opacity: 0; }
-        .tab-content.active { display: block; opacity: 1; animation: smoothFadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; opacity: 1; animation: smoothFadeIn 0.2s ease-out forwards; }
         @keyframes smoothFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .bottom-nav { 
-            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 400px; 
+            position: absolute; /* 相對於 app-wrapper 固定 */
+            bottom: 25px; left: 50%; transform: translateX(-50%); width: calc(100% - 40px); max-width: 400px; 
             height: 70px; background: rgba(255, 255, 255, 0.75); 
             backdrop-filter: blur(20px) saturate(150%); -webkit-backdrop-filter: blur(20px) saturate(150%); 
             display: flex; justify-content: space-around; align-items: center; border-radius: 35px; border: 1px solid rgba(255, 255, 255, 0.6);
@@ -176,7 +206,7 @@
 <div id="loginScreen" class="login-screen">
     <div class="login-card">
         <h1>智能體重管理大師</h1>
-        <p>V2.05 完美修復版<br>請先登入專屬雲端保險箱</p>
+        <p>V2.06 原生滑順版<br>請先登入專屬雲端保險箱</p>
         <button class="btn-google" onclick="window.signInWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
             使用 Google 帳號登入
@@ -185,14 +215,15 @@
 </div>
 
 <div class="app-wrapper" id="mainApp">
+    
     <div class="top-region">
         <div class="header-title">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--secondary-color)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-            我的體重管理大師 <span style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; color: var(--text-muted);">V2.05</span>
+            我的體重管理大師 <span style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; color: var(--text-muted);">V2.06</span>
         </div>
     </div>
 
-    <div class="content-area">
+    <div class="content-area" id="scrollableContent">
         
         <div id="weightTab" class="tab-content active">
             <div class="page-content">
@@ -390,9 +421,8 @@
                 <button class="btn-logout" onclick="window.logOutUser()">登出帳號</button>
             </div>
         </div>
-    </div>
 
-    <div class="bottom-nav">
+    </div> <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('weight', this)">
             <div class="nav-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 9h-2V7h-2v5H6v2h2v5h2v-5h2v-2z"/></svg></div>
             <div class="nav-label">首頁</div>
@@ -410,9 +440,8 @@
             <div class="nav-label">設定</div>
         </div>
     </div>
-</div>
 
-<script type="module">
+</div> <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
@@ -441,7 +470,7 @@
             if (user) {
                 currentUserUid = user.uid;
                 document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('mainApp').style.display = 'flex'; // ✨ V2.06 flex 顯示
                 document.getElementById('userEmailDisplay').innerText = `目前帳號: ${user.email}`;
                 window.initializeAppWithUser();
             } else {
@@ -606,11 +635,15 @@
         renderWorkoutLogs();
     }
 
+    /* ✨ V2.06 核心：切換分頁，重置專屬滾動容器，保證 0 閃爍 */
     function switchTab(tabName, element) { 
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); 
         document.getElementById(tabName + 'Tab').classList.add('active'); 
         document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active')); 
         element.classList.add('active'); 
+        
+        const scrollArea = document.getElementById('scrollableContent');
+        if(scrollArea) scrollArea.scrollTop = 0;
     }
     
     function triggerSync() { if(window.syncWithFirebase) window.syncWithFirebase(appData); }
@@ -738,7 +771,6 @@
             if(log.date) { document.getElementById('foodDate').value = log.date; updateDateDisplays(log.date); }
             appData.foodLogs.splice(idx, 1);
             renderFoodLogs(); updateDashboard(); triggerSync(); 
-            window.scrollTo({ top: document.getElementById('foodTab').offsetTop, behavior: 'smooth' });
         }
     }
 
@@ -794,7 +826,6 @@
             if(log.date) { document.getElementById('workoutDate').value = log.date; updateDateDisplays(log.date); }
             appData.workoutLogs.splice(idx, 1);
             renderWorkoutLogs(); updateDashboard(); triggerSync(); 
-            window.scrollTo({ top: document.getElementById('workoutTab').offsetTop, behavior: 'smooth' });
         }
     }
 
@@ -831,7 +862,6 @@
              document.getElementById('weightValue').innerText = '--.--';
         }
 
-        // ✨ V2.05 更新目標體重顯示
         if (appData.targetWeight > 0) {
             const twDisplay = document.getElementById('targetWeightDisplay');
             if(twDisplay) twDisplay.innerText = appData.targetWeight.toFixed(2);
@@ -852,14 +882,12 @@
             remainingLabel.innerText = '還可以吃';
         }
         
-        // ✨ V2.05 達成率防呆計算引擎 (支援減重與增重，絕不亂標 100%)
         if(latestWeight > 0 && appData.startWeight > 0 && appData.targetWeight > 0) {
             let percent = 0;
             let totalDiff = appData.startWeight - appData.targetWeight;
             let currentDiff = appData.startWeight - latestWeight;
             
             if (totalDiff < 0) {
-                // 如果是增重模式
                 totalDiff = Math.abs(totalDiff);
                 currentDiff = latestWeight - appData.startWeight; 
             }
