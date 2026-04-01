@@ -39,80 +39,76 @@
         .btn-google:hover { background-color: #f1f1f1; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,255,255,0.2); }
         .btn-google img { width: 20px; height: 20px; }
 
-        /* 頂部與儀表板 */
-        .top-region { height: 180px; background-color: var(--primary-color); padding: 20px; text-align: center; position: relative; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; display: flex; justify-content: center; align-items: flex-start; }
-        .header-title { position: relative; z-index: 1; font-size: 20px; font-weight: bold; color: #fff; margin-top: 20px; letter-spacing: 1px; opacity: 0.9; }
-        .fixed-dashboard-card { background-color: var(--dark-card-bg); border-radius: var(--border-radius-card); padding: 25px 20px; box-shadow: 0 12px 35px rgba(0,0,0,0.4); color: var(--text-on-dark); margin: -90px 20px 20px 20px; position: relative; z-index: 10; }
+        /* 頂部區域縮小，讓出空間給滿版儀表板 */
+        .top-region { background-color: var(--primary-color); padding: 20px 20px 30px 20px; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
+        .header-title { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 1px; opacity: 0.9; }
+
+        /* ✨ 滿版儀表板設計 */
+        .dashboard-section { padding: 20px; color: var(--text-on-dark); }
 
         .glass-input-card { background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 25px 20px; border-radius: var(--border-radius-input); box-shadow: var(--glass-shadow); margin: 0 20px 20px 20px; }
         .glass-input-card h2 { font-size: 18px; margin-bottom: 25px; color: var(--text-main); border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 12px; }
 
         .date-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .date-day { font-size: 24px; font-weight: bold; }
+        .date-day { font-size: 24px; font-weight: bold; color: var(--primary-color); }
         .date-period { font-size: 14px; opacity: 0.8; }
-        .week-nav { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .week-nav { display: flex; justify-content: space-between; margin-bottom: 35px; }
         .week-day-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s ease; }
         .week-day-circle:hover { background-color: rgba(255,255,255,0.1); }
         .week-day-circle.active { background-color: var(--primary-color); color: #fff; border-color: var(--primary-color); font-weight: bold; box-shadow: 0 0 12px rgba(252, 163, 17, 0.5); transform: translateY(-2px); }
 
-        .top-metrics { display: flex; align-items: center; margin-bottom: 25px; gap: 20px; }
+        .top-metrics { display: flex; align-items: center; margin-bottom: 30px; gap: 20px; }
         .weight-ring-container { width: 100px; height: 100px; position: relative; }
         .weight-ring { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(var(--primary-color) 0%, transparent 0%); display: flex; justify-content: center; align-items: center; transition: background 0.5s ease; }
-        .weight-ring::before { content: ''; position: absolute; width: 82%; height: 82%; background-color: var(--dark-card-bg); border-radius: 50%; }
+        .weight-ring::before { content: ''; position: absolute; width: 82%; height: 82%; background-color: var(--bg-color); border-radius: 50%; }
         .weight-ring-content { position: relative; z-index: 1; text-align: center; }
         .percent-achieved { font-size: 22px; font-weight: bold; }
         .ring-label { font-size: 12px; opacity: 0.7; }
         .weight-details { flex: 1; }
         .metric-item { margin-bottom: 12px; }
-        .weight-value { font-size: 22px; font-weight: bold; }
+        .weight-value { font-size: 24px; font-weight: bold; }
         .weight-label { font-size: 12px; opacity: 0.7; }
 
-        .chart-container { height: 110px; background-color: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 25px; padding: 10px; position: relative; }
+        .chart-container { height: 110px; background-color: rgba(255,255,255,0.02); border-radius: 12px; margin-bottom: 30px; padding: 10px; position: relative; border: 1px solid rgba(255,255,255,0.05); }
         .chart-canvas { width: 100%; height: 100%; }
         .chart-labels { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 5px; padding: 0 5px; }
 
-        .bottom-metrics { display: flex; justify-content: space-between; gap: 15px; }
+        .bottom-metrics { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 20px; }
         .metric-group { flex: 1; display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
-        .metric-value-large { font-size: 20px; font-weight: bold; margin-bottom: 2px;}
-        .metric-label-muted { font-size: 11px; opacity: 0.7; }
+        .metric-value-large { font-size: 22px; font-weight: bold; margin-bottom: 2px;}
+        .metric-label-muted { font-size: 12px; opacity: 0.7; }
 
         /* 表單與自訂選單 */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: var(--text-muted); opacity: 0.9;}
-        input, textarea { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; resize: none; color-scheme: dark; }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; resize: none; color-scheme: dark; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.3); }
         input:focus, textarea:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: #fca311; box-shadow: 0 0 10px rgba(252, 163, 17, 0.6); }
 
-        /* ✨ 專屬日期選擇器 UI 優化 */
-        .date-input-wrapper {
+        /* ✨ 偽裝成按鈕的高質感日期選擇器 */
+        .custom-date-btn {
             position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-input);
+            padding: 14px;
             display: flex;
             align-items: center;
+            font-size: 16px;
+            color: var(--primary-color);
+            font-weight: bold;
+            transition: all 0.3s ease;
         }
-        .date-input-wrapper svg {
+        .custom-date-btn:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--primary-color); }
+        .custom-date-btn svg { width: 22px; height: 22px; fill: var(--primary-color); margin-right: 12px; }
+        .custom-date-btn input[type="date"] {
             position: absolute;
-            left: 14px;
-            width: 20px;
-            height: 20px;
-            fill: var(--primary-color); /* 配合主題黃色 */
-            pointer-events: none; /* 讓點擊穿透到 input */
-            z-index: 2;
-        }
-        .date-input-wrapper input[type="date"] {
-            padding-left: 44px; /* 留出空間給 Icon */
-            cursor: pointer;
-            position: relative;
-            z-index: 1;
-        }
-        /* 完全隱藏原生日曆按鈕，但保留點擊整個框都會彈出日曆的功能 */
-        .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            width: 100%; height: 100%;
-            opacity: 0;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; /* 完全透明，但保留點擊功能 */
             cursor: pointer;
         }
+        .custom-date-btn .date-display { pointer-events: none; letter-spacing: 1px; }
 
         .custom-select-wrapper { position: relative; user-select: none; }
         .custom-select-display { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; color: var(--text-main); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
@@ -181,68 +177,70 @@
         <div class="header-title">智能體重管理</div>
     </div>
 
-    <div class="fixed-dashboard-card" id="sharedDashboard">
-        <div class="date-container">
-            <div class="date-day" id="displayDayName">星期日</div>
-            <div class="date-period" id="todayDate">--月 --日</div>
-        </div>
+    <div class="content-area">
+        
+        <div id="weightTab" class="tab-content active">
+            <div class="dashboard-section">
+                <div class="date-container">
+                    <div class="date-day" id="displayDayName">星期日</div>
+                    <div class="date-period" id="todayDate">--月 --日</div>
+                </div>
 
-        <div class="week-nav">
-            <div class="week-day-circle" onclick="selectDay(this, '一')">一</div>
-            <div class="week-day-circle" onclick="selectDay(this, '二')">二</div>
-            <div class="week-day-circle" onclick="selectDay(this, '三')">三</div>
-            <div class="week-day-circle" onclick="selectDay(this, '四')">四</div>
-            <div class="week-day-circle" onclick="selectDay(this, '五')">五</div>
-            <div class="week-day-circle" onclick="selectDay(this, '六')">六</div>
-            <div class="week-day-circle" id="circleSunday" onclick="selectDay(this, '日')">日</div>
-        </div>
+                <div class="week-nav">
+                    <div class="week-day-circle" onclick="selectDay(this, '一')">一</div>
+                    <div class="week-day-circle" onclick="selectDay(this, '二')">二</div>
+                    <div class="week-day-circle" onclick="selectDay(this, '三')">三</div>
+                    <div class="week-day-circle" onclick="selectDay(this, '四')">四</div>
+                    <div class="week-day-circle" onclick="selectDay(this, '五')">五</div>
+                    <div class="week-day-circle" onclick="selectDay(this, '六')">六</div>
+                    <div class="week-day-circle" id="circleSunday" onclick="selectDay(this, '日')">日</div>
+                </div>
 
-        <div class="top-metrics">
-            <div class="weight-ring-container">
-                <div class="weight-ring" id="weightRing">
-                    <div class="weight-ring-content">
-                        <span class="percent-achieved" id="weightPercent">0%</span>
-                        <div class="ring-label">目標達成率</div>
+                <div class="top-metrics">
+                    <div class="weight-ring-container">
+                        <div class="weight-ring" id="weightRing">
+                            <div class="weight-ring-content">
+                                <span class="percent-achieved" id="weightPercent">0%</span>
+                                <div class="ring-label">目標達成率</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="weight-details">
+                        <div class="metric-item">
+                            <div class="weight-value" id="weightValue">--.--</div>
+                            <div class="weight-label">當日體重 (kg)</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="weight-value" style="font-size: 20px;" id="startWeightValue">--.--</div>
+                            <div class="weight-label">初始體重</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="weightChartCanvas"></canvas>
+                    <div class="chart-labels"><span>初始體重</span><span>目前體重</span></div>
+                </div>
+
+                <div class="bottom-metrics">
+                    <div class="metric-group">
+                        <div class="metric-item"><div class="metric-value-large" id="displayTDEE">0</div><div class="metric-label-muted">每日 TDEE (kcal)</div></div>
+                        <div class="metric-item"><div class="metric-value-large" id="displayConsumed">0</div><div class="metric-label-muted">已攝取</div></div>
+                    </div>
+                    <div class="metric-group">
+                        <div class="metric-item"><div class="metric-value-large" id="displayBurned">0</div><div class="metric-label-muted">運動消耗</div></div>
+                        <div class="metric-item"><div class="metric-value-large" id="displayRemaining">0</div><div class="metric-label-muted">剩餘額度 (赤字)</div></div>
                     </div>
                 </div>
             </div>
-            <div class="weight-details">
-                <div class="metric-item">
-                    <div class="weight-value" id="weightValue">--.--</div>
-                    <div class="weight-label">當日體重 (kg)</div>
-                </div>
-                <div class="metric-item">
-                    <div class="weight-value" id="startWeightValue">--.--</div>
-                    <div class="weight-label">初始體重</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="chart-container">
-            <canvas class="chart-canvas" id="weightChartCanvas"></canvas>
-            <div class="chart-labels"><span>初始體重</span><span>目前體重</span></div>
-        </div>
-
-        <div class="bottom-metrics">
-            <div class="metric-group">
-                <div class="metric-item"><div class="metric-value-large" id="displayTDEE">0</div><div class="metric-label-muted">每日 TDEE (kcal)</div></div>
-                <div class="metric-item"><div class="metric-value-large" id="displayConsumed">0</div><div class="metric-label-muted">已攝取</div></div>
-            </div>
-            <div class="metric-group">
-                <div class="metric-item"><div class="metric-value-large" id="displayBurned">0</div><div class="metric-label-muted">運動消耗</div></div>
-                <div class="metric-item"><div class="metric-value-large" id="displayRemaining">0</div><div class="metric-label-muted">剩餘額度 (赤字)</div></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="content-area">
-        <div id="weightTab" class="tab-content active">
             <div class="glass-input-card">
                 <h2>體重紀錄</h2>
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <div class="date-input-wrapper">
+                    <div class="custom-date-btn">
                         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                        <span id="weightDateDisplay" class="date-display"></span>
                         <input type="date" id="weightDate">
                     </div>
                 </div>
@@ -255,13 +253,13 @@
         </div>
 
         <div id="foodTab" class="tab-content">
-            <div class="glass-input-card">
+            <div class="glass-input-card" style="margin-top: 20px;">
                 <h2>新增飲食紀錄</h2>
-                
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <div class="date-input-wrapper">
+                    <div class="custom-date-btn">
                         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                        <span id="foodDateDisplay" class="date-display"></span>
                         <input type="date" id="foodDate">
                     </div>
                 </div>
@@ -288,13 +286,13 @@
         </div>
 
         <div id="workoutTab" class="tab-content">
-            <div class="glass-input-card">
+            <div class="glass-input-card" style="margin-top: 20px;">
                 <h2>運動紀錄</h2>
-                
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <div class="date-input-wrapper">
+                    <div class="custom-date-btn">
                         <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                        <span id="workoutDateDisplay" class="date-display"></span>
                         <input type="date" id="workoutDate">
                     </div>
                 </div>
@@ -321,7 +319,7 @@
         </div>
 
         <div id="profileTab" class="tab-content">
-            <div class="glass-input-card">
+            <div class="glass-input-card" style="margin-top: 20px;">
                 <h2>個人資料與目標</h2>
                 <div style="text-align: center; margin-bottom: 15px; color: var(--primary-color); font-size: 12px;" id="userEmailDisplay"></div>
                 <div class="form-group">
@@ -369,9 +367,7 @@
                     </div>
                 </div>
                 <button onclick="calculateAndSaveProfile()">計算 TDEE 並更新</button>
-                
                 <button onclick="resetTodayData()" style="background-color: transparent; color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.5); margin-top: 15px;">🗑️ 重新計算 (清除當日所有紀錄)</button>
-                
                 <button class="btn-logout" onclick="window.logOutUser()">登出帳號</button>
             </div>
         </div>
@@ -457,15 +453,21 @@
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
     
-    // ✨ 取得精確的本地日期字串 (YYYY-MM-DD)
+    // 取得精確的本地日期字串 (YYYY-MM-DD)
     function getLocalDateStr(dateObj) {
         const tzoffset = dateObj.getTimezoneOffset() * 60000; 
         return (new Date(dateObj.getTime() - tzoffset)).toISOString().split('T')[0];
     }
     
-    // ✨ 新增：記錄目前儀表板正在查看的日期
     let currentViewDateStr = getLocalDateStr(todayObj);
     
+    // ✨ 更新所有偽裝按鈕上顯示的日期文字
+    function updateDateDisplays(dateStr) {
+        if(document.getElementById('weightDateDisplay')) document.getElementById('weightDateDisplay').innerText = dateStr;
+        if(document.getElementById('foodDateDisplay')) document.getElementById('foodDateDisplay').innerText = dateStr;
+        if(document.getElementById('workoutDateDisplay')) document.getElementById('workoutDateDisplay').innerText = dateStr;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         const currentDayStr = daysOfWeek[todayObj.getDay()];
@@ -477,11 +479,11 @@
         document.getElementById('displayDayName').innerText = `星期${currentDayStr}`;
         document.getElementById('todayDate').innerText = `${todayObj.getMonth() + 1}月 ${todayObj.getDate()}日`;
         
-        // 將所有輸入框預設為目前查看的日期
+        // 自動載入今天日期
         syncDateInputs(currentViewDateStr);
         drawWeightChart();
 
-        // ✨ 綁定事件：當使用者從日曆變更日期時，反向同步儀表板
+        // 綁定事件：當使用者從隱藏的日曆中變更日期時
         ['weightDate', 'foodDate', 'workoutDate'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
@@ -490,7 +492,7 @@
                     if(!newDateStr) return;
                     
                     currentViewDateStr = newDateStr;
-                    syncDateInputs(newDateStr); // 同步另外兩個分頁的日期框
+                    syncDateInputs(newDateStr);
 
                     // 計算選中日期的星期與顯示字串
                     const parts = newDateStr.split('-');
@@ -505,7 +507,6 @@
                     document.getElementById('displayDayName').innerText = `星期${dayName}`;
                     document.getElementById('todayDate').innerText = `${localDate.getMonth() + 1}月 ${localDate.getDate()}日`;
 
-                    // 重新渲染儀表板與當日清單
                     updateDashboard();
                     renderFoodLogs();
                     renderWorkoutLogs();
@@ -514,11 +515,12 @@
         });
     });
 
-    // ✨ 工具函數：同步所有日期選擇器的值
+    // 同步所有實際的 input[type="date"] 的值，並更新偽裝顯示
     function syncDateInputs(dateStr) {
         if(document.getElementById('weightDate')) document.getElementById('weightDate').value = dateStr;
         if(document.getElementById('foodDate')) document.getElementById('foodDate').value = dateStr;
         if(document.getElementById('workoutDate')) document.getElementById('workoutDate').value = dateStr;
+        updateDateDisplays(dateStr);
     }
 
     window.initializeAppWithUser = async function() {
@@ -549,12 +551,10 @@
         }
     };
 
-    // 選單切換
     function toggleCustomSelect(element) { document.querySelectorAll('.custom-select-wrapper').forEach(el => { if (el !== element) el.classList.remove('open'); }); element.classList.toggle('open'); }
     function selectCustomOption(inputId, value, text) { document.getElementById(inputId).value = value; document.getElementById(inputId + 'Display').innerText = text; }
     document.addEventListener('click', (e) => { if (!e.target.closest('.custom-select-wrapper')) { document.querySelectorAll('.custom-select-wrapper').forEach(el => el.classList.remove('open')); } });
 
-    // 運動面板專屬切換
     window.switchWorkoutType = function(type) {
         document.getElementById('btnToggleWeight').classList.remove('active');
         document.getElementById('btnToggleCardio').classList.remove('active');
@@ -571,7 +571,6 @@
         }
     };
 
-    // ✨ 點擊星期圈圈時，切換儀表板與同步日期輸入框
     function selectDay(element, dayName) {
         document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active')); 
         element.classList.add('active');
@@ -586,7 +585,6 @@
         
         document.getElementById('todayDate').innerText = `${targetDate.getMonth() + 1}月 ${targetDate.getDate()}日`;
 
-        // 更新目前查看的日期變數，並同步所有輸入框
         currentViewDateStr = getLocalDateStr(targetDate);
         syncDateInputs(currentViewDateStr);
 
@@ -621,7 +619,6 @@
         updateDashboard(); drawWeightChart(); triggerSync(); alert("記錄成功！");
     }
 
-    // ✨ 渲染飲食清單 (僅顯示目前選取日期的紀錄)
     function renderFoodLogs() {
         const list = document.getElementById('foodList'); list.innerHTML = '';
         const dailyLogs = appData.foodLogs.filter(log => log.date === currentViewDateStr);
@@ -674,7 +671,10 @@
         if(idx > -1) {
             const log = appData.foodLogs[idx];
             document.getElementById('foodName').value = log.name; document.getElementById('foodCalories').value = log.cals; document.getElementById('foodProtein').value = log.protein;
-            if(log.date) document.getElementById('foodDate').value = log.date;
+            if(log.date) {
+                document.getElementById('foodDate').value = log.date;
+                updateDateDisplays(log.date);
+            }
             
             appData.foodLogs.splice(idx, 1);
             renderFoodLogs(); updateDashboard(); triggerSync(); 
@@ -682,7 +682,6 @@
         }
     }
 
-    // ✨ 渲染運動清單 (僅顯示目前選取日期的紀錄)
     function renderWorkoutLogs() {
         const list = document.getElementById('workoutList'); list.innerHTML = '';
         const dailyLogs = appData.workoutLogs.filter(log => log.date === currentViewDateStr);
@@ -735,7 +734,10 @@
             const log = appData.workoutLogs[idx];
             switchWorkoutType(log.category); 
             document.getElementById('workoutItemName').value = log.name; document.getElementById('workoutItemCals').value = log.cals;
-            if(log.date) document.getElementById('workoutDate').value = log.date;
+            if(log.date) {
+                document.getElementById('workoutDate').value = log.date;
+                updateDateDisplays(log.date);
+            }
             
             appData.workoutLogs.splice(idx, 1);
             renderWorkoutLogs(); updateDashboard(); triggerSync(); 
@@ -743,7 +745,6 @@
         }
     }
 
-    // ✨ 一鍵清除當日資料 (精確刪除 currentViewDateStr 的紀錄)
     window.resetTodayData = function() {
         if(!confirm(`確定要清除【${currentViewDateStr}】的所有飲食與運動紀錄嗎？\n(清除後熱量將歸零)`)) return;
         
@@ -757,19 +758,16 @@
         alert("該日資料已全數歸零！");
     }
 
-    // ✨ 動態計算儀表板數值
     function updateDashboard() {
         let dailyConsumed = 0;
         let dailyBurned = 0;
 
-        // 計算目前選定日期的總攝取
         if(appData.foodLogs) {
             appData.foodLogs.forEach(log => {
                 if (log.date === currentViewDateStr) dailyConsumed += log.cals;
             });
         }
         
-        // 計算目前選定日期的總消耗
         if(appData.workoutLogs) {
             appData.workoutLogs.forEach(log => {
                 if (log.date === currentViewDateStr) dailyBurned += log.cals;
