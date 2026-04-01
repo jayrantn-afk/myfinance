@@ -79,11 +79,40 @@
         /* 表單與自訂選單 */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: var(--text-muted); opacity: 0.9;}
-        /* 增加對 date 類型的支援，在深色模式下稍微美化日曆icon */
         input, textarea { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; resize: none; color-scheme: dark; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.3); }
         input:focus, textarea:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: #fca311; box-shadow: 0 0 10px rgba(252, 163, 17, 0.6); }
+
+        /* ✨ 專屬日期選擇器 UI 優化 */
+        .date-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .date-input-wrapper svg {
+            position: absolute;
+            left: 14px;
+            width: 20px;
+            height: 20px;
+            fill: var(--primary-color); /* 配合主題黃色 */
+            pointer-events: none; /* 讓點擊穿透到 input */
+            z-index: 2;
+        }
+        .date-input-wrapper input[type="date"] {
+            padding-left: 44px; /* 留出空間給 Icon */
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+        }
+        /* 完全隱藏原生日曆按鈕，但保留點擊整個框都會彈出日曆的功能 */
+        .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
 
         .custom-select-wrapper { position: relative; user-select: none; }
         .custom-select-display { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; color: var(--text-main); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
@@ -212,7 +241,10 @@
                 <h2>體重紀錄</h2>
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <input type="date" id="weightDate">
+                    <div class="date-input-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                        <input type="date" id="weightDate">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>輸入當日體重 (kg)</label>
@@ -228,7 +260,10 @@
                 
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <input type="date" id="foodDate">
+                    <div class="date-input-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                        <input type="date" id="foodDate">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -247,7 +282,7 @@
                 </div>
                 <button onclick="addFood()">加入飲食清單</button>
                 
-                <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">飲食清單紀錄</h3>
+                <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">當日飲食紀錄</h3>
                 <ul class="log-list" id="foodList"></ul>
             </div>
         </div>
@@ -258,7 +293,10 @@
                 
                 <div class="form-group">
                     <label>紀錄日期</label>
-                    <input type="date" id="workoutDate">
+                    <div class="date-input-wrapper">
+                        <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                        <input type="date" id="workoutDate">
+                    </div>
                 </div>
 
                 <div class="toggle-group">
@@ -277,7 +315,7 @@
                 </div>
                 
                 <button onclick="addWorkout()">加入運動紀錄</button>
-                <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">運動清單紀錄</h3>
+                <h3 style="margin-top: 35px; font-size: 16px; border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 8px;">當日運動紀錄</h3>
                 <ul class="log-list" id="workoutList"></ul>
             </div>
         </div>
@@ -332,7 +370,7 @@
                 </div>
                 <button onclick="calculateAndSaveProfile()">計算 TDEE 並更新</button>
                 
-                <button onclick="resetTodayData()" style="background-color: transparent; color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.5); margin-top: 15px;">🗑️ 重新計算 (清除今日所有紀錄)</button>
+                <button onclick="resetTodayData()" style="background-color: transparent; color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.5); margin-top: 15px;">🗑️ 重新計算 (清除當日所有紀錄)</button>
                 
                 <button class="btn-logout" onclick="window.logOutUser()">登出帳號</button>
             </div>
@@ -414,26 +452,74 @@
 </script>
 
 <script>
-    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, consumedCals: 0, consumedProtein: 0, burnedCals: 0, foodLogs: [], workoutLogs: [], age: '', height: '', gender: 'male', activity: 1.2 };
+    let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, foodLogs: [], workoutLogs: [], age: '', height: '', gender: 'male', activity: 1.2 };
     
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
     let todayObj = new Date();
     
+    // ✨ 取得精確的本地日期字串 (YYYY-MM-DD)
+    function getLocalDateStr(dateObj) {
+        const tzoffset = dateObj.getTimezoneOffset() * 60000; 
+        return (new Date(dateObj.getTime() - tzoffset)).toISOString().split('T')[0];
+    }
+    
+    // ✨ 新增：記錄目前儀表板正在查看的日期
+    let currentViewDateStr = getLocalDateStr(todayObj);
+    
     document.addEventListener('DOMContentLoaded', () => {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         const currentDayStr = daysOfWeek[todayObj.getDay()];
-        document.querySelectorAll('.week-day-circle').forEach(el => { el.classList.remove('active'); if(el.innerText === currentDayStr) el.classList.add('active'); });
+        
+        document.querySelectorAll('.week-day-circle').forEach(el => { 
+            el.classList.remove('active'); 
+            if(el.innerText === currentDayStr) el.classList.add('active'); 
+        });
         document.getElementById('displayDayName').innerText = `星期${currentDayStr}`;
         document.getElementById('todayDate').innerText = `${todayObj.getMonth() + 1}月 ${todayObj.getDate()}日`;
         
-        // 自動載入今天日期至 Date Pickers
-        const todayStr = new Date().toISOString().split('T')[0];
-        if(document.getElementById('weightDate')) document.getElementById('weightDate').value = todayStr;
-        if(document.getElementById('foodDate')) document.getElementById('foodDate').value = todayStr;
-        if(document.getElementById('workoutDate')) document.getElementById('workoutDate').value = todayStr;
-        
+        // 將所有輸入框預設為目前查看的日期
+        syncDateInputs(currentViewDateStr);
         drawWeightChart();
+
+        // ✨ 綁定事件：當使用者從日曆變更日期時，反向同步儀表板
+        ['weightDate', 'foodDate', 'workoutDate'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.addEventListener('change', (e) => {
+                    const newDateStr = e.target.value;
+                    if(!newDateStr) return;
+                    
+                    currentViewDateStr = newDateStr;
+                    syncDateInputs(newDateStr); // 同步另外兩個分頁的日期框
+
+                    // 計算選中日期的星期與顯示字串
+                    const parts = newDateStr.split('-');
+                    const localDate = new Date(parts[0], parts[1]-1, parts[2]);
+                    const dayName = daysOfWeek[localDate.getDay()];
+                    
+                    // 同步頂部星期圈圈與日期顯示
+                    document.querySelectorAll('.week-day-circle').forEach(circle => {
+                        circle.classList.remove('active');
+                        if(circle.innerText === dayName) circle.classList.add('active');
+                    });
+                    document.getElementById('displayDayName').innerText = `星期${dayName}`;
+                    document.getElementById('todayDate').innerText = `${localDate.getMonth() + 1}月 ${localDate.getDate()}日`;
+
+                    // 重新渲染儀表板與當日清單
+                    updateDashboard();
+                    renderFoodLogs();
+                    renderWorkoutLogs();
+                });
+            }
+        });
     });
+
+    // ✨ 工具函數：同步所有日期選擇器的值
+    function syncDateInputs(dateStr) {
+        if(document.getElementById('weightDate')) document.getElementById('weightDate').value = dateStr;
+        if(document.getElementById('foodDate')) document.getElementById('foodDate').value = dateStr;
+        if(document.getElementById('workoutDate')) document.getElementById('workoutDate').value = dateStr;
+    }
 
     window.initializeAppWithUser = async function() {
         const cloudData = await window.loadFromFirebase();
@@ -468,7 +554,7 @@
     function selectCustomOption(inputId, value, text) { document.getElementById(inputId).value = value; document.getElementById(inputId + 'Display').innerText = text; }
     document.addEventListener('click', (e) => { if (!e.target.closest('.custom-select-wrapper')) { document.querySelectorAll('.custom-select-wrapper').forEach(el => el.classList.remove('open')); } });
 
-    // ✨ 運動面板專屬切換
+    // 運動面板專屬切換
     window.switchWorkoutType = function(type) {
         document.getElementById('btnToggleWeight').classList.remove('active');
         document.getElementById('btnToggleCardio').classList.remove('active');
@@ -485,19 +571,28 @@
         }
     };
 
-    let currentSelectedDay = ''; 
+    // ✨ 點擊星期圈圈時，切換儀表板與同步日期輸入框
     function selectDay(element, dayName) {
-        document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active')); element.classList.add('active');
-        document.getElementById('displayDayName').innerText = `星期${dayName}`; currentSelectedDay = dayName;
-        let currentNorm = todayObj.getDay() === 0 ? 7 : todayObj.getDay(); let targetNorm = dayMap[dayName] === 0 ? 7 : dayMap[dayName];
-        let diff = targetNorm - currentNorm; let targetDate = new Date(todayObj); targetDate.setDate(todayObj.getDate() + diff);
+        document.querySelectorAll('.week-day-circle').forEach(el => el.classList.remove('active')); 
+        element.classList.add('active');
+        document.getElementById('displayDayName').innerText = `星期${dayName}`; 
+        
+        let currentNorm = todayObj.getDay() === 0 ? 7 : todayObj.getDay(); 
+        let targetNorm = dayMap[dayName] === 0 ? 7 : dayMap[dayName];
+        let diff = targetNorm - currentNorm; 
+        
+        let targetDate = new Date(todayObj); 
+        targetDate.setDate(todayObj.getDate() + diff);
+        
         document.getElementById('todayDate').innerText = `${targetDate.getMonth() + 1}月 ${targetDate.getDate()}日`;
 
-        const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
-        if (dayName !== daysOfWeek[todayObj.getDay()]) {
-            document.getElementById('displayConsumed').innerText = '0'; document.getElementById('displayBurned').innerText = '0';
-            document.getElementById('displayRemaining').innerText = appData.tdee > 0 ? appData.tdee : '0'; document.getElementById('displayRemaining').style.color = 'white';
-        } else { updateDashboard(); }
+        // 更新目前查看的日期變數，並同步所有輸入框
+        currentViewDateStr = getLocalDateStr(targetDate);
+        syncDateInputs(currentViewDateStr);
+
+        updateDashboard();
+        renderFoodLogs();
+        renderWorkoutLogs();
     }
 
     function switchTab(tabName, element) { document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); document.getElementById(tabName + 'Tab').classList.add('active'); document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active')); element.classList.add('active'); }
@@ -526,15 +621,17 @@
         updateDashboard(); drawWeightChart(); triggerSync(); alert("記錄成功！");
     }
 
-    // ✨ 渲染飲食清單 (加入日期標示)
+    // ✨ 渲染飲食清單 (僅顯示目前選取日期的紀錄)
     function renderFoodLogs() {
         const list = document.getElementById('foodList'); list.innerHTML = '';
-        appData.foodLogs.forEach(log => {
+        const dailyLogs = appData.foodLogs.filter(log => log.date === currentViewDateStr);
+        
+        dailyLogs.forEach(log => {
             const li = document.createElement('li'); li.className = 'log-item';
             li.innerHTML = `
                 <div class="log-details">
                     <strong>${log.name}</strong>
-                    <span class="log-macros">${log.date ? log.date + ' | ' : ''}蛋白質: ${log.protein}g</span>
+                    <span class="log-macros">蛋白質: ${log.protein}g</span>
                 </div>
                 <div class="log-actions">
                     <span class="log-value" style="color: var(--text-main);">${log.cals} kcal</span>
@@ -549,7 +646,6 @@
         });
     }
 
-    // ✨ 加入飲食 (支援自訂日期)
     function addFood() {
         const name = document.getElementById('foodName').value || "未命名食物";
         const date = document.getElementById('foodDate').value;
@@ -557,40 +653,46 @@
         const protein = parseFloat(document.getElementById('foodProtein').value);
         if(isNaN(cals) || isNaN(protein)) { alert("請確認數值！"); return; }
         
-        appData.consumedCals += cals; appData.consumedProtein += protein;
         appData.foodLogs.push({ id: Date.now(), date: date, name, cals, protein }); 
         
         document.getElementById('foodName').value = ''; document.getElementById('foodCalories').value = ''; document.getElementById('foodProtein').value = '';
         
-        renderFoodLogs(); updateDashboard(); triggerSync(); alert("已加入飲食清單！");
+        renderFoodLogs(); updateDashboard(); triggerSync(); 
     }
 
-    // ✨ 編輯/刪除 飲食
     window.deleteFood = function(id) {
         if(!confirm("確定要刪除這筆飲食紀錄嗎？")) return;
         const idx = appData.foodLogs.findIndex(x => x.id === id);
-        if(idx > -1) { appData.consumedCals -= appData.foodLogs[idx].cals; appData.consumedProtein -= appData.foodLogs[idx].protein; appData.foodLogs.splice(idx, 1); renderFoodLogs(); updateDashboard(); triggerSync(); }
+        if(idx > -1) { 
+            appData.foodLogs.splice(idx, 1); 
+            renderFoodLogs(); updateDashboard(); triggerSync(); 
+        }
     }
+
     window.editFood = function(id) {
         const idx = appData.foodLogs.findIndex(x => x.id === id);
         if(idx > -1) {
             const log = appData.foodLogs[idx];
             document.getElementById('foodName').value = log.name; document.getElementById('foodCalories').value = log.cals; document.getElementById('foodProtein').value = log.protein;
             if(log.date) document.getElementById('foodDate').value = log.date;
-            appData.consumedCals -= log.cals; appData.consumedProtein -= log.protein; appData.foodLogs.splice(idx, 1);
-            renderFoodLogs(); updateDashboard(); triggerSync(); window.scrollTo({ top: document.getElementById('foodTab').offsetTop, behavior: 'smooth' });
+            
+            appData.foodLogs.splice(idx, 1);
+            renderFoodLogs(); updateDashboard(); triggerSync(); 
+            window.scrollTo({ top: document.getElementById('foodTab').offsetTop, behavior: 'smooth' });
         }
     }
 
-    // ✨ 渲染運動清單 (加入日期標示)
+    // ✨ 渲染運動清單 (僅顯示目前選取日期的紀錄)
     function renderWorkoutLogs() {
         const list = document.getElementById('workoutList'); list.innerHTML = '';
-        appData.workoutLogs.forEach(log => {
+        const dailyLogs = appData.workoutLogs.filter(log => log.date === currentViewDateStr);
+
+        dailyLogs.forEach(log => {
             const li = document.createElement('li'); li.className = 'log-item';
             li.innerHTML = `
                 <div class="log-details">
                     <strong>${log.category}</strong>
-                    <span class="log-macros">${log.date ? log.date + ' | ' : ''}${log.name}</span>
+                    <span class="log-macros">${log.name}</span>
                 </div>
                 <div class="log-actions">
                     <span class="log-value" style="color: var(--primary-color);">-${log.cals} kcal</span>
@@ -605,7 +707,6 @@
         });
     }
 
-    // ✨ 加入運動 (支援自訂日期)
     function addWorkout() {
         const category = document.getElementById('workoutCategory').value;
         const name = document.getElementById('workoutItemName').value || "未命名運動";
@@ -613,19 +714,21 @@
         const cals = parseFloat(document.getElementById('workoutItemCals').value);
         if(isNaN(cals) || cals <= 0) { alert("請輸入有效的消耗熱量大卡！"); return; }
         
-        appData.burnedCals += cals;
         appData.workoutLogs.push({ id: Date.now(), date: date, category, name, cals }); 
         
         document.getElementById('workoutItemName').value = ''; document.getElementById('workoutItemCals').value = '';
-        renderWorkoutLogs(); updateDashboard(); triggerSync(); alert("已加入運動清單！");
+        renderWorkoutLogs(); updateDashboard(); triggerSync();
     }
 
-    // ✨ 編輯/刪除 運動
     window.deleteWorkout = function(id) {
         if(!confirm("確定要刪除這筆運動紀錄嗎？")) return;
         const idx = appData.workoutLogs.findIndex(x => x.id === id);
-        if(idx > -1) { appData.burnedCals -= appData.workoutLogs[idx].cals; appData.workoutLogs.splice(idx, 1); renderWorkoutLogs(); updateDashboard(); triggerSync(); }
+        if(idx > -1) { 
+            appData.workoutLogs.splice(idx, 1); 
+            renderWorkoutLogs(); updateDashboard(); triggerSync(); 
+        }
     }
+
     window.editWorkout = function(id) {
         const idx = appData.workoutLogs.findIndex(x => x.id === id);
         if(idx > -1) {
@@ -633,30 +736,57 @@
             switchWorkoutType(log.category); 
             document.getElementById('workoutItemName').value = log.name; document.getElementById('workoutItemCals').value = log.cals;
             if(log.date) document.getElementById('workoutDate').value = log.date;
-            appData.burnedCals -= log.cals; appData.workoutLogs.splice(idx, 1);
-            renderWorkoutLogs(); updateDashboard(); triggerSync(); window.scrollTo({ top: document.getElementById('workoutTab').offsetTop, behavior: 'smooth' });
+            
+            appData.workoutLogs.splice(idx, 1);
+            renderWorkoutLogs(); updateDashboard(); triggerSync(); 
+            window.scrollTo({ top: document.getElementById('workoutTab').offsetTop, behavior: 'smooth' });
         }
     }
 
-    // ✨ 一鍵清除今日資料 (殺掉幽靈數字)
+    // ✨ 一鍵清除當日資料 (精確刪除 currentViewDateStr 的紀錄)
     window.resetTodayData = function() {
-        if(!confirm("確定要清除【所有】的飲食與運動紀錄，並且讓熱量強制歸零嗎？\n(用來消滅舊的幽靈數字超級好用！)")) return;
-        appData.consumedCals = 0;
-        appData.consumedProtein = 0;
-        appData.burnedCals = 0;
-        appData.foodLogs = [];
-        appData.workoutLogs = [];
+        if(!confirm(`確定要清除【${currentViewDateStr}】的所有飲食與運動紀錄嗎？\n(清除後熱量將歸零)`)) return;
+        
+        appData.foodLogs = appData.foodLogs.filter(log => log.date !== currentViewDateStr);
+        appData.workoutLogs = appData.workoutLogs.filter(log => log.date !== currentViewDateStr);
+        
         renderFoodLogs();
         renderWorkoutLogs();
         updateDashboard();
         triggerSync();
-        alert("資料已全數歸零！");
+        alert("該日資料已全數歸零！");
     }
 
+    // ✨ 動態計算儀表板數值
     function updateDashboard() {
-        document.getElementById('displayTDEE').innerText = appData.tdee; document.getElementById('displayConsumed').innerText = appData.consumedCals;
-        document.getElementById('displayBurned').innerText = appData.burnedCals; let remaining = appData.tdee + appData.burnedCals - appData.consumedCals;
-        if(appData.tdee === 0) remaining = 0; const remainingEl = document.getElementById('displayRemaining'); remainingEl.innerText = remaining; remainingEl.style.color = remaining < 0 ? '#ff7b7b' : 'white';
+        let dailyConsumed = 0;
+        let dailyBurned = 0;
+
+        // 計算目前選定日期的總攝取
+        if(appData.foodLogs) {
+            appData.foodLogs.forEach(log => {
+                if (log.date === currentViewDateStr) dailyConsumed += log.cals;
+            });
+        }
+        
+        // 計算目前選定日期的總消耗
+        if(appData.workoutLogs) {
+            appData.workoutLogs.forEach(log => {
+                if (log.date === currentViewDateStr) dailyBurned += log.cals;
+            });
+        }
+
+        document.getElementById('displayTDEE').innerText = appData.tdee; 
+        document.getElementById('displayConsumed').innerText = dailyConsumed;
+        document.getElementById('displayBurned').innerText = dailyBurned; 
+        
+        let remaining = appData.tdee + dailyBurned - dailyConsumed;
+        if(appData.tdee === 0) remaining = 0; 
+        
+        const remainingEl = document.getElementById('displayRemaining'); 
+        remainingEl.innerText = remaining; 
+        remainingEl.style.color = remaining < 0 ? '#ff7b7b' : 'white';
+        
         if(appData.currentWeight > 0 && appData.startWeight > 0 && appData.targetWeight > 0) {
             const achieve = appData.startWeight - appData.currentWeight; const totalTarget = appData.startWeight - appData.targetWeight;
             let percent = (achieve / totalTarget) * 100; if(isNaN(percent) || totalTarget === 0) percent = 0; percent = Math.min(Math.max(0, percent), 100);
