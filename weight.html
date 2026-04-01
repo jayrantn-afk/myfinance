@@ -111,7 +111,7 @@
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
         button.btn-ai { background-color: var(--secondary-color); font-size: 16px; box-shadow: 0 4px 10px rgba(33, 150, 243, 0.3); display: flex; justify-content: center; align-items: center; gap: 8px;}
         button.btn-ai:hover { background-color: #0b7dda; box-shadow: 0 6px 15px rgba(33, 150, 243, 0.5); }
-        button.btn-logout { background-color: rgba(244, 67, 54, 0.2); color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.3); margin-top: 30px; box-shadow: none; }
+        button.btn-logout { background-color: rgba(244, 67, 54, 0.2); color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.3); margin-top: 10px; box-shadow: none; }
 
         /* ✨ 運動類型切換按鈕 */
         .toggle-group { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -350,6 +350,9 @@
                     </div>
                 </div>
                 <button onclick="calculateAndSaveProfile()">計算 TDEE 並更新</button>
+                
+                <button onclick="resetTodayData()" style="background-color: transparent; color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.5); margin-top: 15px;">🗑️ 重新計算 (清除今日所有紀錄)</button>
+                
                 <button class="btn-logout" onclick="window.logOutUser()">登出帳號</button>
             </div>
         </div>
@@ -433,7 +436,6 @@
     // 金鑰
     const GEMINI_API_KEY = "AIzaSyCQWawCtDA17Bf7vh_IRuaHQQin0ABJ1Fo";
 
-    // ✨ 新增了 foodLogs 和 workoutLogs 陣列，讓你的明細永遠存雲端！
     let appData = { tdee: 0, startWeight: 0, targetWeight: 0, currentWeight: 0, consumedCals: 0, consumedProtein: 0, burnedCals: 0, foodLogs: [], workoutLogs: [], age: '', height: '', gender: 'male', activity: 1.2 };
     
     const dayMap = { '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 0 };
@@ -452,7 +454,6 @@
         const cloudData = await window.loadFromFirebase();
         if (cloudData) {
             appData = cloudData; 
-            // 初始化確保陣列存在 (防呆)
             if(!appData.foodLogs) appData.foodLogs = [];
             if(!appData.workoutLogs) appData.workoutLogs = [];
             
@@ -460,7 +461,6 @@
             if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
             if(appData.currentWeight > 0) document.getElementById('weightValue').innerText = appData.currentWeight.toFixed(2);
             
-            // 自動填入個人資料
             if(appData.age) document.getElementById('age').value = appData.age;
             if(appData.height) document.getElementById('height').value = appData.height;
             if(appData.gender) selectCustomOption('gender', appData.gender, appData.gender === 'male' ? '男性' : '女性');
@@ -472,7 +472,6 @@
                 selectCustomOption('activity', appData.activity, actText);
             }
             
-            // ✨ 渲染雲端抓下來的歷史明細
             renderFoodLogs();
             renderWorkoutLogs();
             updateDashboard(); drawWeightChart(); 
@@ -592,7 +591,7 @@
         updateDashboard(); drawWeightChart(); triggerSync(); alert("記錄成功！");
     }
 
-    // ✨ 渲染飲食清單 (加上質感 SVG Icon)
+    // ✨ 渲染飲食清單
     function renderFoodLogs() {
         const list = document.getElementById('foodList'); list.innerHTML = '';
         appData.foodLogs.forEach(log => {
@@ -612,7 +611,7 @@
         });
     }
 
-    // ✨ 加入飲食 (寫入陣列)
+    // ✨ 加入飲食
     function addFood() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回今日再進行記錄。"); return; }
@@ -621,7 +620,7 @@
         if(isNaN(cals) || isNaN(protein)) { alert("請確認數值！"); return; }
         
         appData.consumedCals += cals; appData.consumedProtein += protein;
-        appData.foodLogs.push({ id: Date.now(), name, cals, protein }); // 存入明細
+        appData.foodLogs.push({ id: Date.now(), name, cals, protein }); 
         
         document.getElementById('foodName').value = ''; document.getElementById('foodCalories').value = ''; document.getElementById('foodProtein').value = '';
         document.getElementById('imagePreview').style.display = 'none'; document.getElementById('uploadPlaceholder').style.opacity = '1';
@@ -646,7 +645,7 @@
         }
     }
 
-    // ✨ 渲染運動清單 (加上質感 SVG Icon)
+    // ✨ 渲染運動清單
     function renderWorkoutLogs() {
         const list = document.getElementById('workoutList'); list.innerHTML = '';
         appData.workoutLogs.forEach(log => {
@@ -666,7 +665,7 @@
         });
     }
 
-    // ✨ 加入運動 (全新自由輸入邏輯)
+    // ✨ 加入運動 
     function addWorkout() {
         const daysOfWeek = ['日', '一', '二', '三', '四', '五', '六'];
         if(currentSelectedDay !== '' && currentSelectedDay !== daysOfWeek[todayObj.getDay()]) { alert("請切換回今日再進行記錄。"); return; }
@@ -677,7 +676,7 @@
         if(isNaN(cals) || cals <= 0) { alert("請輸入有效的消耗熱量大卡！"); return; }
         
         appData.burnedCals += cals;
-        appData.workoutLogs.push({ id: Date.now(), category, name, cals }); // 存入明細
+        appData.workoutLogs.push({ id: Date.now(), category, name, cals }); 
         
         document.getElementById('workoutItemName').value = ''; document.getElementById('workoutItemCals').value = '';
         renderWorkoutLogs(); updateDashboard(); triggerSync(); alert("已加入運動清單！");
@@ -693,11 +692,26 @@
         const idx = appData.workoutLogs.findIndex(x => x.id === id);
         if(idx > -1) {
             const log = appData.workoutLogs[idx];
-            switchWorkoutType(log.category); // 切換回對應的按鈕
+            switchWorkoutType(log.category); 
             document.getElementById('workoutItemName').value = log.name; document.getElementById('workoutItemCals').value = log.cals;
             appData.burnedCals -= log.cals; appData.workoutLogs.splice(idx, 1);
             renderWorkoutLogs(); updateDashboard(); triggerSync(); window.scrollTo({ top: document.getElementById('workoutTab').offsetTop, behavior: 'smooth' });
         }
+    }
+
+    // ✨ 一鍵清除今日資料 (殺掉幽靈數字)
+    window.resetTodayData = function() {
+        if(!confirm("確定要清除今日【所有】的飲食與運動紀錄，並且讓熱量強制歸零嗎？\n(用來消滅舊的幽靈數字超級好用！)")) return;
+        appData.consumedCals = 0;
+        appData.consumedProtein = 0;
+        appData.burnedCals = 0;
+        appData.foodLogs = [];
+        appData.workoutLogs = [];
+        renderFoodLogs();
+        renderWorkoutLogs();
+        updateDashboard();
+        triggerSync();
+        alert("今日資料已全數歸零！");
     }
 
     function updateDashboard() {
