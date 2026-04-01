@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的體重管理大師 - V2.04</title>
+    <title>我的體重管理大師 - V2.05</title>
     <style>
         :root {
             --primary-color: #fca311; 
@@ -72,11 +72,8 @@
         .weight-value { font-size: 26px; font-weight: 900; color: var(--text-main);}
         .weight-label { font-size: 12px; color: var(--text-muted); }
 
-        /* ✨ V2.04 修復圖表區塊崩塌：移除寫死的高度，讓子元素自然撐開 */
         .chart-container { margin-top: 25px; margin-bottom: 15px; position: relative; }
-        /* 給畫布一個固定的高度，並且設定為區塊元素避免底部空白 */
         .chart-canvas { width: 100%; height: 110px; display: block; }
-        /* 文字標籤會自然排在畫布下方，不會再重疊 */
         .chart-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px; padding: 0 4px; }
 
         .chart-range-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; background: rgba(0,0,0,0.02); padding: 5px; border-radius: 20px;}
@@ -154,7 +151,6 @@
         .icon-edit:hover { color: var(--secondary-color); }
         .icon-delete:hover { color: #e74c3c; }
 
-        /* ✨ V2.04 修復分頁跳動：移除上下位移(translateY)，改為單純的透明度淡入，極致順暢 */
         .tab-content { display: none; opacity: 0; }
         .tab-content.active { display: block; opacity: 1; animation: smoothFadeIn 0.3s ease-in-out; }
         @keyframes smoothFadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -180,7 +176,7 @@
 <div id="loginScreen" class="login-screen">
     <div class="login-card">
         <h1>智能體重管理大師</h1>
-        <p>V2.04 平滑修復版<br>請先登入專屬雲端保險箱</p>
+        <p>V2.05 完美修復版<br>請先登入專屬雲端保險箱</p>
         <button class="btn-google" onclick="window.signInWithGoogle()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20px" height="20px"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
             使用 Google 帳號登入
@@ -192,7 +188,7 @@
     <div class="top-region">
         <div class="header-title">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--secondary-color)"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
-            我的體重管理大師 <span style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; color: var(--text-muted);">V2.04</span>
+            我的體重管理大師 <span style="font-size: 12px; background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; color: var(--text-muted);">V2.05</span>
         </div>
     </div>
 
@@ -231,9 +227,15 @@
                                 <div class="weight-value" id="weightValue">--.--</div>
                                 <div class="weight-label">當日體重 (kg)</div>
                             </div>
-                            <div class="metric-item" style="margin-bottom: 0;">
-                                <div class="weight-value" style="font-size: 20px;" id="startWeightValue">--.--</div>
-                                <div class="weight-label">初始體重</div>
+                            <div style="display: flex; gap: 20px;">
+                                <div class="metric-item" style="margin-bottom: 0;">
+                                    <div class="weight-value" style="font-size: 18px;" id="startWeightValue">--.--</div>
+                                    <div class="weight-label">初始體重</div>
+                                </div>
+                                <div class="metric-item" style="margin-bottom: 0;">
+                                    <div class="weight-value" style="font-size: 18px; color: var(--secondary-color);" id="targetWeightDisplay">--.--</div>
+                                    <div class="weight-label">目標體重</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -543,7 +545,7 @@
             if(!appData.weightLogs) appData.weightLogs = [];
             
             if(appData.startWeight > 0) { document.getElementById('startWeightInput').value = appData.startWeight; document.getElementById('startWeightValue').innerText = appData.startWeight.toFixed(2); }
-            if(appData.targetWeight > 0) document.getElementById('targetWeightInput').value = appData.targetWeight;
+            if(appData.targetWeight > 0) { document.getElementById('targetWeightInput').value = appData.targetWeight; document.getElementById('targetWeightDisplay').innerText = appData.targetWeight.toFixed(2); }
             
             if(appData.age) document.getElementById('age').value = appData.age;
             if(appData.height) document.getElementById('height').value = appData.height;
@@ -604,7 +606,6 @@
         renderWorkoutLogs();
     }
 
-    /* ✨ V2.04 修復分頁跳動：拔除強制跳回頂端的語法，讓系統維持平滑淡入 */
     function switchTab(tabName, element) { 
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); 
         document.getElementById(tabName + 'Tab').classList.add('active'); 
@@ -626,6 +627,7 @@
         let bmr = (gender === 'male') ? (10 * startWeight) + (6.25 * height) - (5 * age) + 5 : (10 * startWeight) + (6.25 * height) - (5 * age) - 161;
         appData.tdee = Math.round(bmr * activity);
         document.getElementById('startWeightValue').innerText = startWeight.toFixed(2);
+        document.getElementById('targetWeightDisplay').innerText = targetWeight.toFixed(2);
         
         updateDashboard(); drawWeightChart(appData.weightLogs, currentChartRange); triggerSync(); 
         alert(`設定成功！`); 
@@ -634,7 +636,11 @@
 
     function getLatestWeight() {
         if (!appData.weightLogs || appData.weightLogs.length === 0) return 0;
-        const sortedLogs = [...appData.weightLogs].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sortedLogs = [...appData.weightLogs].sort((a, b) => {
+            const dateDiff = new Date(b.date) - new Date(a.date);
+            if (dateDiff !== 0) return dateDiff;
+            return b.id - a.id; 
+        });
         return sortedLogs[0].weight;
     }
 
@@ -825,6 +831,12 @@
              document.getElementById('weightValue').innerText = '--.--';
         }
 
+        // ✨ V2.05 更新目標體重顯示
+        if (appData.targetWeight > 0) {
+            const twDisplay = document.getElementById('targetWeightDisplay');
+            if(twDisplay) twDisplay.innerText = appData.targetWeight.toFixed(2);
+        }
+
         let remaining = appData.tdee + dailyBurned - dailyConsumed;
         if(appData.tdee === 0) remaining = 0; 
         
@@ -840,10 +852,29 @@
             remainingLabel.innerText = '還可以吃';
         }
         
+        // ✨ V2.05 達成率防呆計算引擎 (支援減重與增重，絕不亂標 100%)
         if(latestWeight > 0 && appData.startWeight > 0 && appData.targetWeight > 0) {
-            const achieve = appData.startWeight - latestWeight; const totalTarget = appData.startWeight - appData.targetWeight;
-            let percent = (achieve / totalTarget) * 100; if(isNaN(percent) || totalTarget === 0) percent = 0; percent = Math.min(Math.max(0, percent), 100);
-            document.getElementById('weightPercent').innerText = Math.round(percent) + "%"; document.getElementById('weightRing').style.background = `conic-gradient(var(--secondary-color) ${Math.round(percent)}%, rgba(33, 150, 243, 0.1) 0%)`;
+            let percent = 0;
+            let totalDiff = appData.startWeight - appData.targetWeight;
+            let currentDiff = appData.startWeight - latestWeight;
+            
+            if (totalDiff < 0) {
+                // 如果是增重模式
+                totalDiff = Math.abs(totalDiff);
+                currentDiff = latestWeight - appData.startWeight; 
+            }
+            
+            if (totalDiff === 0) {
+                percent = (latestWeight === appData.targetWeight) ? 100 : 0;
+            } else {
+                percent = (currentDiff / totalDiff) * 100;
+            }
+            
+            if(isNaN(percent)) percent = 0; 
+            percent = Math.min(Math.max(0, percent), 100);
+            
+            document.getElementById('weightPercent').innerText = Math.round(percent) + "%"; 
+            document.getElementById('weightRing').style.background = `conic-gradient(var(--secondary-color) ${Math.round(percent)}%, rgba(33, 150, 243, 0.1) 0%)`;
         }
     }
 
