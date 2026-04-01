@@ -6,6 +6,9 @@
     <title>我的智能體重管理大師 - 滿版優化版</title>
     <style>
         :root {
+            /* ✨ 加上這行魔法，強制瀏覽器將所有原生元件(如日曆、捲軸)切換為深色模式 */
+            color-scheme: dark; 
+            
             --primary-color: #fca311; 
             --primary-hover: #e89610;
             --secondary-color: #2196F3;
@@ -43,7 +46,7 @@
         .top-region { background-color: var(--primary-color); padding: 20px 20px 30px 20px; text-align: center; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
         .header-title { font-size: 20px; font-weight: bold; color: #fff; letter-spacing: 1px; opacity: 0.9; }
 
-        /* ✨ 全面滿版設計，移除小方框 */
+        /* 全面滿版設計 */
         .page-content { padding: 20px; color: var(--text-on-dark); }
         .page-content h2 { font-size: 18px; margin-bottom: 20px; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; letter-spacing: 0.5px; }
 
@@ -80,12 +83,12 @@
         /* 表單與自訂選單 */
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 14px; color: var(--text-muted); opacity: 0.9;}
-        input[type="text"], input[type="number"], textarea { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; resize: none; color-scheme: dark; }
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-radius: var(--border-radius-input); font-size: 15px; transition: all 0.3s ease; color: var(--text-main); -moz-appearance: textfield; resize: none; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input::placeholder, textarea::placeholder { color: rgba(255, 255, 255, 0.3); }
         input:focus, textarea:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: #fca311; box-shadow: 0 0 10px rgba(252, 163, 17, 0.6); }
 
-        /* ✨ 完美修復：高質感日期選擇器 (雙重觸發防護) */
+        /* 高質感日期選擇器 */
         .custom-date-btn {
             position: relative;
             background: rgba(255, 255, 255, 0.05);
@@ -99,7 +102,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            overflow: hidden; /* 避免隱藏的日曆溢出 */
+            overflow: hidden;
         }
         .custom-date-btn:hover { background: rgba(255, 255, 255, 0.15); border-color: var(--primary-color); }
         .custom-date-btn svg { width: 22px; height: 22px; fill: var(--primary-color); margin-right: 12px; pointer-events: none; }
@@ -111,7 +114,6 @@
             cursor: pointer;
             box-sizing: border-box;
         }
-        /* 關鍵修復：將原生日曆圖示強制撐滿整個按鈕，確保點擊範圍覆蓋 */
         .custom-date-btn input[type="date"]::-webkit-calendar-picker-indicator {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -137,12 +139,12 @@
         button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
         button.btn-logout { background-color: rgba(244, 67, 54, 0.2); color: #ff7b7b; border: 1px solid rgba(244, 67, 54, 0.3); margin-top: 10px; box-shadow: none; }
 
-        /* ✨ 運動類型切換按鈕 */
+        /* 運動類型切換按鈕 */
         .toggle-group { display: flex; gap: 10px; margin-bottom: 20px; }
         .toggle-btn { flex: 1; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); margin-top: 0; box-shadow: none; padding: 12px; }
         .toggle-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); box-shadow: 0 4px 10px rgba(252, 163, 17, 0.3); }
 
-        /* ✨ 列表與操作 Icon */
+        /* 列表與操作 Icon */
         .log-list { list-style: none; margin-top: 15px; }
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 14px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; margin-bottom: 12px; font-size: 14px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.02); }
         .log-item:hover { background: rgba(255,255,255,0.1); }
