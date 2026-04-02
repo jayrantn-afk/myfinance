@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.13</title>
+    <title>杰冉宇宙營收表 v01.17</title>
     
+    <!-- 引入 html2pdf 引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- 引入 Chart.js 繪圖引擎 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Flatpickr 精美日期選擇器 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -108,7 +111,7 @@
         .table-scroll { flex: 1; overflow: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; }
         
-        #mainTable { min-width: 1500px; table-layout: fixed; }
+        #mainTable { min-width: 1430px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
@@ -249,15 +252,15 @@
 
         #barChart { cursor: default; transition: cursor 0.2s; }
 
-        .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.8); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
-        .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 320px; text-align: center; border: 1px solid var(--glass-border); }
+        .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.9); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
+        .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 360px; text-align: center; border: 1px solid var(--glass-border); }
         
         .custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
         .custom-modal.active { display: flex; opacity: 1; }
         .custom-modal-content { background: #FFF; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align: center; transform: translateY(20px); transition: transform 0.3s; }
         .custom-modal.active .custom-modal-content { transform: translateY(0); }
         .custom-modal-text { margin: 15px 0 25px; color: var(--mid); font-size: 15px; line-height: 1.5; white-space: pre-wrap; font-weight: 600; }
-        .custom-modal-input { width: 100%; box-sizing: border-box; border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 12px; font-size: 14px; margin-bottom: 25px; outline: none; transition: 0.3s; background: #F4F7F6; font-weight: 600; color: var(--text-main); }
+        .custom-modal-input { width: 100%; box-sizing: border-box; border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; outline: none; transition: 0.3s; background: #F4F7F6; font-weight: 600; color: var(--text-main); }
         .custom-modal-input:focus { background: #FFF; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2); }
         .custom-modal-actions { display: flex; gap: 15px; justify-content: center; }
         .custom-modal-btn { padding: 12px 24px; border-radius: 50px; font-weight: 800; cursor: pointer; border: none; font-size: 14px; transition: 0.2s; flex: 1; }
@@ -303,12 +306,25 @@
     <div class="context-menu-item danger" onclick="execMenuAction('clear')"><span>🗑️</span> 清除內容</div>
 </div>
 
+<!-- 🔥 Google 與密碼雙軌登入 -->
 <div id="login-screen" class="login-screen">
     <div class="login-card">
         <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">杰冉營收系統</h2>
-        <p style="color:var(--mid); font-size:13px; margin-bottom:25px; font-weight: 600;">請輸入管理員密碼以進入系統<br>(登入後將記住此裝置)</p>
-        <input type="password" id="login-pwd" class="custom-modal-input" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
-        <button class="custom-modal-btn btn-confirm" style="width:100%" onclick="checkLogin()">登入系統</button>
+        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請登入管理員 Google 帳號以進入系統<br>(登入後將永遠記住此裝置)</p>
+        
+        <button id="google-login-btn" class="custom-modal-btn" style="width:100%; display: flex; justify-content: center; align-items: center; gap: 10px; background: white; border: 1px solid var(--glass-border); color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;" onclick="signInWithGoogle()">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+            <span style="font-weight: 800;">使用 Google 登入</span>
+        </button>
+
+        <div style="display: flex; align-items: center; margin: 15px 0;">
+            <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.1);"></div>
+            <span style="font-size: 12px; color: var(--light); padding: 0 10px;">或輸入密碼測試</span>
+            <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.1);"></div>
+        </div>
+
+        <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
+        <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 10px;" onclick="checkLogin()">密碼登入</button>
     </div>
 </div>
 
@@ -458,7 +474,7 @@
                 </div>
                 <div class="table-scroll" id="input-view">
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><!-- 🚨 新增的刪除按鈕欄位 --><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -1444,7 +1460,6 @@ function createRow(r) {
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
-    
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
@@ -1458,7 +1473,43 @@ function createRow(r) {
         }
         tr.appendChild(td);
     }
+    
+    // 🚨 新增：最右側的「刪除案件」淡淡 ✕ 按鈕
+    let delTd = document.createElement('td');
+    delTd.className = 'calc-cell';
+    delTd.innerHTML = `<div style="color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s;" onmouseover="this.style.color='#FF3B30'; this.style.transform='scale(1.2)';" onmouseout="this.style.color='rgba(0,0,0,0.15)'; this.style.transform='scale(1)';" onclick="deleteProjectRow(${r})" title="刪除/取消此案件">✕</div>`;
+    tr.appendChild(delTd);
+    
     return tr;
+}
+
+// 🚨 新增：連根拔起的物理刪除邏輯
+async function deleteProjectRow(r) {
+    let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+    let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
+    if (!hasData) return;
+
+    if (!(await uiConfirm(`確定要刪除 / 取消「${d[3] || '此案件'}」嗎？\n刪除後數據中心將同步扣除此筆資料。`, "刪除案件"))) return;
+
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    
+    // 將後面的資料全數往前推一格覆蓋
+    for (let i = r; i < rc - 1; i++) {
+        let nextData = localStorage.getItem(`d_${curY}_${i+1}`);
+        if (nextData) {
+            localStorage.setItem(`d_${curY}_${i}`, nextData);
+        } else {
+            localStorage.setItem(`d_${curY}_${i}`, JSON.stringify({}));
+        }
+    }
+    // 清空最後一格
+    localStorage.setItem(`d_${curY}_${rc-1}`, JSON.stringify({}));
+    
+    // 瞬間重新讀取表格與數據中心
+    initTable();
+    if (document.getElementById('ssM') && document.getElementById('ssM').value.trim() !== '') {
+        checkMonthClients(); // 若有在使用分潤結算過濾，也一併刷新
+    }
 }
 
 function initInvoiceTable() {
@@ -2013,6 +2064,7 @@ window.exportData = exportData;
 window.switchSlide = switchSlide;
 window.manageVip = manageVip;
 window.runSettleSearch = runSettleSearch;
+window.deleteProjectRow = deleteProjectRow;
 
 window.onload = () => { 
     migrateRitaToYiminjia(); 
@@ -2029,7 +2081,7 @@ window.onload = () => {
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -2042,13 +2094,54 @@ window.onload = () => {
     };
 
     let app, auth, db, currentUser = null;
+    const provider = new GoogleAuthProvider();
+
     try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
-        signInAnonymously(auth).catch((error) => { console.error("Firebase 登入失敗:", error); });
-        onAuthStateChanged(auth, (user) => { currentUser = user; });
+
+        setPersistence(auth, browserLocalPersistence).catch((error) => { console.error("Persistence error:", error); });
+
+        onAuthStateChanged(auth, (user) => {
+            // 🔥 在測試環境中優先檢查本地密碼 bypass
+            if (localStorage.getItem('vB_Auth') === 'true') {
+                document.getElementById('login-screen').style.display = 'none';
+                return; 
+            }
+
+            if (user) {
+                if (user.isAnonymous) {
+                    auth.signOut();
+                } else {
+                    currentUser = user;
+                    localStorage.setItem('vB_Auth', 'true');
+                    document.getElementById('login-screen').style.display = 'none';
+                }
+            } else {
+                currentUser = null;
+                if (localStorage.getItem('vB_Auth') !== 'true') {
+                    document.getElementById('login-screen').style.display = 'flex';
+                }
+            }
+        });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
+
+    window.signInWithGoogle = async function() {
+        const btn = document.getElementById('google-login-btn');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = "⏳ 登入中...";
+        btn.style.pointerEvents = 'none';
+        
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Google 登入失敗:", error);
+            alert("登入失敗！\n錯誤訊息：" + error.message);
+            btn.innerHTML = originalContent;
+            btn.style.pointerEvents = 'auto';
+        }
+    };
 
     window.cloudSync = async function(mode) {
         if (!app || !auth || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
@@ -2086,7 +2179,6 @@ window.onload = () => {
                             projectName: d[3] || '',
                             percent: d[16] || 0,
                             amount: partnerAmt,
-                            // 🚨 上傳給夥伴的狀態，直接改名為「已分潤」，並嚴格聽從 d[21] 有沒有打勾
                             status: d[21] === true ? '已分潤' : '待結算'
                         });
                     }
