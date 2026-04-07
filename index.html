@@ -306,21 +306,9 @@
 <div id="login-screen" class="login-screen">
     <div class="login-card">
         <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">杰冉營收系統</h2>
-        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請登入管理員 Google 帳號以進入系統<br>(登入後將永遠記住此裝置)</p>
-        
-        <button id="google-login-btn" class="custom-modal-btn" style="width:100%; display: flex; justify-content: center; align-items: center; gap: 10px; background: white; border: 1px solid var(--glass-border); color: var(--text-main); box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px;" onclick="signInWithGoogle()">
-            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-            <span style="font-weight: 800;">使用 Google 登入</span>
-        </button>
-
-        <div style="display: flex; align-items: center; margin: 15px 0;">
-            <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.1);"></div>
-            <span style="font-size: 12px; color: var(--light); padding: 0 10px;">或輸入密碼測試</span>
-            <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.1);"></div>
-        </div>
-
+        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請輸入管理員密碼以進入系統</p>
         <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
-        <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 10px;" onclick="checkLogin()">密碼登入</button>
+        <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 10px;" onclick="checkLogin()">登入</button>
     </div>
 </div>
 
@@ -2077,7 +2065,6 @@ window.onload = () => {
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -2089,59 +2076,19 @@ window.onload = () => {
       appId: "1:616171972475:web:980452f45898a03b4ebfde"
     };
 
-    let app, auth, db, currentUser = null;
-    const provider = new GoogleAuthProvider();
+    let app, db;
 
     try {
         app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
         db = getFirestore(app);
-
-        setPersistence(auth, browserLocalPersistence).catch((error) => { console.error("Persistence error:", error); });
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                if (user.isAnonymous) {
-                    auth.signOut();
-                } else {
-                    currentUser = user;
-                    localStorage.setItem('vB_Auth', 'true');
-                    document.getElementById('login-screen').style.display = 'none';
-                }
-            } else {
-                currentUser = null;
-                // 🔥 若無 Firebase 使用者，則檢查是否使用了本地密碼 Bypass
-                if (localStorage.getItem('vB_Auth') === 'true') {
-                    document.getElementById('login-screen').style.display = 'none';
-                } else {
-                    document.getElementById('login-screen').style.display = 'flex';
-                }
-            }
-        });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
 
-    window.signInWithGoogle = async function() {
-        const btn = document.getElementById('google-login-btn');
-        const originalContent = btn.innerHTML;
-        btn.innerHTML = "⏳ 登入中...";
-        btn.style.pointerEvents = 'none';
-        
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Google 登入失敗:", error);
-            alert("登入失敗！\n錯誤訊息：" + error.message);
-            btn.innerHTML = originalContent;
-            btn.style.pointerEvents = 'auto';
-        }
-    };
-
     window.cloudSync = async function(mode) {
-        if (!app || !auth || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
+        if (!app || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
         
-        // 💡 優化提示：明確區分是在載入中還是使用了密碼登入
-        if (!currentUser) { 
-            await uiAlert("⚠️ 您目前使用的是「密碼登入」或尚未完成 Google 授權，無法連線至 Firebase 雲端。\n\n請重新載入網頁並使用「管理員 Google 帳號」登入才能進行同步！"); 
+        // 💡 直接用本地驗證，移除 Google currentUser 的限制
+        if (localStorage.getItem('vB_Auth') !== 'true') { 
+            await uiAlert("⚠️ 系統尚未登入，請重整網頁輸入密碼進入系統再進行同步！"); 
             return; 
         }
 
@@ -2192,7 +2139,7 @@ window.onload = () => {
                 await uiAlert("🔥 搬家成功！\n資料已備份！夥伴報表將會根據您是否有勾選『付夥伴』來顯示『已分潤』或『待結算』！");
             } catch(e) { 
                 console.error("上傳錯誤:", e); 
-                await uiAlert("❌ 上傳失敗！請檢查網路連線。"); 
+                await uiAlert("❌ 上傳失敗！這通常是因為移除了 Google 登入後，Firebase 的讀寫權限遭到拒絕。請確保 Firestore 的安全性規則已設為公開或適當調整。"); 
             }
             btn.innerText = "🔥 搬家至 Firebase";
             
@@ -2207,7 +2154,10 @@ window.onload = () => {
                     await uiAlert("✅ 載入成功！資料已同步。");
                     location.reload(); 
                 } else { await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！"); }
-            } catch(e) { console.error("下載錯誤:", e); await uiAlert("❌ 載入失敗！"); }
+            } catch(e) { 
+                console.error("下載錯誤:", e); 
+                await uiAlert("❌ 載入失敗！這通常是因為移除了 Google 登入後，Firebase 的讀寫權限遭到拒絕。"); 
+            }
         }
     };
 </script>
