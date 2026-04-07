@@ -2104,28 +2104,117 @@ window.onload = () => {
         setPersistence(auth, browserLocalPersistence).catch((error) => { console.error("Persistence error:", error); });
 
         onAuthStateChanged(auth, (user) => {
-            // 🔥 在測試環境中優先檢查本地密碼 bypass
-            if (localStorage.getItem('vB_Auth') === 'true') {
-                document.getElementById('login-screen').style.display = 'none';
-                return; 
-            }
-
             if (user) {
                 if (user.isAnonymous) {
                     auth.signOut();
                 } else {
-                    currentUser = user;
+                    currentUser = user; // 正確賦值
                     localStorage.setItem('vB_Auth', 'true');
                     document.getElementById('login-screen').style.display = 'none';
                 }
             } else {
                 currentUser = null;
-                if (localStorage.getItem('vB_Auth') !== 'true') {
+                // 🔥 若無 Firebase 使用者，則檢查是否使用了本地密碼 Bypass
+                if (localStorage.getItem('vB_Auth') === 'true') {
+                    document.getElementById('login-screen').style.display = 'none';
+                } else {
                     document.getElementById('login-screen').style.display = 'flex';
                 }
             }
         });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
+
+    window.signInWithGoogle = async function() {
+        const btn = document.getElementById('google-login-btn');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = "⏳ 登入中...";
+        btn.style.pointerEvents = 'none';
+        
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Google 登入失敗:", error);
+            alert("登入失敗！\n錯誤訊息：" + error.message);
+            btn.innerHTML = originalContent;
+            btn.style.pointerEvents = 'auto';
+        }
+    };
+
+    window.cloudSync = async function(mode) {
+        if (!app || !auth || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
+        
+        // 💡 優化提示：明確區分是在載入中還是使用了密碼登入
+        if (!currentUser) { 
+            await uiAlert("⚠️ 您目前使用的是「密碼登入」或尚未完成 Google 授權，無法連線至 Firebase 雲端。\n\n請重新載入網頁並使用「管理員 Google 帳號」登入才能進行同步！"); 
+            return; 
+        }
+
+        const btn = document.getElementById('cloudSaveBtn');
+        const docRef = doc(db, 'system_data', 'default_backup');
+        
+        if (mode === 'SAVE') {
+            let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
+            if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
+            btn.innerText = "🔥 正在上傳雲端...";
+            
+            let fullData = {};
+            for(let i=0; i<localStorage.length; i++){
+                let k = localStorage.key(i);
+                if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_') || k.startsWith('bank_') || k.startsWith('bankCount_')) {
+                    fullData[k] = localStorage.getItem(k);
+                }
+            }
+
+            let partnerSafeData = [];
+            let yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+            
+            for (let y of yList) {
+                let rowCount = parseInt(localStorage.getItem(`rowCount_${y}`)) || 65;
+                for(let r=0; r<rowCount; r++) {
+                    let d = JSON.parse(localStorage.getItem(`d_${y}_${r}`)) || {};
+                    let partnerAmt = parseFloat(d[19]) || 0; 
+                    
+                    if(d[3] && partnerAmt > 0) { 
+                        partnerSafeData.push({
+                            date: d[0] || '未定',
+                            clientNumber: d[1] || 'N/A', 
+                            clientName: d[2] || '未填寫', 
+                            projectName: d[3] || '',
+                            percent: d[16] || 0,
+                            amount: partnerAmt,
+                            status: d[21] === true ? '已分潤' : '待結算'
+                        });
+                    }
+                }
+            }
+
+            try {
+                await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
+                const partnerDocRef = doc(db, 'system_data', 'partner_view');
+                await setDoc(partnerDocRef, { data: JSON.stringify(partnerSafeData), lastUpdate: new Date().toISOString() });
+
+                await uiAlert("🔥 搬家成功！\n資料已備份！夥伴報表將會根據您是否有勾選『付夥伴』來顯示『已分潤』或『待結算』！");
+            } catch(e) { 
+                console.error("上傳錯誤:", e); 
+                await uiAlert("❌ 上傳失敗！請檢查網路連線。"); 
+            }
+            btn.innerText = "🔥 搬家至 Firebase";
+            
+        } else {
+            if(!(await uiConfirm("⚠️ 注意：這將會清除目前資料並從雲端載入備份。\n確定要執行嗎？"))) return;
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const cloudData = JSON.parse(docSnap.data().data);
+                    localStorage.clear(); 
+                    Object.keys(cloudData).forEach(k => localStorage.setItem(k, cloudData[k]));
+                    await uiAlert("✅ 載入成功！資料已同步。");
+                    location.reload(); 
+                } else { await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！"); }
+            } catch(e) { console.error("下載錯誤:", e); await uiAlert("❌ 載入失敗！"); }
+        }
+    };
+</script>
 
     window.signInWithGoogle = async function() {
         const btn = document.getElementById('google-login-btn');
