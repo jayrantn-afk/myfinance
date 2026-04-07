@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>杰冉宇宙營收表 v01.17</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
-    <!-- 引入 html2pdf 引擎 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- 引入 Chart.js 繪圖引擎 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- 引入 Flatpickr 精美日期選擇器 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
@@ -306,7 +303,6 @@
     <div class="context-menu-item danger" onclick="execMenuAction('clear')"><span>🗑️</span> 清除內容</div>
 </div>
 
-<!-- 🔥 Google 與密碼雙軌登入 -->
 <div id="login-screen" class="login-screen">
     <div class="login-card">
         <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">杰冉營收系統</h2>
@@ -474,7 +470,7 @@
                 </div>
                 <div class="table-scroll" id="input-view">
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><!-- 🚨 新增的刪除按鈕欄位 --><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -2108,7 +2104,7 @@ window.onload = () => {
                 if (user.isAnonymous) {
                     auth.signOut();
                 } else {
-                    currentUser = user; // 正確賦值
+                    currentUser = user;
                     localStorage.setItem('vB_Auth', 'true');
                     document.getElementById('login-screen').style.display = 'none';
                 }
@@ -2149,92 +2145,6 @@ window.onload = () => {
             return; 
         }
 
-        const btn = document.getElementById('cloudSaveBtn');
-        const docRef = doc(db, 'system_data', 'default_backup');
-        
-        if (mode === 'SAVE') {
-            let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
-            if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
-            btn.innerText = "🔥 正在上傳雲端...";
-            
-            let fullData = {};
-            for(let i=0; i<localStorage.length; i++){
-                let k = localStorage.key(i);
-                if(k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_') || k.startsWith('bank_') || k.startsWith('bankCount_')) {
-                    fullData[k] = localStorage.getItem(k);
-                }
-            }
-
-            let partnerSafeData = [];
-            let yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
-            
-            for (let y of yList) {
-                let rowCount = parseInt(localStorage.getItem(`rowCount_${y}`)) || 65;
-                for(let r=0; r<rowCount; r++) {
-                    let d = JSON.parse(localStorage.getItem(`d_${y}_${r}`)) || {};
-                    let partnerAmt = parseFloat(d[19]) || 0; 
-                    
-                    if(d[3] && partnerAmt > 0) { 
-                        partnerSafeData.push({
-                            date: d[0] || '未定',
-                            clientNumber: d[1] || 'N/A', 
-                            clientName: d[2] || '未填寫', 
-                            projectName: d[3] || '',
-                            percent: d[16] || 0,
-                            amount: partnerAmt,
-                            status: d[21] === true ? '已分潤' : '待結算'
-                        });
-                    }
-                }
-            }
-
-            try {
-                await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
-                const partnerDocRef = doc(db, 'system_data', 'partner_view');
-                await setDoc(partnerDocRef, { data: JSON.stringify(partnerSafeData), lastUpdate: new Date().toISOString() });
-
-                await uiAlert("🔥 搬家成功！\n資料已備份！夥伴報表將會根據您是否有勾選『付夥伴』來顯示『已分潤』或『待結算』！");
-            } catch(e) { 
-                console.error("上傳錯誤:", e); 
-                await uiAlert("❌ 上傳失敗！請檢查網路連線。"); 
-            }
-            btn.innerText = "🔥 搬家至 Firebase";
-            
-        } else {
-            if(!(await uiConfirm("⚠️ 注意：這將會清除目前資料並從雲端載入備份。\n確定要執行嗎？"))) return;
-            try {
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const cloudData = JSON.parse(docSnap.data().data);
-                    localStorage.clear(); 
-                    Object.keys(cloudData).forEach(k => localStorage.setItem(k, cloudData[k]));
-                    await uiAlert("✅ 載入成功！資料已同步。");
-                    location.reload(); 
-                } else { await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！"); }
-            } catch(e) { console.error("下載錯誤:", e); await uiAlert("❌ 載入失敗！"); }
-        }
-    };
-</script>
-
-    window.signInWithGoogle = async function() {
-        const btn = document.getElementById('google-login-btn');
-        const originalContent = btn.innerHTML;
-        btn.innerHTML = "⏳ 登入中...";
-        btn.style.pointerEvents = 'none';
-        
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (error) {
-            console.error("Google 登入失敗:", error);
-            alert("登入失敗！\n錯誤訊息：" + error.message);
-            btn.innerHTML = originalContent;
-            btn.style.pointerEvents = 'auto';
-        }
-    };
-
-    window.cloudSync = async function(mode) {
-        if (!app || !auth || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
-        if (!currentUser) { await uiAlert("⏳ 正在與 Firebase 雲端建立安全連線...請稍等幾秒後再試！"); return; }
         const btn = document.getElementById('cloudSaveBtn');
         const docRef = doc(db, 'system_data', 'default_backup');
         
