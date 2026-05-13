@@ -3,11 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.29</title>
-    
-    <!-- 強制刷新圖標 -->
-    <link rel="icon" href="favicon.png?v=6" type="image/png">
-    
+    <title>杰冉宇宙營收表 v01.30</title>
+    <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -16,13 +13,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
 
-        /* 預設綠色主題 */
         :root { 
-            --primary: #00D26A; 
-            --primary-rgb: 0, 210, 106;
+            --primary: #007AFF; 
+            --primary-rgb: 0, 122, 255;
             --mid: #6E6E73; 
             --light: #86868B; 
-            --bg: #F0F7F4; 
+            --bg: #F4F7F6; 
             --text-main: #1D1D1F;
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.5);
@@ -146,7 +142,19 @@
         .bank-amount-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 15px rgba(0,122,255,0.2) !important; background: #fff !important; }
         
         .bank-type-toggle {
-            display: flex; align-items: center; justify-content: center; height: 34px; width: 80%; margin: 0 auto; border-radius: 10px; font-weight: 800; cursor: pointer; transition: all 0.3s ease; user-select: none; font-size: 13px; border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 34px;
+            width: 80%;
+            margin: 0 auto;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            font-size: 13px;
+            border: 1px solid transparent;
         }
         .bank-type-toggle:hover { opacity: 0.8; }
         .type-empty { color: var(--light); background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
@@ -163,7 +171,12 @@
         .cell-selected input { color: var(--primary) !important; }
 
         .selection-stats-bar {
-            position: fixed; bottom: 100px; right: 40px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 20px; display: flex; gap: 20px; align-items: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); z-index: 1000; opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.3s ease;
+            position: fixed; bottom: 100px; right: 40px;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px 20px;
+            display: flex; gap: 20px; align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); z-index: 1000;
+            opacity: 0; pointer-events: none; transform: translateY(10px); transition: all 0.3s ease;
         }
         .selection-stats-bar.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
         .stat-item { display: flex; flex-direction: column; }
@@ -176,6 +189,7 @@
         .tab-bar-container { display: flex; gap: 4px; background: var(--glass-bg); padding: 6px; border-radius: 50px; position: absolute; left: 50%; transform: translateX(-50%); box-shadow: 0 10px 30px rgba(0,0,0,0.06); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); max-width: 60%; overflow-x: auto; }
         .tab-bar-container::-webkit-scrollbar { display: none; }
         .tab-bar-container { -ms-overflow-style: none; scrollbar-width: none; }
+
         .btn-group-right { display: flex; justify-content: flex-end; width: 250px; }
         .tab-item { padding: 10px 18px; border-radius: 40px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--mid); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; flex-shrink: 0; }
         .tab-item:hover { color: var(--text-main); background: rgba(0,0,0,0.03); }
@@ -236,14 +250,14 @@
         #barChart { cursor: default; transition: cursor 0.2s; }
 
         .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.9); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
-        .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 320px; text-align: center; border: 1px solid var(--glass-border); }
+        .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 360px; text-align: center; border: 1px solid var(--glass-border); }
         
         .custom-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
         .custom-modal.active { display: flex; opacity: 1; }
         .custom-modal-content { background: #FFF; padding: 30px; border-radius: 20px; max-width: 400px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align: center; transform: translateY(20px); transition: transform 0.3s; }
         .custom-modal.active .custom-modal-content { transform: translateY(0); }
         .custom-modal-text { margin: 15px 0 25px; color: var(--mid); font-size: 15px; line-height: 1.5; white-space: pre-wrap; font-weight: 600; }
-        .custom-modal-input { width: 100%; box-sizing: border-box; border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 12px; font-size: 14px; margin-bottom: 25px; outline: none; transition: 0.3s; background: #F4F7F6; font-weight: 600; color: var(--text-main); }
+        .custom-modal-input { width: 100%; box-sizing: border-box; border: 1px solid var(--glass-border); padding: 12px 20px; border-radius: 12px; font-size: 14px; margin-bottom: 20px; outline: none; transition: 0.3s; background: #F4F7F6; font-weight: 600; color: var(--text-main); }
         .custom-modal-input:focus { background: #FFF; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.2); }
         .custom-modal-actions { display: flex; gap: 15px; justify-content: center; }
         .custom-modal-btn { padding: 12px 24px; border-radius: 50px; font-weight: 800; cursor: pointer; border: none; font-size: 14px; transition: 0.2s; flex: 1; }
@@ -261,47 +275,24 @@
         
         #pdf-loading-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); z-index: 9999999; display: none; align-items: center; justify-content: center; flex-direction: column; }
         
-        .client-chip { padding: 10px 20px; border-radius: 50px; background: rgba(0,0,0,0.04); font-size: 13px; font-weight: 800; color: var(--mid); cursor: pointer; transition: all 0.2s; border: 2px solid transparent; margin: 5px; display: inline-block; }
+        .client-chip {
+            padding: 10px 20px; border-radius: 50px; background: rgba(0,0,0,0.04); font-size: 13px; font-weight: 800; color: var(--mid); cursor: pointer; transition: all 0.2s; border: 2px solid transparent; margin: 5px; display: inline-block;
+        }
         .client-chip:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
         .client-chip.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3); }
 
-        /* 🚨 刪除按鈕淡淡的樣式 */
+        /* 🚨 新增：刪除按鈕樣式 */
         .btn-row-del { color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s; user-select: none; }
         .btn-row-del:hover { color: #FF3B30; transform: scale(1.3); }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
 
-<!-- 🔥 安全防護層，防止 JSON 解析卡死 -->
+<!-- 🔥 全域防抖計時器 -->
 <script>
-    const Storage = {
-        get: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
-        set: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
-        remove: function(k) { try { localStorage.removeItem(k); } catch(e) {} },
-        clear: function() { try { localStorage.clear(); } catch(e) {} },
-        getJSON: function(k) {
-            try {
-                let v = this.get(k);
-                if (v === null || v === undefined || v === "undefined" || v === "null" || v === "") return {};
-                let p = JSON.parse(v);
-                return (p && typeof p === 'object') ? p : {};
-            } catch(e) { return {}; }
-        },
-        getArray: function(k) {
-            try {
-                let v = this.get(k);
-                if (v === null || v === undefined || v === "undefined" || v === "null" || v === "") return [];
-                let p = JSON.parse(v);
-                return Array.isArray(p) ? p : [];
-            } catch(e) { return []; }
-        }
-    };
-    
-    // 全域防抖計時器
     window.calcTimer1 = null;
     window.calcTimer2 = null;
     window.calcTimer3 = null;
-    window.cloudSync = async function() { alert("⏳ 模組載入中，請稍候..."); };
 </script>
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
@@ -323,27 +314,22 @@
     <div class="context-menu-item danger" onclick="execMenuAction('clear')"><span>🗑️</span> 清除內容</div>
 </div>
 
-<!-- 🚨 已完全移除 Google 登入 -->
 <div id="login-screen" class="login-screen">
     <div class="login-card">
         <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">杰冉營收系統</h2>
-        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請輸入系統密碼<br>(登入後將永久記住此裝置)</p>
-        <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 20px;" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
-        <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 12px;" onclick="checkLogin()">登入系統</button>
+        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請輸入系統密碼以進入系統<br>(登入後將永久記住此裝置)</p>
+        <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
+        <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 10px;" onclick="checkLogin()">登入</button>
     </div>
 </div>
 
 <script>
     window.APP_PWD = "8721"; 
-    if(Storage.get('vB_Auth') === 'true') { document.getElementById('login-screen').style.display = 'none'; }
+    if(localStorage.getItem('vB_Auth') === 'true') { document.getElementById('login-screen').style.display = 'none'; }
     function checkLogin() {
         let p = document.getElementById('login-pwd').value;
-        if(p === window.APP_PWD) { 
-            Storage.set('vB_Auth', 'true'); 
-            document.getElementById('login-screen').style.display = 'none'; 
-        } else { 
-            alert("密碼錯誤，請重新輸入！"); document.getElementById('login-pwd').value = ""; 
-        }
+        if(p === window.APP_PWD) { localStorage.setItem('vB_Auth', 'true'); document.getElementById('login-screen').style.display = 'none'; } 
+        else { alert("密碼錯誤，請重新輸入！"); document.getElementById('login-pwd').value = ""; }
     }
 </script>
 
@@ -362,7 +348,8 @@
 <div id="client-filter-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 500px; width: 90%;">
         <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">👥 選擇結算客戶 (可多選)</h3>
-        <div id="client-chip-grid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 30px; max-height: 40vh; overflow-y: auto; padding: 10px;"></div>
+        <div id="client-chip-grid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 30px; max-height: 40vh; overflow-y: auto; padding: 10px;">
+        </div>
         <div class="custom-modal-actions">
             <button class="custom-modal-btn btn-cancel" onclick="document.getElementById('client-filter-modal').classList.remove('active')">取消</button>
             <button class="custom-modal-btn btn-confirm" onclick="applyClientFilter()">確定篩選</button>
@@ -398,9 +385,7 @@
 
 <div class="header-section">
     <div style="position:relative">
-        <div class="page-title" onclick="event.stopPropagation(); document.getElementById('yMenu').style.display='block'">
-            <span id="yDisp">2026</span> 營收表
-        </div>
+        <div class="page-title" onclick="event.stopPropagation(); document.getElementById('yMenu').style.display='block'"><span id="yDisp">2026</span> 營收表</div>
         <div id="yMenu" class="year-dropdown"><div id="yList"></div><div class="year-item" style="color:var(--primary); border-top:1px solid rgba(0,0,0,0.05)" onclick="addNewYear()">+ 新增年度</div></div>
     </div>
     
@@ -485,14 +470,14 @@
                 </div>
                 <div class="table-scroll" id="input-view">
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><!-- 🚨 刪除按鈕欄位 --><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
             </div>
         </div>
         
-        <!-- Slide 1: 分潤結算 (v01.4 原版 PDF 匯出) -->
+        <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
@@ -866,12 +851,14 @@ async function execMenuAction(action) {
     rightClickedElement = null;
 }
 
-let curY = Storage.get('vB_Y') || '2026';
-let yArr = Storage.getArray('vB_List'); if(yArr.length===0) yArr=['2026'];
-let opts = Storage.getJSON('vB_Opts'); if(!opts[4]) opts={ 4: [], 6: [] };
-let vipClients = Storage.getArray('vB_VipClients');
-let invoiceVips = Storage.getJSON('vB_InvVips');
-let invPrefixes = Storage.getJSON(`vB_InvPrefixes_${curY}`);
+let curY = localStorage.getItem('vB_Y') || '2026';
+let yArr = JSON.parse(localStorage.getItem('vB_List')) || ['2026'];
+let opts = JSON.parse(localStorage.getItem('vB_Opts')) || { 4: [], 6: [] };
+let vipClients = JSON.parse(localStorage.getItem('vB_VipClients')) || [];
+
+let invoiceVips = JSON.parse(localStorage.getItem('vB_InvVips')) || {};
+let currentInvRow = null;
+let invPrefixes = JSON.parse(localStorage.getItem(`vB_InvPrefixes_${curY}`)) || {};
 
 let activeVipFilter = "";
 window.curRole = '公司';
@@ -879,32 +866,26 @@ window.curRole = '公司';
 let chartPie = null; let chartBar = null;
 
 function migrateRitaToYiminjia() {
-    let vips = Storage.getArray('vB_VipClients');
-    if (vips.includes('RITA')) { vips = vips.map(c => c === 'RITA' ? '醫敏家' : c); Storage.set('vB_VipClients', JSON.stringify(vips)); vipClients = vips; }
+    let vips = JSON.parse(localStorage.getItem('vB_VipClients')) || [];
+    if (vips.includes('RITA')) { vips = vips.map(c => c === 'RITA' ? '醫敏家' : c); localStorage.setItem('vB_VipClients', JSON.stringify(vips)); vipClients = vips; }
     for (let i = 0; i < localStorage.length; i++) {
         let key = localStorage.key(i);
-        if (key && key.startsWith('d_')) { 
-            let d = Storage.getJSON(key); 
-            if (d && d[2] === 'RITA') { 
-                d[2] = '醫敏家'; 
-                Storage.set(key, JSON.stringify(d)); 
-            } 
-        }
+        if (key && key.startsWith('d_')) { try { let d = JSON.parse(localStorage.getItem(key)); if (d && d[2] === 'RITA') { d[2] = '醫敏家'; localStorage.setItem(key, JSON.stringify(d)); } } catch(e) {} }
     }
 }
 
 function changeYear(y) { 
-    curY=y; Storage.set('vB_Y',y); 
-    invPrefixes = Storage.getJSON(`vB_InvPrefixes_${curY}`);
+    curY=y; localStorage.setItem('vB_Y',y); 
+    invPrefixes = JSON.parse(localStorage.getItem(`vB_InvPrefixes_${curY}`)) || {};
     document.getElementById('yDisp').innerText=y; 
     applyTheme(y); initTable(); initInvoiceTable(); initBankTable(); renderDashboard(); 
 }
 
 function applyTheme(y) { const themes=['','theme-green','theme-blue','theme-red','theme-purple']; document.body.className=themes[parseInt(y)%themes.length]; }
-async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:", ""); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();Storage.set('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
+async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:", ""); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();localStorage.setItem('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
 
-// 🚨【修復卡頓】移除了切換分頁時的冗餘重新排版計算
+// 🚨【防抖修復】切換分頁延遲排版，完全解決卡頓問題
 function switchSlide(idx, el) {
     document.getElementById('mainSlider').style.transform = `translateX(-${idx * 100}vw)`;
     document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active')); 
@@ -939,13 +920,13 @@ function selectDashboardMonth(val, text, el) {
 }
 
 function showClientProjects(monthStr, clientName) {
-    let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let tb = document.getElementById('client-details-tb');
     tb.innerHTML = '';
     let total = 0;
     
     for(let i=0; i<count; i++) {
-        let d = Storage.getJSON(`d_${curY}_${i}`);
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         if (!hasData) continue;
         
@@ -980,22 +961,22 @@ function showClientProjects(monthStr, clientName) {
 
 function renderDashboard() {
     let filterMonth = document.getElementById('dbMonthFilter').value; 
-    let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let totalProjects = 0, totalRevGross = 0, totalCol = 0, totalPen = 0;
     let typeData = {};
     let monthlyArray = [0,0,0,0,0,0,0,0,0,0,0,0]; 
     let clientData = {}; 
 
     for(let i=0; i<count; i++) {
-        let d = Storage.getJSON(`d_${curY}_${i}`);
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
         let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
         let gross = parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
-        let hasData = !!d[1] || !!d[3];
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         
-        if (hasData) {
-            let rawMonth = d[0] ? d[0].split('-')[1] : "";
-            let rowMonthPad = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : null;
-            
+        let rawMonth = d[0] ? d[0].split('-')[1] : "";
+        let rowMonthPad = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : null;
+        
+        if (hasData && (net > 0 || d[3] || d[1])) {
             if (filterMonth !== 'all' && rowMonthPad !== filterMonth) continue;
             totalProjects++;
             let deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0; 
@@ -1116,8 +1097,8 @@ function toggleVipFilter(clientName) {
 }
 
 async function manageVip(action) {
-    if (action === 'add') { let n = await uiPrompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); Storage.set('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
-    else if (action === 'del') { let target = await uiPrompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); Storage.set('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
+    if (action === 'add') { let n = await uiPrompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
+    else if (action === 'del') { let target = await uiPrompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
 }
 
 let currentMonthFilter = 'all';
@@ -1133,12 +1114,12 @@ function setStatusFilter(val, text, el) {
 }
 
 function filterTable() {
-    let sc = activeVipFilter, sk = document.getElementById('fK').value.trim().toLowerCase(), rowCount = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let sc = activeVipFilter, sk = document.getElementById('fK').value.trim().toLowerCase(), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let isFiltering = (sc !== "") || (sk !== ""), emptyVisible = 0, visibleUnpaid = 0;
     let terms = sk ? sk.split(/[\s,，]+/) : [];
     for(let r=0; r<rowCount; r++) {
         let tr = document.getElementById(`r${r}`); if(!tr) continue;
-        let d = Storage.getJSON(`d_${curY}_${r}`);
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
         
         let rawMonth = d[0] ? d[0].split('-')[1] : "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1158,17 +1139,17 @@ function filterTable() {
 
 async function simpleBatchResolve() {
     if (!(await uiConfirm("確定要把畫面上顯示的所有未結案項目，標記為「銀行匯款」並自動填入尾款結清嗎？"))) return;
-    let rc = parseInt(Storage.get(`rowCount_${curY}`)) || 65, count = 0;
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65, count = 0;
     for(let r=0; r<rc; r++) {
         let tr = document.getElementById(`r${r}`);
         if (tr && tr.style.display !== 'none') {
-            let d = Storage.getJSON(`d_${curY}_${r}`);
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
             let unpaid = d[13] ? parseFloat(String(d[13]).replace(/,/g, '')) : 0;
             if (unpaid > 0 && d[3]) {
                 d[6] = "銀行匯款"; d[7] = true;
                 let totalAmount = parseFloat(String(d[11]).replace(/,/g,'')) || 0, deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0;
                 d[12] = totalAmount - deposit; d[13] = 0; 
-                Storage.set(`d_${curY}_${r}`, JSON.stringify(d)); count++;
+                localStorage.setItem(`d_${curY}_${r}`, JSON.stringify(d)); count++;
             }
         }
     }
@@ -1198,11 +1179,11 @@ function checkMonthClients() {
         return;
     }
 
-    let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let monthClients = new Set();
 
     for(let i=0; i<count; i++) {
-        let d = Storage.getJSON(`d_${curY}_${i}`);
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         let rawMonth = (d[0]||"").split('-')[1] || "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1274,6 +1255,7 @@ function updateClientFilterBtnText() {
     }
 }
 
+// 🚨【修復逗號計算問題】讓分潤結算不再因為逗號而算錯
 function runSettleSearch() {
     let role = window.curRole, tb = document.getElementById('settle-tb'), tot = 0; tb.innerHTML = '';
     let statusF = document.getElementById('ssStatus').value;
@@ -1287,12 +1269,12 @@ function runSettleSearch() {
     document.getElementById('sP').innerText = role+" %";
     document.getElementById('sA').innerText = role+" 金額 $";
     
-    let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let matched = [];
 
     for(let i=0; i<count; i++) {
-        let d = Storage.getJSON(`d_${curY}_${i}`);
-        let hasData = !!d[1] || !!d[3];
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         
         let rawMonth = (d[0]||"").split('-')[1] || "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1322,7 +1304,7 @@ function runSettleSearch() {
     });
 
     matched.forEach(d => {
-        let rowVal = parseFloat(String(d[aIdx]).replace(/,/g,'')) || 0;
+        let rowVal = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; // 🚨 移除逗號再計算
         tb.innerHTML += `<tr>
             <td class="calc-cell" style="padding:10px;">${d[0]||''}</td>
             <td class="calc-cell" style="padding:10px;">${d[1]||''}</td>
@@ -1336,6 +1318,7 @@ function runSettleSearch() {
     document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
 }
 
+// 🚨【修復逗號計算問題】讓列印的PDF不再算錯
 function downloadSettlePDF() {
     const btn = document.getElementById('exportSettlePdfBtn');
     let originalText = btn.innerHTML;
@@ -1350,15 +1333,15 @@ function downloadSettlePDF() {
     let pdfTitle = `杰冉宇宙 ${curY}年 ${monthStr} - 夥伴分潤對帳單`;
 
     let statusF = document.getElementById('ssStatus').value;
-    let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let matched = [];
 
     let empPIdx = 16; 
     let empAIdx = 19; 
 
     for(let i=0; i<count; i++) {
-        let d = Storage.getJSON(`d_${curY}_${i}`);
-        let hasData = !!d[1] || !!d[3];
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         
         let rawMonth = (d[0]||"").split('-')[1] || "";
         let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1387,14 +1370,14 @@ function downloadSettlePDF() {
     let totalSum = 0;
 
     matched.forEach(d => {
-        let rowVal = parseFloat(String(d[empAIdx]).replace(/,/g,'')) || 0;
+        let rowVal = parseFloat(String(d[empAIdx]).replace(/,/g, '')) || 0; // 🚨 移除逗號再計算
         totalSum += rowVal;
         printTb.innerHTML += `
             <tr>
                 <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[0]||''}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[1]||''}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${d[2]||''}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: left; font-weight: 600;">${d[3]||''}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${d[3]||''}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${d[empPIdx]||0}%</td>
                 <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${rowVal.toLocaleString()}</td>
             </tr>
@@ -1439,14 +1422,14 @@ function downloadSettlePDF() {
 }
 
 function runQuoteSearch() { 
-    let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let placeholder = document.getElementById('quote-placeholder'), content = document.getElementById('quote-content'), invWrapper = document.getElementById('inv-list-wrapper');
     if (sc !== "" || (sm !== "" && sm !== "00")) {
         placeholder.style.display = 'none'; content.style.display = 'flex'; invWrapper.innerHTML = '';
         let terms = sc ? sc.split(/[\s,，]+/) : []; document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
         let results = [], totalSum = 0, totalPreSum = 0;
         for(let r=0; r<rowCount; r++){ 
-            let d = Storage.getJSON(`d_${curY}_${r}`);
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
             let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
             if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); totalPreSum += parseFloat(String(d[9]).replace(/,/g,''))||0; totalSum += parseFloat(String(d[11]).replace(/,/g,''))||0; }
         }
@@ -1468,10 +1451,10 @@ function downloadPDF() {
 }
 
 function initTable() { 
-    const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65; 
+    const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; 
     for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } 
-    let ec = 0; for(let i=count-1; i>=0; i--) { let d = Storage.getJSON(`d_${curY}_${i}`); if (!d[0] && !d[1] && !d[2] && !d[3] && !d[9]) ec++; else break; }
-    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createRow(count++)); } Storage.set(`rowCount_${curY}`, count); }
+    let ec = 0; for(let i=count-1; i>=0; i--) { let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {}; if (!d[0] && !d[1] && !d[2] && !d[3] && !d[9]) ec++; else break; }
+    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createRow(count++)); } localStorage.setItem(`rowCount_${curY}`, count); }
     renderVipBubbles(); renderDashboard(); 
 }
 
@@ -1483,7 +1466,7 @@ function createRow(r) {
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
-    let saved = Storage.getJSON(`d_${curY}_${r}`);
+    let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
@@ -1498,7 +1481,7 @@ function createRow(r) {
         tr.appendChild(td);
     }
     
-    // 🚨 刪除按鈕欄位
+    // 🚨 淡淡的刪除按鈕
     let delTd = document.createElement('td');
     delTd.className = 'calc-cell';
     delTd.innerHTML = `<div class="btn-row-del" onclick="deleteProjectRow(${r})" title="刪除此案件">✕</div>`;
@@ -1509,19 +1492,19 @@ function createRow(r) {
 
 // 🚨 物理刪除並遞補資料
 async function deleteProjectRow(r) {
-    let d = Storage.getJSON(`d_${curY}_${r}`);
+    let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
     let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
     if (!hasData) return;
 
     if (!(await uiConfirm(`確定要刪除 / 取消「${d[3] || '此案件'}」嗎？\n刪除後數據中心將同步扣除此筆資料。`, "刪除案件"))) return;
 
-    let rc = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     for (let i = r; i < rc - 1; i++) {
-        let nextData = Storage.get(`d_${curY}_${i+1}`);
-        if (nextData) Storage.set(`d_${curY}_${i}`, nextData);
-        else Storage.set(`d_${curY}_${i}`, JSON.stringify({}));
+        let nextData = localStorage.getItem(`d_${curY}_${i+1}`);
+        if (nextData) localStorage.setItem(`d_${curY}_${i}`, nextData);
+        else localStorage.setItem(`d_${curY}_${i}`, JSON.stringify({}));
     }
-    Storage.set(`d_${curY}_${rc-1}`, JSON.stringify({}));
+    localStorage.setItem(`d_${curY}_${rc-1}`, JSON.stringify({}));
     
     initTable();
     if (document.getElementById('ssM') && document.getElementById('ssM').value.trim() !== '') checkMonthClients(); 
@@ -1529,10 +1512,10 @@ async function deleteProjectRow(r) {
 
 function initInvoiceTable() {
     const b = document.getElementById('inv-tb'); b.innerHTML = ''; 
-    let count = parseInt(Storage.get(`invCount_${curY}`)) || 30; 
+    let count = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30; 
     for(let r=0; r<count; r++) { b.appendChild(createInvoiceRow(r)); calcInvoice(r, 0, false); }
-    let ec = 0; for(let i=count-1; i>=0; i--) { let d = Storage.getJSON(`inv_${curY}_${i}`); if (!d[1] && !d[2] && !d[3] && !d[4] && !d[5]) ec++; else break; }
-    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createInvoiceRow(count++)); } Storage.set(`invCount_${curY}`, count); }
+    let ec = 0; for(let i=count-1; i>=0; i--) { let d = JSON.parse(localStorage.getItem(`inv_${curY}_${i}`)) || {}; if (!d[1] && !d[2] && !d[3] && !d[4] && !d[5]) ec++; else break; }
+    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createInvoiceRow(count++)); } localStorage.setItem(`invCount_${curY}`, count); }
     flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" });
 }
 
@@ -1615,13 +1598,13 @@ async function manageInvVips(action) {
         if (taxId === null) return;
         
         invoiceVips[shortName.trim()] = { full: fullName.trim(), tax: taxId.trim() };
-        Storage.set('vB_InvVips', JSON.stringify(invoiceVips));
+        localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
         await uiAlert(`✅ 已成功儲存！\n\n簡稱：${shortName.trim()}\n全名：${fullName.trim()}\n統編：${taxId.trim() || '無'}`);
     } else if (action === 'del') {
         let shortName = await uiPrompt("請輸入要刪除的發票客戶「簡稱」:");
         if (shortName && invoiceVips[shortName]) {
             delete invoiceVips[shortName];
-            Storage.set('vB_InvVips', JSON.stringify(invoiceVips));
+            localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
             await uiAlert(`🗑️ 已成功刪除：${shortName}`);
         } else if (shortName) {
             await uiAlert(`❌ 找不到名為「${shortName}」的簡稱。`);
@@ -1631,7 +1614,7 @@ async function manageInvVips(action) {
 
 function handleInvNumFocus(el, r) {
     if(el.value.trim() === '') {
-        let d = Storage.getJSON(`inv_${curY}_${r}`);
+        let d = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
         let p = d[0] || currentInvPeriodFilter; 
         if(p && p !== 'all' && invPrefixes[p]) {
             el.value = invPrefixes[p];
@@ -1650,7 +1633,7 @@ async function setInvPrefix() {
     let res = await uiPrompt(`請輸入「${currentInvPeriodFilter}」的預設發票字軌\n(通常為2位英文，例如: AB):`, cur);
     if(res !== null) {
         invPrefixes[currentInvPeriodFilter] = res.trim().toUpperCase();
-        Storage.set(`vB_InvPrefixes_${curY}`, JSON.stringify(invPrefixes));
+        localStorage.setItem(`vB_InvPrefixes_${curY}`, JSON.stringify(invPrefixes));
         await uiAlert(`✅ 已成功將 ${currentInvPeriodFilter} 的預設字軌設為：${invPrefixes[currentInvPeriodFilter]}`);
     }
 }
@@ -1660,7 +1643,7 @@ function createInvoiceRow(r) {
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
-    let saved = Storage.getJSON(`inv_${curY}_${r}`);
+    let saved = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
     for(let c=0; c<9; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
@@ -1707,10 +1690,11 @@ function selectInvPeriod(val, el) {
     filterInvoiceTable();
 }
 
+// 🚨【防抖修復】發票延遲計算，不再卡頓
 function calcInvoice(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`inv_r${r}c${col}`); return el ? el.value : ""; };
     const s = (col, val) => { if(document.getElementById(`inv_r${r}c${col}`)) document.getElementById(`inv_r${r}c${col}`).value = val; };
-    let rc = parseInt(Storage.get(`invCount_${curY}`)) || 30;
+    let rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30;
     
     if(c === 1) {
         let invInput = document.getElementById(`inv_r${r}c1`);
@@ -1735,23 +1719,23 @@ function calcInvoice(r, c, save=true) {
     s(6, tax); s(7, total);
     
     if(save) { 
-        Storage.set(`inv_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8)})); 
+        localStorage.setItem(`inv_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8)})); 
         
-        if(window.debounceTimer2) clearTimeout(window.debounceTimer2);
-        window.debounceTimer2 = setTimeout(() => {
-            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = Storage.getJSON(`inv_${curY}_${i}`); if(!dr[1]&&!dr[2]&&!dr[3]&&!dr[4]&&!dr[5]) ec++; else break; }
-            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('inv-tb').appendChild(createInvoiceRow(rc++)); } Storage.set(`invCount_${curY}`, rc); flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" }); }
+        if(window.calcTimer2) clearTimeout(window.calcTimer2);
+        window.calcTimer2 = setTimeout(() => {
+            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = JSON.parse(localStorage.getItem(`inv_${curY}_${i}`))||{}; if(!dr[1]&&!dr[2]&&!dr[3]&&!dr[4]&&!dr[5]) ec++; else break; }
+            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('inv-tb').appendChild(createInvoiceRow(rc++)); } localStorage.setItem(`invCount_${curY}`, rc); flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" }); }
             filterInvoiceTable(); 
         }, 400);
     }
 }
 
 function filterInvoiceTable() {
-    let sk = document.getElementById('invSearchK').value.trim().toLowerCase(), rc = parseInt(Storage.get(`invCount_${curY}`)) || 30, terms = sk ? sk.split(/[\s,，]+/) : [];
+    let sk = document.getElementById('invSearchK').value.trim().toLowerCase(), rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30, terms = sk ? sk.split(/[\s,，]+/) : [];
     let pFilter = currentInvPeriodFilter, emptyVisible = 0; 
     for(let r=0; r<rc; r++) {
         let tr = document.getElementById(`inv_r${r}`); if(!tr) continue;
-        let d = Storage.getJSON(`inv_${curY}_${r}`);
+        let d = JSON.parse(localStorage.getItem(`inv_${curY}_${r}`)) || {};
         let matchK = terms.length === 0 ? true : terms.some(term => (d[1]||"").toLowerCase().includes(term) || (d[2]||"").toLowerCase().includes(term) || (d[3]||"").toLowerCase().includes(term));
         let matchP = (pFilter === 'all') || (d[0] === pFilter) || (!d[0] || d[0].trim() === "");
         let hasData = !!d[1] || !!d[2] || !!d[3] || !!d[4] || !!d[5];
@@ -1764,10 +1748,10 @@ let currentBankMonthFilter = 'all';
 
 function initBankTable() {
     const b = document.getElementById('bank-tb'); b.innerHTML = ''; 
-    let count = parseInt(Storage.get(`bankCount_${curY}`)) || 30; 
+    let count = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30; 
     for(let r=0; r<count; r++) { b.appendChild(createBankRow(r)); calcBank(r, 0, false); }
-    let ec = 0; for(let i=count-1; i>=0; i--) { let d = Storage.getJSON(`bank_${curY}_${i}`); if (!d[1] && !d[2] && !d[3] && !d[4] && !d[5]) ec++; else break; }
-    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createBankRow(count++)); } Storage.set(`bankCount_${curY}`, count); }
+    let ec = 0; for(let i=count-1; i>=0; i--) { let d = JSON.parse(localStorage.getItem(`bank_${curY}_${i}`)) || {}; if (!d[1] && !d[2] && !d[3] && !d[4] && !d[5]) ec++; else break; }
+    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createBankRow(count++)); } localStorage.setItem(`bankCount_${curY}`, count); }
     flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" });
     updateBankDashboard();
 }
@@ -1786,7 +1770,7 @@ function createBankRow(r) {
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
-    let saved = Storage.getJSON(`bank_${curY}_${r}`);
+    let saved = JSON.parse(localStorage.getItem(`bank_${curY}_${r}`)) || {};
     
     for(let c=0; c<6; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
@@ -1825,6 +1809,7 @@ function selectBankMonth(m, el) {
     updateBankDashboard();
 }
 
+// 🚨【防抖修復】帳本延遲排版，不再卡頓
 function calcBank(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`bank_r${r}c${col}`); return el ? el.value : ""; };
     const s = (col, val) => { if(document.getElementById(`bank_r${r}c${col}`)) document.getElementById(`bank_r${r}c${col}`).value = val; };
@@ -1851,13 +1836,14 @@ function calcBank(r, c, save=true) {
     }
 
     if(save) {
-        Storage.set(`bank_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5)})); 
+        let rc = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30;
+        let d = {}; for(let i=0; i<6; i++) d[i] = g(i); 
+        localStorage.setItem(`bank_${curY}_${r}`, JSON.stringify(d)); 
         
-        if(window.debounceTimer3) clearTimeout(window.debounceTimer3);
-        window.debounceTimer3 = setTimeout(() => {
-            let rc = parseInt(Storage.get(`bankCount_${curY}`)) || 30;
-            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = Storage.getJSON(`bank_${curY}_${i}`); if(!dr[1]&&!dr[2]&&!dr[3]&&!dr[4]&&!dr[5]) ec++; else break; }
-            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('bank-tb').appendChild(createBankRow(rc++)); } Storage.set(`bankCount_${curY}`, rc); flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" }); }
+        if(window.calcTimer3) clearTimeout(window.calcTimer3);
+        window.calcTimer3 = setTimeout(() => {
+            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = JSON.parse(localStorage.getItem(`bank_${curY}_${i}`))||{}; if(!dr[1]&&!dr[2]&&!dr[3]&&!dr[4]&&!dr[5]) ec++; else break; }
+            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('bank-tb').appendChild(createBankRow(rc++)); } localStorage.setItem(`bankCount_${curY}`, rc); flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" }); }
             
             filterBankTable();
             updateBankDashboard();
@@ -1878,13 +1864,13 @@ function formatBankAmount(r) {
 
 function filterBankTable() {
     let sk = document.getElementById('bankSearchK').value.trim().toLowerCase();
-    let rc = parseInt(Storage.get(`bankCount_${curY}`)) || 30;
+    let rc = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30;
     let terms = sk ? sk.split(/[\s,，]+/) : [];
     let emptyVisible = 0; 
     
     for(let r=0; r<rc; r++) {
         let tr = document.getElementById(`bank_r${r}`); if(!tr) continue;
-        let d = Storage.getJSON(`bank_${curY}_${r}`);
+        let d = JSON.parse(localStorage.getItem(`bank_${curY}_${r}`)) || {};
         let matchK = terms.length === 0 ? true : terms.some(term => (d[4]||"").toLowerCase().includes(term) || (d[5]||"").toLowerCase().includes(term));
         let matchM = (currentBankMonthFilter === 'all') || (d[0] === currentBankMonthFilter) || (!d[0]);
         let hasData = !!d[1] || !!d[2] || !!d[3] || !!d[4] || !!d[5];
@@ -1895,7 +1881,7 @@ function filterBankTable() {
 }
 
 function updateBankDashboard() {
-    let rc = parseInt(Storage.get(`bankCount_${curY}`)) || 30;
+    let rc = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30;
     
     let monthIn = 0;
     let monthOut = 0;
@@ -1903,7 +1889,7 @@ function updateBankDashboard() {
     let yearOut = 0;
     
     for(let r=0; r<rc; r++) {
-        let d = Storage.getJSON(`bank_${curY}_${r}`);
+        let d = JSON.parse(localStorage.getItem(`bank_${curY}_${r}`)) || {};
         let amt = parseFloat(String(d[2]).replace(/,/g, '')) || 0;
         let type = d[3];
         
@@ -1927,17 +1913,17 @@ function updateBankDashboard() {
     netEl.innerText = `${monthNet >= 0 ? '+' : '-'}$ ${Math.abs(monthNet).toLocaleString()}`;
     netEl.style.color = monthNet >= 0 ? 'var(--primary)' : '#FF3B30';
 
-    let initialBalance = parseFloat(Storage.get(`bankInitialBalance_${curY}`)) || 0;
+    let initialBalance = parseFloat(localStorage.getItem(`bankInitialBalance_${curY}`)) || 0;
     let globalBalance = initialBalance + yearIn - yearOut;
     document.getElementById('bank-global-balance').innerText = `$ ${globalBalance.toLocaleString()}`;
 }
 
 async function setBankBalance() {
-    let current = Storage.get(`bankInitialBalance_${curY}`) || "0";
+    let current = localStorage.getItem(`bankInitialBalance_${curY}`) || "0";
     let res = await uiPrompt(`請輸入 ${curY} 年的「起始帳戶本金」：\n(目前設定為: $${parseFloat(current).toLocaleString()})\n\n系統將會自動以這筆本金，加上所有的收入並扣除支出，計算出現有總餘額。`, current);
     if(res !== null) {
         let num = parseFloat(res.replace(/,/g, '')) || 0;
-        Storage.set(`bankInitialBalance_${curY}`, num);
+        localStorage.setItem(`bankInitialBalance_${curY}`, num);
         updateBankDashboard();
         await uiAlert(`✅ 起始本金已設定為 $${num.toLocaleString()}，總餘額已自動更新！`);
     }
@@ -1991,85 +1977,27 @@ function reorderData(si, ti, type = 'main') {
     if (si === ti) return; 
     let prefix = '', countKey = '', rc = 0;
     
-    if(type === 'inv') { prefix = 'inv_'; countKey = `invCount_${curY}`; rc = parseInt(Storage.get(countKey)) || 30; }
-    else if(type === 'bank') { prefix = 'bank_'; countKey = `bankCount_${curY}`; rc = parseInt(Storage.get(countKey)) || 30; }
-    else { prefix = 'd_'; countKey = `rowCount_${curY}`; rc = parseInt(Storage.get(countKey)) || 65; }
+    if(type === 'inv') { prefix = 'inv_'; countKey = `invCount_${curY}`; rc = parseInt(localStorage.getItem(countKey)) || 30; }
+    else if(type === 'bank') { prefix = 'bank_'; countKey = `bankCount_${curY}`; rc = parseInt(localStorage.getItem(countKey)) || 30; }
+    else { prefix = 'd_'; countKey = `rowCount_${curY}`; rc = parseInt(localStorage.getItem(countKey)) || 65; }
 
     let all = [];
-    for (let i = 0; i < rc; i++) all.push(Storage.getJSON(`${prefix}${curY}_${i}`));
+    for (let i = 0; i < rc; i++) all.push(JSON.parse(localStorage.getItem(`${prefix}${curY}_${i}`)) || {});
     let moved = all.splice(si, 1)[0]; all.splice(ti, 0, moved);
-    for (let i = 0; i < rc; i++) Storage.set(`${prefix}${curY}_${i}`, JSON.stringify(all[i]));
+    for (let i = 0; i < rc; i++) localStorage.setItem(`${prefix}${curY}_${i}`, JSON.stringify(all[i]));
     
     if (type === 'inv') { initInvoiceTable(); filterInvoiceTable(); } 
     else if (type === 'bank') { initBankTable(); filterBankTable(); }
     else { initTable(); filterTable(); }
 }
 
-// 🚨 修正鍵盤報錯，加入極致防護
-function safeSelect(el) {
-    try {
-        if (el && el.tagName === 'INPUT' && el.type !== 'checkbox') {
-            el.select();
-        }
-    } catch(err) {}
-}
-
-document.addEventListener('keydown', function(e) {
-    if (!e.target.matches('input[type="text"], select, input[type="checkbox"]')) return;
-    let id = e.target.id;
-    let isInv = id.startsWith('inv_r');
-    let isBank = id.startsWith('bank_r');
-    let prefix = isInv ? 'inv_r' : (isBank ? 'bank_r' : 'r');
-    
-    if (!id.startsWith(prefix) || !id.includes('c')) return;
-    let parts = id.replace(prefix, '').split('c'), r = parseInt(parts[0]), c = parseInt(parts[1]), nextId = null;
-    if (e.shiftKey) return; 
-    
-    let atStart = false;
-    let atEnd = false;
-    let isCheckboxOrSelect = (e.target.tagName === 'SELECT' || e.target.type === 'checkbox');
-
-    if (isCheckboxOrSelect) {
-        atStart = true;
-        atEnd = true;
-    } else {
-        try { 
-            atStart = (e.target.selectionStart === 0);
-            atEnd = (e.target.selectionStart === (e.target.value || "").length);
-        } catch(err) {
-            atStart = true;
-            atEnd = true;
-        }
-    }
-
-    if (e.key === 'ArrowUp') nextId = `${prefix}${r-1}c${c}`;
-    else if (e.key === 'ArrowDown' || e.key === 'Enter') { nextId = `${prefix}${r+1}c${c}`; }
-    else if (e.key === 'ArrowLeft' && atStart) nextId = `${prefix}${r}c${c-1}`;
-    else if (e.key === 'ArrowRight' && atEnd) nextId = `${prefix}${r}c${c+1}`;
-    
-    if (nextId) { 
-        let el = document.getElementById(nextId); 
-        if (el) { 
-            e.preventDefault(); 
-            el.focus(); 
-            safeSelect(el);
-        } 
-    }
-});
-
-// 定義真實雲端函數前的防呆提示
-window.cloudSync = async function() {
-    await uiAlert("⏳ 雲端模組正在準備中，請等一秒鐘後再點擊！", "請稍候");
-};
-
-// 🚨【月報修復】修正從 String() 轉換浮點數，並且正確排除含逗號的金額
+// 🚨【修復月報系統】修正從 String() 轉換浮點數，正確過濾「有逗號的金額」
 function updateMonthlyReport() {
-    const rt = document.getElementById('report-tb'); rt.innerHTML = ''; 
-    let count = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    const rt = document.getElementById('report-tb'); rt.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     for(let m=1; m<=12; m++) {
         let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
         for(let i=0; i<count; i++) {
-            let d = Storage.getJSON(`d_${curY}_${i}`);
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
             if(d[0] === mStr) { 
                 n += parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
                 t += parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
@@ -2085,11 +2013,11 @@ function updateMonthlyReport() {
     }
 }
 
-// 🚨【防抖延遲機制】案件明細計算
+// 🚨【防抖修復】案件明細延遲排版，完全解決打字卡頓
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
-    let rc = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
     if(c === 5) {
         let v = g(5).trim();
@@ -2111,16 +2039,63 @@ function calc(r, c, save=true) {
     let row = document.getElementById(`r${r}`); if (row) { if (net > 0 && rem <= 0) row.classList.add('is-settled'); else row.classList.remove('is-settled'); }
     
     if(save) {
-        Storage.set(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)}));
+        localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)}));
         
-        if(window.debounceTimer1) clearTimeout(window.debounceTimer1);
-        window.debounceTimer1 = setTimeout(() => {
-            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = Storage.getJSON(`d_${curY}_${i}`); if(!dr[0]&&!dr[1]&&!dr[2]&&!dr[3]&&!dr[9]) ec++; else break; }
-            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('tb').appendChild(createRow(rc++)); } Storage.set(`rowCount_${curY}`, rc); }
+        if(window.calcTimer1) clearTimeout(window.calcTimer1);
+        window.calcTimer1 = setTimeout(() => {
+            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = JSON.parse(localStorage.getItem(`d_${curY}_${i}`))||{}; if(!dr[0]&&!dr[1]&&!dr[2]&&!dr[3]&&!dr[9]) ec++; else break; }
+            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('tb').appendChild(createRow(rc++)); } localStorage.setItem(`rowCount_${curY}`, rc); }
             filterTable(); 
         }, 400);
     }
 }
+
+async function handleOptChange(r, c) {
+    let sel = document.getElementById(`r${r}c${c}`);
+    if (sel.value === "__ADD__") { let n = await uiPrompt("新增:"); if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
+    else if (sel.value === "__DEL__") { let target = await uiPrompt("刪除名稱:"); if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
+    else calc(r, c);
+}
+
+function exportData() { let b = new Blob([JSON.stringify(localStorage)], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `backup_${curY}.json`; a.click(); }
+
+// 🚨【黑框死機修復】加上 try-catch 防護罩，鍵盤移動遇到打勾方塊絕不報錯
+document.addEventListener('keydown', function(e) {
+    if (!e.target.matches('input[type="text"], select, input[type="checkbox"]')) return;
+    let id = e.target.id;
+    let isInv = id.startsWith('inv_r');
+    let isBank = id.startsWith('bank_r');
+    let prefix = isInv ? 'inv_r' : (isBank ? 'bank_r' : 'r');
+    
+    if (!id.startsWith(prefix) || !id.includes('c')) return;
+    let parts = id.replace(prefix, '').split('c'), r = parseInt(parts[0]), c = parseInt(parts[1]), nextId = null;
+    if (e.shiftKey) return; 
+    
+    let selStart = 0;
+    let valLen = 0;
+    try { 
+        if(e.target.tagName !== 'SELECT' && e.target.type !== 'checkbox') {
+            selStart = e.target.selectionStart || 0; 
+            valLen = (e.target.value || "").length;
+        }
+    } catch(err) {}
+
+    if (e.key === 'ArrowUp') nextId = `${prefix}${r-1}c${c}`;
+    else if (e.key === 'ArrowDown' || e.key === 'Enter') { nextId = `${prefix}${r+1}c${c}`; }
+    else if (e.key === 'ArrowLeft' && (e.target.tagName==='SELECT' || e.target.type==='checkbox' || selStart === 0)) nextId = `${prefix}${r}c${c-1}`;
+    else if (e.key === 'ArrowRight' && (e.target.tagName==='SELECT' || e.target.type==='checkbox' || selStart === valLen)) nextId = `${prefix}${r}c${c+1}`;
+    
+    if (nextId) { 
+        let el = document.getElementById(nextId); 
+        if (el) { 
+            e.preventDefault(); 
+            el.focus(); 
+            if(el.tagName==='INPUT' && el.type !== 'checkbox') {
+                try { el.select(); } catch(err) {}
+            }
+        } 
+    }
+});
 
 window.exportData = exportData;
 window.switchSlide = switchSlide;
@@ -2141,10 +2116,11 @@ window.onload = () => {
 };
 </script>
 
-<!-- 🔥 Firebase 無需登入讀寫 (純雲端備份用) -->
+<!-- 🔥 Firebase 安全連線層 (完全移除Google按鈕，只靠內部加密連線) -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDllqltvIctsNWUuLW75kLUtcRnTjXdvBs",
@@ -2155,40 +2131,41 @@ window.onload = () => {
       appId: "1:616171972475:web:980452f45898a03b4ebfde"
     };
 
-    let app, db;
+    let app, db, auth;
 
     try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
+        auth = getAuth(app);
+        
+        // 系統在背景自動取得資料庫寫入權限，不需任何登入按鈕
+        signInAnonymously(auth).catch(e => console.error("Firebase 連線準備中..."));
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
 
     window.cloudSync = async function(mode) {
-        if (!app || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查您的網路連線。"); return; }
-        
-        if (Storage.get('vB_Auth') !== 'true') { 
-            await uiAlert("⚠️ 系統尚未登入，請重整網頁輸入密碼進入系統再進行同步！"); 
-            return; 
-        }
+        if (!app || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查網路連線。"); return; }
+        if (localStorage.getItem('vB_Auth') !== 'true') { await uiAlert("⚠️ 系統尚未登入，請重整網頁輸入密碼進入系統！"); return; }
 
         const btn = document.getElementById('cloudSaveBtn');
         const docRef = doc(db, 'system_data', 'default_backup');
         
         if (mode === 'SAVE') {
-            let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
-            if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
-            
-            // 🚨 防空資料覆寫保護機制
-            let rowCount = parseInt(Storage.get(`rowCount_${curY}`)) || 65;
+            // 🚨 終極防呆：若本機是空的，絕對不准覆蓋雲端！
+            let rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
             let validRows = 0;
             for(let r=0; r<rowCount; r++) {
-                let d = Storage.getJSON(`d_${curY}_${r}`);
+                let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
                 if (d[1] || d[3]) validRows++;
             }
             if (validRows < 5) {
-                if (!(await uiConfirm(`⚠️【極度危險警告】⚠️\n\n系統偵測到本機完全沒有資料！\n\n如果確定上傳，雲端舊資料將被【全數清空】！\n若只想看舊資料，請按取消並點擊【從雲端載入】。\n\n確定要用空白資料毀滅雲端嗎？`, "⚠️ 防呆警告"))) return;
+                if (!(await uiConfirm(`⚠️【極度危險警告】⚠️\n\n系統偵測到您目前的本機端「幾乎沒有資料」！\n如果您現在點擊確認，雲端上的【幾百筆舊資料將會被全數清空】！\n\n如果您只是剛換電腦想看資料，請按「取消」並點擊右側的【從雲端載入】。\n\n您確定要用現在的空白資料毀滅雲端嗎？`, "⚠️ 防呆警告"))) return;
             }
 
-            btn.innerText = "🔥 上傳雲端中...";
+            let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
+            if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
+            
+            let oldText = btn.innerText;
+            btn.innerText = "⏳ 正在上傳雲端...";
             
             let fullData = {};
             for(let i=0; i<localStorage.length; i++){
@@ -2199,24 +2176,14 @@ window.onload = () => {
             }
 
             let partnerSafeData = [];
-            let yList = Storage.getArray('vB_List'); if(yList.length===0) yList = [Storage.get('vB_Y') || '2026'];
-            
+            let yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
             for (let y of yList) {
-                let rCount = parseInt(Storage.get(`rowCount_${y}`)) || 65;
+                let rCount = parseInt(localStorage.getItem(`rowCount_${y}`)) || 65;
                 for(let r=0; r<rCount; r++) {
-                    let d = Storage.getJSON(`d_${y}_${r}`);
+                    let d = JSON.parse(localStorage.getItem(`d_${y}_${r}`)) || {};
                     let partnerAmt = parseFloat(d[19]) || 0; 
-                    
                     if(d[3] && partnerAmt > 0) { 
-                        partnerSafeData.push({
-                            date: d[0] || '未定',
-                            clientNumber: d[1] || 'N/A', 
-                            clientName: d[2] || '未填寫', 
-                            projectName: d[3] || '',
-                            percent: d[16] || 0,
-                            amount: partnerAmt,
-                            status: d[21] === true ? '已分潤' : '待結算'
-                        });
+                        partnerSafeData.push({ date: d[0] || '未定', clientNumber: d[1] || 'N/A', clientName: d[2] || '未填寫', projectName: d[3] || '', percent: d[16] || 0, amount: partnerAmt, status: d[21] === true ? '已分潤' : '待結算' });
                     }
                 }
             }
@@ -2225,33 +2192,49 @@ window.onload = () => {
                 await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
                 const partnerDocRef = doc(db, 'system_data', 'partner_view');
                 await setDoc(partnerDocRef, { data: JSON.stringify(partnerSafeData), lastUpdate: new Date().toISOString() });
-
-                await uiAlert("🔥 搬家成功！\n資料已備份！");
+                await uiAlert("🔥 搬家成功！\n資料已完美備份！");
             } catch(e) { 
                 console.error("上傳錯誤:", e); 
-                await uiAlert("❌ 上傳失敗！請確保 Firestore 的安全性規則已設為允許讀寫。"); 
+                await uiAlert("❌ 上傳失敗！這通常是因為剛開啟網頁，加密連線還沒建立完成，請等幾秒鐘後再試一次！"); 
             }
-            btn.innerText = "🔥 搬家至 Firebase";
+            btn.innerText = oldText;
             
         } else {
             if(!(await uiConfirm("⚠️ 注意：這將會清除目前電腦上的資料，並從雲端載入備份。\n確定要執行嗎？"))) return;
+            
+            let btnLoad = event.target;
+            let oldText = btnLoad.innerText;
+            btnLoad.innerText = "⏳ 載入中...";
+            
             try {
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    let cloudData = {};
+                    let cloudData = null;
                     try { cloudData = JSON.parse(docSnap.data().data); } catch(e) {}
+                    
+                    // 🚨 防壞檔：如果雲端資料壞掉，絕對不清除本地資料！
+                    if (!cloudData || Object.keys(cloudData).length === 0) {
+                        await uiAlert("❌ 雲端資料庫格式異常。已強制攔截載入，保護您目前的資料。");
+                        btnLoad.innerText = oldText;
+                        return;
+                    }
+
                     localStorage.clear(); 
                     Object.keys(cloudData).forEach(k => {
                         if (cloudData[k] !== "undefined" && cloudData[k] !== "null") {
                             localStorage.setItem(k, cloudData[k]);
                         }
                     });
-                    await uiAlert("✅ 載入成功！資料已同步。");
+                    await uiAlert("✅ 載入成功！資料已完美同步。\n畫面即將重新整理。");
                     location.reload(); 
-                } else { await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！"); }
+                } else { 
+                    await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！"); 
+                    btnLoad.innerText = oldText;
+                }
             } catch(e) { 
                 console.error("下載錯誤:", e); 
-                await uiAlert("❌ 載入失敗！這可能是由於網路不穩定或資料庫權限所引起。"); 
+                await uiAlert("❌ 載入失敗！請確認網路是否正常，或等待幾秒讓系統建立安全連線。"); 
+                btnLoad.innerText = oldText;
             }
         }
     };
