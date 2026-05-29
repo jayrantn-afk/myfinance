@@ -80,10 +80,11 @@
             white-space: nowrap;
         }
 
-        /* 畫筆顏色選擇器 */
+        /* 👑 整合型畫筆工具箱（含顏色與板擦圈圈） */
         .brush-colors {
             display: flex;
             gap: 6px;
+            align-items: center;
         }
         .brush-dot {
             width: 16px;
@@ -97,6 +98,28 @@
             transform: scale(1.2);
             border-color: #ffffff;
             box-shadow: 0 0 0 1.5px #1e293b;
+        }
+        
+        /* 👑 板擦圈圈樣式 */
+        .eraser-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            transition: transform 0.1s;
+            box-sizing: border-box;
+        }
+        .eraser-dot.active {
+            transform: scale(1.2);
+            background: #2563eb;
+            border-color: #2563eb;
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
         }
 
         /* 左側：白板區域 */
@@ -331,26 +354,26 @@
         <button class="btn" id="add-note-btn">📄 新增便利貼</button>
         <button class="btn" id="add-magnet-btn">🧲 新增磁鐵</button>
         <div class="divider"></div>
+        
         <button class="btn" id="brush-toggle-btn">🖌️ 麥克筆模式</button>
+        
         <div class="brush-colors" id="brush-colors-box" style="display:none;">
-            <div class="brush-dot active" style="background:#1e293b" data-color="#1e293b"></div>
-            <div class="brush-dot" style="background:#ef4444" data-color="#ef4444"></div>
-            <div class="brush-dot" style="background:#2563eb" data-color="#2563eb"></div>
-            <div class="brush-dot" style="background:#10b981" data-color="#10b981"></div>
+            <div class="brush-dot active" style="background:#1e293b" data-mode="draw" data-color="#1e293b"></div>
+            <div class="brush-dot" style="background:#ef4444" data-mode="draw" data-color="#ef4444"></div>
+            <div class="brush-dot" style="background:#2563eb" data-mode="draw" data-color="#2563eb"></div>
+            <div class="brush-dot" style="background:#10b981" data-mode="draw" data-color="#10b981"></div>
+            <div class="eraser-dot" id="eraser-dot-btn" data-mode="erase" title="切換為板擦">🧽</div>
+            <button class="btn" id="clear-canvas-btn" style="background:#f1f5f9; color:#475569; padding: 4px 10px; font-size: 11px; height: 22px; border-radius: 11px;">🧹 全清</button>
         </div>
-        <!-- 👑 新增：真板擦按鈕 -->
-        <button class="btn" id="eraser-toggle-btn">🧽 板擦模式</button>
-        <button class="btn" id="clear-canvas-btn" style="background:#f1f5f9; color:#475569; display:none;">🧹 全清</button>
+        
         <div class="divider"></div>
         <span class="status" id="sync-status">☁️ 雲端已同步</span>
     </div>
 
-    <!-- 左側：白板區域 -->
     <div id="board">
         <canvas id="drawing-canvas"></canvas>
     </div>
 
-    <!-- 右側：筆記本模式區域 -->
     <div id="notebook-sidebar">
         <div class="notebook-header">
             <div class="notebook-title">📒 筆記本模式</div>
@@ -391,7 +414,7 @@
         const addMagnetBtn = document.getElementById('add-magnet-btn');
         const brushToggleBtn = document.getElementById('brush-toggle-btn');
         const brushColorsBox = document.getElementById('brush-colors-box');
-        const eraserToggleBtn = document.getElementById('eraser-toggle-btn'); // 板擦按鈕
+        const eraserDotBtn = document.getElementById('eraser-dot-btn');
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const syncStatus = document.getElementById('sync-status');
         
@@ -402,7 +425,7 @@
         
         // 麥克筆與板擦狀態
         let isDrawingMode = false;
-        let isEraserMode = false;
+        let currentToolState = 'draw'; // 'draw' 或 'erase'
         let isDrawing = false;
         let isErasing = false;
         let currentBrushColor = '#1e293b';
@@ -482,82 +505,90 @@
 
         updateNotebookUI();
 
-        // 👑 麥克筆模式切換
+        // 👑 麥克筆大按鈕功能切換
         brushToggleBtn.addEventListener('click', () => {
             isDrawingMode = !isDrawingMode;
             if (isDrawingMode) {
-                isEraserMode = false;
-                board.classList.remove('eraser-mode');
-                eraserToggleBtn.classList.remove('active');
-                
-                board.classList.add('drawing-mode'); 
                 brushToggleBtn.classList.add('active'); 
                 brushColorsBox.style.display = 'flex'; 
-                clearCanvasBtn.style.display = 'flex';
+                setCanvasToolStyle(); // 套用當前選取的子工具狀態（筆或板擦）
             } else {
-                board.classList.remove('drawing-mode'); brushToggleBtn.classList.remove('active'); brushColorsBox.style.display = 'none'; clearCanvasBtn.style.display = 'none';
-            }
-        });
-
-        // 👑 板擦模式切換
-        eraserToggleBtn.addEventListener('click', () => {
-            isEraserMode = !isEraserMode;
-            if (isEraserMode) {
-                isDrawingMode = false;
                 board.classList.remove('drawing-mode');
-                brushToggleBtn.classList.remove('active');
-                brushColorsBox.style.display = 'none';
-                
-                board.classList.add('eraser-mode');
-                eraserToggleBtn.classList.add('active');
-                clearCanvasBtn.style.display = 'flex';
-            } else {
                 board.classList.remove('eraser-mode');
-                eraserToggleBtn.classList.remove('active');
-                clearCanvasBtn.style.display = 'none';
+                brushToggleBtn.classList.remove('active'); 
+                brushColorsBox.style.display = 'none'; 
             }
         });
 
+        // 👑 動態變更畫布工具樣式
+        function setCanvasToolStyle() {
+            if (!isDrawingMode) return;
+            if (currentToolState === 'draw') {
+                board.classList.remove('eraser-mode');
+                board.classList.add('drawing-mode');
+            } else if (currentToolState === 'erase') {
+                board.classList.remove('drawing-mode');
+                board.classList.add('eraser-mode');
+            }
+        }
+
+        // 👑 點選顏色圈圈：切換為對應顏色的麥克筆
         document.querySelectorAll('.brush-dot').forEach(dot => {
             dot.addEventListener('click', () => {
-                document.querySelector('.brush-dot.active').classList.remove('active'); dot.classList.add('active'); currentBrushColor = dot.dataset.color;
+                // 移除所有子項目的作用樣式
+                const activeDot = document.querySelector('.brush-dot.active');
+                if(activeDot) activeDot.classList.remove('active');
+                eraserDotBtn.classList.remove('active');
+
+                dot.classList.add('active');
+                currentToolState = 'draw';
+                currentBrushColor = dot.dataset.color;
+                setCanvasToolStyle();
             });
         });
 
-        // 👑 畫布滑鼠按下事件（支援畫線與板擦）
+        // 👑 點選🧽圈圈：切換為板擦
+        eraserDotBtn.addEventListener('click', () => {
+            const activeDot = document.querySelector('.brush-dot.active');
+            if(activeDot) activeDot.classList.remove('active');
+            eraserDotBtn.classList.add('active');
+
+            currentToolState = 'erase';
+            setCanvasToolStyle();
+        });
+
+        // 畫布滑鼠事件
         canvas.addEventListener('mousedown', (e) => {
-            if (isDrawingMode) {
+            if (!isDrawingMode) return;
+            if (currentToolState === 'draw') {
                 isDrawing = true; ctx.beginPath(); ctx.moveTo(e.clientX, e.clientY);
                 linesData.push({ color: currentBrushColor, points: [{x: e.clientX, y: e.clientY}] });
-            } else if (isEraserMode) {
+            } else if (currentToolState === 'erase') {
                 isErasing = true;
                 eraseLinesAt(e.clientX, e.clientY);
             }
         });
 
-        // 👑 畫布滑鼠移動事件（支援畫線與板擦）
         canvas.addEventListener('mousemove', (e) => {
-            if (isDrawingMode && isDrawing) { 
+            if (!isDrawingMode) return;
+            if (currentToolState === 'draw' && isDrawing) { 
                 ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = currentBrushColor; ctx.lineTo(e.clientX, e.clientY); ctx.stroke();
                 linesData[linesData.length - 1].points.push({x: e.clientX, y: e.clientY});
-            } else if (isEraserMode && isErasing) {
+            } else if (currentToolState === 'erase' && isErasing) {
                 eraseLinesAt(e.clientX, e.clientY);
             }
         });
 
-        // 👑 局部擦除線條的演算法邏輯
         function eraseLinesAt(x, y) {
-            const eraserRadius = 15; // 擦除半徑
+            const eraserRadius = 15; 
             let modified = false;
 
-            // 篩選線條，如果點跟板擦距離太近就把該點移除，甚至切斷線條
             linesData = linesData.filter(line => {
                 let keepLine = true;
-                // 檢查線條中是否有任何點進入了板擦範圍
                 for (let p of line.points) {
                     let dist = Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
                     if (dist <= eraserRadius) {
-                        keepLine = false; // 擦除這條線
+                        keepLine = false; 
                         modified = true;
                         break;
                     }
@@ -565,16 +596,12 @@
                 return keepLine;
             });
 
-            if (modified) {
-                redrawCanvas();
-            }
+            if (modified) redrawCanvas();
         }
 
-        // 放開滑鼠：統一將資料同步至雲端
         canvas.addEventListener('mouseup', async () => {
             if (isDrawing || isErasing) {
-                isDrawing = false;
-                isErasing = false;
+                isDrawing = false; isErasing = false;
                 showStatus("⚡ 正在同步畫布...", "#f59e0b");
                 await setDoc(doc(canvasRef, "drawing_layer"), { lines: JSON.stringify(linesData) }); 
                 showStatus("✅ 雲端已即時同步", "#10b981");
@@ -676,7 +703,7 @@
         function bindDrag(el, handleEl, id, type, getArgsFunc) {
             let isDragging = false; let startX, startY, startLeft, startTop;
             handleEl.addEventListener('mousedown', (e) => {
-                if (isDrawingMode || isEraserMode || e.target.classList.contains('delete-btn')) return;
+                if (isDrawingMode || e.target.classList.contains('delete-btn')) return;
                 isDragging = true; isDraggingGlobal = true; el.classList.add('dragging'); el.style.zIndex = zIndexCounter++;
                 startX = e.clientX; startY = e.clientY; startLeft = parseInt(el.style.left); startTop = parseInt(el.style.top);
                 document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp);
