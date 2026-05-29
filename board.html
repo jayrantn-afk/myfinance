@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>極致便利！雲端白板便利貼</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
@@ -327,6 +330,7 @@
             note.style.zIndex = zIndex;
             note.style.transform = `rotate(${rotate}deg)`;
 
+            // 👑 核心修復：所有的 value 全部替換成標準的英文系統字型家族名稱
             note.innerHTML = `
                 <div class="drag-handle">⋮⋮</div>
                 <div class="delete-btn">✕</div>
@@ -334,11 +338,11 @@
                     <button class="toolbar-item btn-bold" title="粗體">B</button>
                     <select class="toolbar-item select-font" title="切換字體">
                         <option value="">— 選擇字體 —</option>
-                        <option value="system-ui, sans-serif">預設黑體</option>
-                        <option value="'BiauKai', '標楷體', sans-serif">標楷體</option>
-                        <option value="'PMingLiU', '新細明體', serif">新細明體</option>
-                        <option value="'Microsoft JhengHei', '微軟正黑體', sans-serif">微軟正黑體</option>
-                        <option value="'YuGothic', 'Mplus 1p', 'Rounded Mplus 1c', sans-serif">原體/圓體</option>
+                        <option value="system-ui, -apple-system, sans-serif">預設黑體</option>
+                        <option value="'Microsoft JhengHei', sans-serif">微軟正黑體</option>
+                        <option value="'Kosugi Maru', sans-serif">原體/圓體</option>
+                        <option value="'DFKai-SB', 'BiauKai', sans-serif">標楷體</option>
+                        <option value="'PMingLiU', serif">新細明體</option>
                     </select>
                     <select class="toolbar-item select-size" title="字體大小">
                         <option value="">— 大小 —</option>
@@ -371,10 +375,7 @@
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
 
-            // 👑 核心修復：阻止工具列內部的 mousedown 事件！
-            // 這會阻止瀏覽器將焦點移出文字編輯區，從而完美鎖定反白範圍
             toolbar.addEventListener('mousedown', (e) => {
-                e.preventDefault();
                 e.stopPropagation();
             });
 
@@ -388,22 +389,44 @@
                 });
             };
 
-            // 格式修改功能（現在反白不會消失了！）
             btnBold.addEventListener('click', () => { 
                 document.execCommand('bold', false, null); 
                 saveCurrentState(); 
             });
             
+            let savedSelection = null;
+            function keepSelection() {
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    savedSelection = sel.getRangeAt(0).cloneRange();
+                }
+            }
+
+            function restoreSelection() {
+                if (savedSelection) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(savedSelection);
+                }
+            }
+
+            contentNode.addEventListener('keyup', keepSelection);
+            contentNode.addEventListener('mouseup', keepSelection);
+
             selectFont.addEventListener('change', (e) => { 
                 if (e.target.value) {
+                    contentNode.focus();
+                    restoreSelection(); 
                     document.execCommand('fontName', false, e.target.value); 
                     saveCurrentState(); 
-                    e.target.value = ""; // 重設選單標題
+                    e.target.value = ""; 
                 }
             });
             
             selectSize.addEventListener('change', (e) => { 
                 if (e.target.value) {
+                    contentNode.focus();
+                    restoreSelection();
                     document.execCommand('fontSize', false, e.target.value); 
                     saveCurrentState(); 
                     e.target.value = ""; 
@@ -412,6 +435,8 @@
             
             selectColor.addEventListener('change', (e) => { 
                 if (e.target.value) {
+                    contentNode.focus();
+                    restoreSelection();
                     document.execCommand('foreColor', false, e.target.value); 
                     saveCurrentState(); 
                     e.target.value = ""; 
@@ -433,7 +458,6 @@
                 note.style.zIndex = zIndexCounter++; 
             });
 
-            // 拖曳處理
             let isDragging = false;
             let startX, startY, startLeft, startTop;
 
