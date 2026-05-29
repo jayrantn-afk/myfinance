@@ -70,7 +70,7 @@
 
         .note {
             position: absolute;
-            width: 220px;
+            width: 240px; /* 稍微加寬容納更多工具 */
             min-height: 180px;
             height: auto;
             padding: 12px;
@@ -93,9 +93,10 @@
 
         .note-toolbar {
             display: flex;
-            gap: 6px;
+            flex-wrap: wrap; /* 讓工具過多時能自動折行 */
+            gap: 4px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.5);
             padding: 4px 6px;
             border-radius: 4px;
             opacity: 0;
@@ -109,13 +110,15 @@
 
         .toolbar-item {
             font-size: 11px;
-            padding: 2px 5px;
+            padding: 2px 4px;
             border: 1px solid rgba(0,0,0,0.1);
             background: white;
             border-radius: 3px;
             cursor: pointer;
             color: #334155;
             font-weight: bold;
+            height: 22px;
+            box-sizing: border-box;
         }
         .toolbar-item:hover {
             background: #f1f5f9;
@@ -198,7 +201,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 已嵌入你的專屬 Firebase 配置
+        // 已保留你的專屬 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyC5DspOkctRSuXJojh8iJu1uJ31E9ykN10",
             authDomain: "my-sticky-notes-5929c.firebaseapp.com",
@@ -208,7 +211,6 @@
             appId: "1:44041714179:web:f8baac058e2068ad026c36"
         };
 
-        // 初始化 Firebase 與 Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const notesRef = collection(db, "sticky_notes");
@@ -300,16 +302,24 @@
             note.style.zIndex = zIndex;
             note.style.transform = `rotate(${rotate}deg)`;
 
+            // 升級工具列：加上字體切換功能
             note.innerHTML = `
                 <div class="delete-btn">✕</div>
                 <div class="note-toolbar">
-                    <button class="toolbar-item btn-bold">B</button>
-                    <select class="toolbar-item select-size">
+                    <button class="toolbar-item btn-bold" title="粗體">B</button>
+                    <select class="toolbar-item select-font" title="切換字體">
+                        <option value="system-ui, sans-serif">預設黑體</option>
+                        <option value="'BiauKai', '標楷體', sans-serif">標楷體</option>
+                        <option value="'PMingLiU', '新細明體', serif">新細明體</option>
+                        <option value="'Microsoft JhengHei', '微軟正黑體', sans-serif">微軟正黑體</option>
+                        <option value="'YuGothic', 'Mplus 1p', 'Rounded Mplus 1c', sans-serif">原體/圓體</option>
+                    </select>
+                    <select class="toolbar-item select-size" title="字體大小">
                         <option value="3">中</option>
                         <option value="2">小</option>
                         <option value="5">大</option>
                     </select>
-                    <select class="toolbar-item select-color">
+                    <select class="toolbar-item select-color" title="文字顏色">
                         <option value="#334155">黑</option>
                         <option value="#ef4444">紅</option>
                         <option value="#2563eb">藍</option>
@@ -327,6 +337,7 @@
             const toolbar = note.querySelector('.note-toolbar');
             
             const btnBold = note.querySelector('.btn-bold');
+            const selectFont = note.querySelector('.select-font');
             const selectSize = note.querySelector('.select-size');
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
@@ -343,24 +354,35 @@
                 });
             };
 
+            // 粗體
             btnBold.addEventListener('click', () => {
                 document.execCommand('bold', false, null);
                 contentNode.focus();
                 saveCurrentState();
             });
 
+            // 💡 字體家族切換核心功能
+            selectFont.addEventListener('change', (e) => {
+                document.execCommand('fontName', false, e.target.value);
+                contentNode.focus();
+                saveCurrentState();
+            });
+
+            // 大小
             selectSize.addEventListener('change', (e) => {
                 document.execCommand('fontSize', false, e.target.value);
                 contentNode.focus();
                 saveCurrentState();
             });
 
+            // 顏色
             selectColor.addEventListener('change', (e) => {
                 document.execCommand('foreColor', false, e.target.value);
                 contentNode.focus();
                 saveCurrentState();
             });
 
+            // 卡片顏色
             dots.forEach(dot => {
                 dot.addEventListener('click', () => {
                     note.style.backgroundColor = dot.getAttribute('data-color');
