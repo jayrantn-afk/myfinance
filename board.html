@@ -80,7 +80,7 @@
             white-space: nowrap;
         }
 
-        /* 👑 整合型畫筆工具箱（含顏色與板擦圈圈） */
+        /* 整合型畫筆工具箱 */
         .brush-colors {
             display: flex;
             gap: 6px;
@@ -100,7 +100,7 @@
             box-shadow: 0 0 0 1.5px #1e293b;
         }
         
-        /* 👑 板擦圈圈樣式 */
+        /* 板擦圈圈樣式 */
         .eraser-dot {
             width: 20px;
             height: 20px;
@@ -146,9 +146,9 @@
 
         /* 右側：筆記本模式區域 */
         #notebook-sidebar {
-            width: 350px;
+            width: 380px;
             height: 100%;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             border-left: 1px solid #e2e8f0;
             box-shadow: -4px 0 24px rgba(0, 0, 0, 0.02);
             backdrop-filter: blur(20px);
@@ -159,8 +159,7 @@
         }
 
         .notebook-header {
-            padding: 20px;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 20px 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -205,6 +204,28 @@
             text-align: center;
         }
 
+        /* 👑 搜尋框區域 */
+        .search-container {
+            padding: 0 20px 14px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .notebook-search {
+            width: 100%;
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+        .notebook-search:focus {
+            border-color: #2563eb;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
         .notebook-content {
             flex: 1;
             overflow-y: auto;
@@ -213,19 +234,26 @@
 
         .day-row {
             display: flex;
+            flex-direction: column; /* 調整為垂直排版，容納內容與下方的自動標籤 */
             border-bottom: 1px solid #f1f5f9;
-            padding: 10px 0;
-            align-items: flex-start;
+            padding: 12px 0;
+            gap: 6px;
+        }
+        .day-row.hidden {
+            display: none !important;
+        }
+
+        .day-meta {
+            display: flex;
+            align-items: center;
             gap: 12px;
         }
 
         .day-label {
-            width: 50px;
-            font-size: 13px;
+            width: 65px;
+            font-size: 12px;
             font-weight: 600;
             color: #64748b;
-            padding-top: 2px;
-            text-align: right;
             white-space: nowrap;
         }
         
@@ -251,6 +279,29 @@
             content: "點擊紀錄今天的事...";
             color: #cbd5e1;
             font-size: 13px;
+        }
+
+        /* 👑 自動生成的極簡標籤區樣式 */
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding-left: 0px;
+            margin-top: 2px;
+        }
+        .auto-tag {
+            font-size: 11px;
+            font-weight: 500;
+            color: #2563eb;
+            background: rgba(37, 99, 235, 0.06);
+            padding: 2px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .auto-tag:hover {
+            background: #2563eb;
+            color: #ffffff;
         }
 
         /* 物件容器 */
@@ -383,6 +434,11 @@
                 <button class="nav-month-btn" id="next-month">▶</button>
             </div>
         </div>
+        
+        <div class="search-container">
+            <input type="text" class="notebook-search" id="notebook-search-input" placeholder="🔍 搜尋筆記或點擊下方標籤...">
+        </div>
+
         <div class="notebook-content" id="days-container"></div>
     </div>
 
@@ -417,6 +473,7 @@
         const eraserDotBtn = document.getElementById('eraser-dot-btn');
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const syncStatus = document.getElementById('sync-status');
+        const searchInput = document.getElementById('notebook-search-input');
         
         const noteColors = ['#fffbeb', '#f0fdf4', '#eff6ff', '#fdf2f8', '#faf5ff', '#fff7ed'];
         const magnetColors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#a855f7'];
@@ -425,7 +482,7 @@
         
         // 麥克筆與板擦狀態
         let isDrawingMode = false;
-        let currentToolState = 'draw'; // 'draw' 或 'erase'
+        let currentToolState = 'draw'; 
         let isDrawing = false;
         let isErasing = false;
         let currentBrushColor = '#1e293b';
@@ -435,6 +492,12 @@
         let currentYear = currentDate.getFullYear();
         let currentMonth = currentDate.getMonth(); 
         let unsubscribeNotebook = null;
+
+        // 👑 預設內部智慧型重點關聯字庫
+        const keywordsRepo = [
+            '匯款', '報價', '請款', '合約', '拜訪', '會議', '試剪', '腳本', '拍攝', 
+            '開會', '提案', '交片', '毛片', '定剪', '瑞迪', 'Miriam', 'Debbie', '水晶', '礦礦'
+        ];
 
         function resizeCanvas() {
             canvas.width = board.clientWidth;
@@ -448,6 +511,36 @@
             syncStatus.textContent = text;
             syncStatus.style.color = color;
         }
+
+        // 👑 核心：語意標籤分析提取器
+        function parseTags(text) {
+            if (!text) return [];
+            // 清除 HTML 標籤後提取純文字進行判斷
+            const cleanText = text.replace(/<[^>]*>/g, '');
+            const foundTags = [];
+            keywordsRepo.forEach(keyword => {
+                if (cleanText.toLowerCase().includes(keyword.toLowerCase())) {
+                    foundTags.push('#' + keyword);
+                }
+            });
+            return foundTags;
+        }
+
+        // 👑 執行過濾搜尋
+        function filterNotes() {
+            const query = searchInput.value.trim().toLowerCase();
+            const rows = document.querySelectorAll('.day-row');
+            rows.forEach(row => {
+                const inputText = row.querySelector('.day-input').textContent.toLowerCase();
+                if (!query || inputText.includes(query)) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+
+        searchInput.addEventListener('input', filterNotes);
 
         // 筆記本邏輯
         const daysContainer = document.getElementById('days-container');
@@ -468,15 +561,26 @@
                 const docId = `${currentYear}_${String(currentMonth + 1).padStart(2, '0')}_${String(d).padStart(2, '0')}`;
                 
                 dayRow.innerHTML = `
-                    <div class="day-label">${d} 日 (${['日','一','二','三','四','五','六'][dayOfWeek]})</div>
-                    <div class="day-input" id="input_${docId}" contenteditable="true"></div>
+                    <div class="day-meta">
+                        <div class="day-label">${d} 日 (${['日','一','二','三','四','五','六'][dayOfWeek]})</div>
+                        <div class="day-input" id="input_${docId}" contenteditable="true"></div>
+                    </div>
+                    <div class="tag-list" id="tags_${docId}"></div>
                 `;
                 
                 const inputNode = dayRow.querySelector('.day-input');
+                const tagListNode = dayRow.querySelector('.tag-list');
+
                 inputNode.addEventListener('mousedown', (e) => e.stopPropagation());
+                
+                // 👑 監聽打字：儲存並同步分析抓取標籤
                 inputNode.addEventListener('input', () => {
                     showStatus("⚡ 正在儲存筆記...", "#f59e0b");
-                    setDoc(doc(notebookRef, docId), { text: inputNode.innerHTML }, { merge: true });
+                    const content = inputNode.innerHTML;
+                    setDoc(doc(notebookRef, docId), { text: content }, { merge: true });
+                    
+                    // 動態更新本地標籤
+                    renderTagsUI(tagListNode, inputNode.innerHTML);
                 });
                 daysContainer.appendChild(dayRow);
             }
@@ -487,12 +591,32 @@
                     const id = doc.id;
                     if (id.startsWith(`${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`)) {
                         const inputField = document.getElementById(`input_${id}`);
+                        const tagField = document.getElementById(`tags_${id}`);
                         if (inputField && document.activeElement !== inputField) {
                             inputField.innerHTML = doc.data().text || '';
+                            if(tagField) renderTagsUI(tagField, doc.data().text || '');
                         }
                     }
                 });
+                filterNotes(); // 確保重新讀取雲端後依然維持搜尋狀態
                 showStatus("✅ 雲端已即時同步", "#10b981");
+            });
+        }
+
+        // 👑 標籤渲染與點擊過濾功能
+        function renderTagsUI(container, text) {
+            container.innerHTML = '';
+            const tags = parseTags(text);
+            tags.forEach(tag => {
+                const tagEl = document.createElement('span');
+                tagEl.className = 'auto-tag';
+                tagEl.textContent = tag;
+                // 點擊標籤直接幫搜尋框填入關鍵字並過濾
+                tagEl.addEventListener('click', () => {
+                    searchInput.value = tag.replace('#', '');
+                    filterNotes();
+                });
+                container.appendChild(tagEl);
             });
         }
 
@@ -505,13 +629,13 @@
 
         updateNotebookUI();
 
-        // 👑 麥克筆大按鈕功能切換
+        // 麥克筆大按鈕功能切換
         brushToggleBtn.addEventListener('click', () => {
             isDrawingMode = !isDrawingMode;
             if (isDrawingMode) {
                 brushToggleBtn.classList.add('active'); 
                 brushColorsBox.style.display = 'flex'; 
-                setCanvasToolStyle(); // 套用當前選取的子工具狀態（筆或板擦）
+                setCanvasToolStyle(); 
             } else {
                 board.classList.remove('drawing-mode');
                 board.classList.remove('eraser-mode');
@@ -520,7 +644,6 @@
             }
         });
 
-        // 👑 動態變更畫布工具樣式
         function setCanvasToolStyle() {
             if (!isDrawingMode) return;
             if (currentToolState === 'draw') {
@@ -532,10 +655,8 @@
             }
         }
 
-        // 👑 點選顏色圈圈：切換為對應顏色的麥克筆
         document.querySelectorAll('.brush-dot').forEach(dot => {
             dot.addEventListener('click', () => {
-                // 移除所有子項目的作用樣式
                 const activeDot = document.querySelector('.brush-dot.active');
                 if(activeDot) activeDot.classList.remove('active');
                 eraserDotBtn.classList.remove('active');
@@ -547,7 +668,6 @@
             });
         });
 
-        // 👑 點選🧽圈圈：切換為板擦
         eraserDotBtn.addEventListener('click', () => {
             const activeDot = document.querySelector('.brush-dot.active');
             if(activeDot) activeDot.classList.remove('active');
