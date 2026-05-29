@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式白板便利貼 Pro</title>
+    <title>互動式白板便利貼 Pro (自動儲存版)</title>
     <style>
-        /* 全域樣式：打造白板背景 */
         body {
             margin: 0;
             padding: 0;
@@ -21,7 +20,6 @@
             width: 100vw;
         }
 
-        /* 頂部功能列 */
         .controls {
             position: fixed;
             top: 20px;
@@ -63,19 +61,17 @@
             color: #64748b;
         }
 
-        /* 白板畫布區域 */
         #board {
             width: 100%;
             height: 100%;
             position: relative;
         }
 
-        /* 便利貼主體：外層 */
         .note {
             position: absolute;
             width: 220px;
             min-height: 180px;
-            height: auto; /* 關鍵：讓高度隨內容自動撐開 */
+            height: auto;
             padding: 12px;
             box-sizing: border-box;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
@@ -88,14 +84,12 @@
             transition: transform 0.1s, box-shadow 0.1s;
         }
 
-        /* 拖曳中的樣式 */
         .note.dragging {
             transform: scale(1.03) rotate(-1deg) !important;
             box-shadow: 5px 15px 25px rgba(0,0,0,0.18);
             z-index: 999 !important;
         }
 
-        /* 便利貼內建工具列 */
         .note-toolbar {
             display: flex;
             gap: 6px;
@@ -103,16 +97,15 @@
             background: rgba(255, 255, 255, 0.4);
             padding: 4px 6px;
             border-radius: 4px;
-            opacity: 0; /* 平時隱藏 */
+            opacity: 0;
             transition: opacity 0.2s;
             cursor: default;
         }
 
         .note:hover .note-toolbar {
-            opacity: 1; /* 滑鼠移入時顯示 */
+            opacity: 1;
         }
 
-        /* 工具列元件樣式 */
         .toolbar-item {
             font-size: 11px;
             padding: 2px 5px;
@@ -131,11 +124,10 @@
             font-weight: normal;
         }
 
-        /* 顏色選擇器色票 */
         .color-dots {
             display: flex;
             gap: 4px;
-            margin-left: auto; /* 推到最右邊 */
+            margin-left: auto;
         }
         .dot {
             width: 12px;
@@ -145,7 +137,6 @@
             border: 1px solid rgba(0,0,0,0.15);
         }
 
-        /* 文字內容區 */
         .note-content {
             width: 100%;
             height: auto;
@@ -165,7 +156,6 @@
             cursor: text;
         }
 
-        /* 刪除按鈕 */
         .delete-btn {
             position: absolute;
             top: -8px;
@@ -198,7 +188,7 @@
 
     <div class="controls">
         <button class="btn" id="add-btn">+ 新增便利貼</button>
-        <span class="hint">💡 操作說明：拖曳空白處移動｜雙擊文字編輯｜選取文字可局部改粗細顏色</span>
+        <span class="hint">💡 系統已啟用自動儲存功能｜拖曳、修改、刪除皆會同步存檔</span>
     </div>
 
     <div id="board"></div>
@@ -207,36 +197,77 @@
         const board = document.getElementById('board');
         const addBtn = document.getElementById('add-btn');
         
-        // 粉嫩色系庫
         const colors = [
             '#fff9db', '#e7f5ff', '#e6fcf5', '#fff0f6', '#f3f0ff', '#fff4e6'
         ];
 
         let zIndexCounter = 1;
 
-        // 初始化範例
-        createNote('歡迎使用！<br><b>雙擊我</b>可以編輯。文字變多時，我也會自動向下變長喔！', 200, 150);
+        // --- 核心：儲存資料到 LocalStorage ---
+        function saveNotes() {
+            const notesData = [];
+            const notes = document.querySelectorAll('.note');
+            
+            notes.forEach(note => {
+                const contentNode = note.querySelector('.note-content');
+                notesData.push({
+                    id: note.dataset.id,
+                    html: contentNode.innerHTML,
+                    left: note.style.left,
+                    top: note.style.top,
+                    bg: note.style.backgroundColor,
+                    zIndex: note.style.zIndex,
+                    rotate: note.dataset.rotate
+                });
+            });
+            
+            localStorage.setItem('board_sticky_notes', JSON.stringify(notesData));
+        }
+
+        // --- 核心：載入快取資料 ---
+        function loadNotes() {
+            const savedData = localStorage.getItem('board_sticky_notes');
+            if (savedData) {
+                const notesData = JSON.parse(savedData);
+                if (notesData.length > 0) {
+                    // 找出最大的 zIndex，避免計數器重置
+                    notesData.forEach(data => {
+                        const z = parseInt(data.zIndex) || 1;
+                        if (z >= zIndexCounter) zIndexCounter = z + 1;
+                        
+                        createNote(data.html, parseInt(data.left), parseInt(data.top), data.bg, data.rotate, data.id);
+                    });
+                    return;
+                }
+            }
+            // 如果沒有快取紀錄，給予預設範例
+            createNote('歡迎使用自動儲存版！<br>不論你如何拖曳、修改，甚至關掉網頁，資料都會自動留在你的瀏覽器裡喔！', 200, 150);
+        }
 
         addBtn.addEventListener('click', () => {
             const x = Math.random() * (window.innerWidth - 280) + 50;
             const y = Math.random() * (window.innerHeight - 350) + 100;
             createNote('新注意事項...', x, y);
+            saveNotes(); // 新增時儲存
         });
 
-        function createNote(htmlContent = '', left = 100, top = 100) {
+        // 建立便利貼函式（支援載入歷史參數）
+        function createNote(htmlContent = '', left = 100, top = 100, customBg = null, customRotate = null, savedId = null) {
             const note = document.createElement('div');
             note.className = 'note';
             note.style.left = `${left}px`;
             note.style.top = `${top}px`;
-            const defaultBg = colors[Math.floor(Math.random() * colors.length)];
-            note.style.backgroundColor = defaultBg;
+            
+            // 設定唯一識別 ID
+            note.dataset.id = savedId || 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            
+            // 底色與旋轉度
+            note.style.backgroundColor = customBg || colors[Math.floor(Math.random() * colors.length)];
             note.style.zIndex = zIndexCounter++;
+            const rotateVal = customRotate || (Math.random() * 3 - 1.5).toFixed(1);
+            note.dataset.rotate = rotateVal;
+            note.style.transform = `rotate(${rotateVal}deg)`;
 
-            // 微旋轉
-            const randomRotate = (Math.random() * 3 - 1.5).toFixed(1);
-            note.style.transform = `rotate(${randomRotate}deg)`;
-
-            // 建立工具列與內容結構
             note.innerHTML = `
                 <div class="delete-btn">✕</div>
                 <div class="note-toolbar">
@@ -263,58 +294,59 @@
             const deleteBtn = note.querySelector('.delete-btn');
             const toolbar = note.querySelector('.note-toolbar');
             
-            // 工具列按鈕事件
             const btnBold = note.querySelector('.btn-bold');
             const selectSize = note.querySelector('.select-size');
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
 
-            // 點擊工具列內部時，阻止觸發便利貼的拖曳
             toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
 
-            // 粗體功能
+            // 格式修改後存檔
             btnBold.addEventListener('click', () => {
                 document.execCommand('bold', false, null);
                 contentNode.focus();
+                saveNotes();
             });
 
-            // 字體大小功能
             selectSize.addEventListener('change', (e) => {
                 document.execCommand('fontSize', false, e.target.value);
                 contentNode.focus();
+                saveNotes();
             });
 
-            // 文字顏色功能
             selectColor.addEventListener('change', (e) => {
                 document.execCommand('foreColor', false, e.target.value);
                 contentNode.focus();
+                saveNotes();
             });
 
-            // 便利貼更換背景色
             dots.forEach(dot => {
                 dot.addEventListener('click', () => {
                     note.style.backgroundColor = dot.getAttribute('data-color');
+                    saveNotes();
                 });
             });
 
-            // 雙擊進入編輯
             contentNode.addEventListener('dblclick', (e) => {
                 contentNode.contentEditable = "true";
                 contentNode.classList.add('editing');
                 contentNode.focus();
             });
 
-            // 結束編輯
+            // 文字編輯完（失去焦點）時存檔
             contentNode.addEventListener('blur', () => {
                 contentNode.contentEditable = "false";
                 contentNode.classList.remove('editing');
+                saveNotes();
             });
 
-            // 編輯狀態下點擊文字不觸發拖曳
+            // 即時輸入監聽（選填，確保萬一突發關閉網頁也能記住部分字）
+            contentNode.addEventListener('input', () => {
+                saveNotes();
+            });
+
             contentNode.addEventListener('mousedown', (e) => {
-                if (contentNode.contentEditable === "true") {
-                    e.stopPropagation(); 
-                }
+                if (contentNode.contentEditable === "true") e.stopPropagation(); 
             });
 
             // 拖曳 (Drag and Drop)
@@ -357,16 +389,25 @@
             }
 
             function onMouseUp() {
-                isDragging = false;
-                note.classList.remove('dragging');
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
+                if (isDragging) {
+                    isDragging = false;
+                    note.classList.remove('dragging');
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    saveNotes(); // 拖曳放開後，儲存新位置
+                }
             }
 
-            deleteBtn.addEventListener('click', () => note.remove());
+            deleteBtn.addEventListener('click', () => {
+                note.remove();
+                saveNotes(); // 刪除後更新快取
+            });
 
             board.appendChild(note);
         }
+
+        // 頁面初始化：載入資料
+        window.addEventListener('DOMContentLoaded', loadNotes);
 
         // 視窗縮放防溢出
         window.addEventListener('resize', () => {
@@ -381,6 +422,7 @@
                     note.style.top = `${window.innerHeight - note.offsetHeight}px`;
                 }
             });
+            saveNotes();
         });
     </script>
 </body>
