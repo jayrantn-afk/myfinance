@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jayran Studio | 雲端極簡互動白板</title>
+    <title>Jayran Studio | 雲端極簡互動白板與筆記本</title>
     <style>
         /* 全域極簡現代感設計 */
         body {
@@ -17,13 +17,14 @@
             height: 100vh;
             width: 100vw;
             user-select: none;
+            display: flex; /* 使用 flex 來切分左右區塊 */
         }
 
         /* 頂部高級感毛玻璃功能列 */
         .controls {
             position: fixed;
             top: 24px;
-            left: 50%;
+            left: calc(50% - 175px); /* 微調置中，扣除右邊筆記本的寬度 */
             transform: translateX(-50%);
             z-index: 1000;
             background: rgba(255, 255, 255, 0.75);
@@ -52,6 +53,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
 
         .btn:hover {
@@ -75,6 +77,7 @@
             font-size: 12px;
             color: #64748b;
             font-weight: 500;
+            white-space: nowrap;
         }
 
         /* 畫筆顏色選擇器 */
@@ -96,11 +99,12 @@
             box-shadow: 0 0 0 1.5px #1e293b;
         }
 
-        /* 画布區域 */
+        /* 左側：白板區域 */
         #board {
-            width: 100%;
+            flex: 1;
             height: 100%;
             position: relative;
+            overflow: hidden;
         }
 
         #drawing-canvas {
@@ -110,20 +114,132 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            pointer-events: none; /* 平時不擋住卡片點擊 */
+            pointer-events: none; 
         }
         #board.drawing-mode #drawing-canvas {
-            pointer-events: auto; /* 畫筆模式時開啟點擊 */
+            pointer-events: auto; 
             cursor: crosshair;
         }
 
-        /* 項目容器的通用的層級 */
+        /* 右側：筆記本模式區域 */
+        #notebook-sidebar {
+            width: 350px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -4px 0 24px rgba(0, 0, 0, 0.02);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        /* 筆記本頂部選擇列 */
+        .notebook-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notebook-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-month-btn {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .nav-month-btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        #current-month-display {
+            font-size: 14px;
+            font-weight: 600;
+            color: #334155;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* 筆記本滾動內容區 */
+        .notebook-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 20px 30px 20px;
+        }
+
+        /* 每一天的筆記列 */
+        .day-row {
+            display: flex;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 10px 0;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .day-label {
+            width: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            padding-top: 2px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        
+        .day-row.weekend .day-label {
+            color: #ef4444; /* 假日用紅色標註 */
+        }
+
+        .day-input {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #334155;
+            outline: none;
+            border: none;
+            background: transparent;
+            word-break: break-all;
+            white-space: pre-wrap;
+            cursor: text;
+            user-select: text;
+            min-height: 22px;
+        }
+        .day-input:empty:not(:focus)::before {
+            content: "點擊紀錄今天的事...";
+            color: #cbd5e1;
+            font-size: 13px;
+        }
+
+        /* 物件容器 */
         .board-item {
             position: absolute;
             z-index: 2;
         }
 
-        /* 1. 精緻日系便利貼樣式 */
+        /* 便利貼樣式 */
         .note {
             width: 240px; 
             min-height: 160px;
@@ -133,11 +249,10 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            border-radius: 8px; /* 圓角微調更有氣質 */
+            border-radius: 8px; 
             border: 1px solid rgba(0,0,0,0.03);
         }
 
-        /* 左側高質感手把 */
         .drag-handle {
             position: absolute;
             left: 0;
@@ -159,7 +274,6 @@
             background: rgba(0, 0, 0, 0.04);
         }
 
-        /* 簡潔型懸浮工具列 */
         .note-toolbar {
             position: absolute;
             top: -38px; 
@@ -214,7 +328,6 @@
             border: 1px solid rgba(0,0,0,0.1);
         }
 
-        /* 內文區域 */
         .note-content {
             width: 100%;
             height: auto;
@@ -231,7 +344,7 @@
             user-select: text; 
         }
 
-        /* 2. 磁鐵主體樣式 */
+        /* 磁鐵樣式 */
         .magnet {
             width: 32px;
             height: 32px;
@@ -244,11 +357,7 @@
             font-size: 14px;
             transition: transform 0.1s;
         }
-        .magnet:active {
-            transform: scale(1.1);
-        }
 
-        /* 通用圓形紅色軟刪除鈕 */
         .delete-btn {
             position: absolute;
             top: -6px;
@@ -271,7 +380,6 @@
         .note:hover .delete-btn, .magnet:hover .delete-btn {
             opacity: 1;
         }
-
     </style>
 </head>
 <body>
@@ -292,15 +400,30 @@
         <span class="status" id="sync-status">☁️ 雲端已同步</span>
     </div>
 
+    <!-- 左側：白板區域 -->
     <div id="board">
         <canvas id="drawing-canvas"></canvas>
+    </div>
+
+    <!-- 👑 右側：筆記本模式區域 -->
+    <div id="notebook-sidebar">
+        <div class="notebook-header">
+            <div class="notebook-title">📒 筆記本模式</div>
+            <div class="month-selector">
+                <button class="nav-month-btn" id="prev-month">◀</button>
+                <div id="current-month-display">2026 年 5 月</div>
+                <button class="nav-month-btn" id="next-month">▶</button>
+            </div>
+        </div>
+        <div class="notebook-content" id="days-container">
+            <!-- 每日筆記條會透過 JavaScript 動態生成 -->
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 沿用你的 Firebase 金鑰
         const firebaseConfig = {
             apiKey: "AIzaSyC5DspOkctRSuXJojh8iJu1uJ31E9ykN10",
             authDomain: "my-sticky-notes-5929c.firebaseapp.com",
@@ -313,9 +436,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         
-        // 分離集合：物件與畫布
         const itemsRef = collection(db, "board_items");
         const canvasRef = collection(db, "board_canvas");
+        const notebookRef = collection(db, "board_notebook"); // 筆記本雲端資料夾
 
         const board = document.getElementById('board');
         const canvas = document.getElementById('drawing-canvas');
@@ -328,42 +451,121 @@
         const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const syncStatus = document.getElementById('sync-status');
         
-        const noteColors = ['#fffbeb', '#f0fdf4', '#eff6ff', '#fdf2f8', '#faf5ff', '#fff7ed']; // 高級感淡調色
-        const magnetColors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#a855f7']; // 鮮艷磁鐵色
+        const noteColors = ['#fffbeb', '#f0fdf4', '#eff6ff', '#fdf2f8', '#faf5ff', '#fff7ed'];
+        const magnetColors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#a855f7'];
         let zIndexCounter = 10;
         let isDraggingGlobal = false;
         
-        // 麥克筆畫布狀態
         let isDrawingMode = false;
         let isDrawing = false;
         let currentBrushColor = '#1e293b';
-        let linesData = []; // 用來存放所有線條
+        let linesData = []; 
 
-        // 初始化畫布尺寸
+        // 筆記本行事曆狀態（預設當前時間）
+        let currentDate = new Date();
+        let currentYear = currentDate.getFullYear();
+        let currentMonth = currentDate.getMonth(); // 0-11
+        let unsubscribeNotebook = null;
+
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            // 只計算白板區域的寬度
+            canvas.width = board.clientWidth;
+            canvas.height = board.clientHeight;
             redrawCanvas();
         }
         window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        setTimeout(resizeCanvas, 100);
 
         function showStatus(text, color) {
             syncStatus.textContent = text;
             syncStatus.style.color = color;
         }
 
+        // --- 👑 筆記本邏輯核心 ---
+        const daysContainer = document.getElementById('days-container');
+        const currentMonthDisplay = document.getElementById('current-month-display');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+
+        function updateNotebookUI() {
+            currentMonthDisplay.textContent = `${currentYear} 年 ${currentMonth + 1} 月`;
+            
+            // 算出當月有幾天
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            daysContainer.innerHTML = '';
+
+            // 產生每天的輸入框
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dayOfWeek = new Date(currentYear, currentMonth, d).getDay(); // 0是週日，6是週六
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                
+                const dayRow = document.createElement('div');
+                dayRow.className = `day-row ${isWeekend ? 'weekend' : ''}`;
+                
+                const docId = `${currentYear}_${String(currentMonth + 1).padStart(2, '0')}_${String(d).padStart(2, '0')}`;
+                
+                dayRow.innerHTML = `
+                    <div class="day-label">${d} 日 (${['日','一','二','三','四','五','六'][dayOfWeek]})</div>
+                    <div class="day-input" id="input_${docId}" contenteditable="true"></div>
+                `;
+                
+                const inputNode = dayRow.querySelector('.day-input');
+                
+                // 阻擋點擊打字區時觸發白板的奇怪滑鼠行為
+                inputNode.addEventListener('mousedown', (e) => e.stopPropagation());
+                
+                // 即時輸入與同步至雲端
+                inputNode.addEventListener('input', () => {
+                    showStatus("⚡ 正在儲存筆記...", "#f59e0b");
+                    setDoc(doc(notebookRef, docId), { text: inputNode.innerHTML }, { merge: true });
+                });
+                
+                daysContainer.appendChild(dayRow);
+            }
+
+            // 接上該月份的 Firebase 即時快取監聽
+            if (unsubscribeNotebook) unsubscribeNotebook();
+            
+            unsubscribeNotebook = onSnapshot(collection(db, "board_notebook"), (snapshot) => {
+                snapshot.forEach((doc) => {
+                    const id = doc.id;
+                    // 只撈取屬於目前顯示月份的資料包
+                    if (id.startsWith(`${currentYear}_${String(currentMonth + 1).padStart(2, '0')}`)) {
+                        const inputField = document.getElementById(`input_${id}`);
+                        if (inputField && document.activeElement !== inputField) {
+                            inputField.innerHTML = doc.data().text || '';
+                        }
+                    }
+                });
+                showStatus("✅ 雲端已即時同步", "#10b981");
+            });
+        }
+
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            updateNotebookUI();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            updateNotebookUI();
+        });
+
+        // 初始化載入筆記本
+        updateNotebookUI();
+
+
         // --- 麥克筆畫筆核心事件 ---
         brushToggleBtn.addEventListener('click', () => {
             isDrawingMode = !isDrawingMode;
             if (isDrawingMode) {
-                isDrawingMode = true;
                 board.classList.add('drawing-mode');
                 brushToggleBtn.classList.add('active');
                 brushColorsBox.style.display = 'flex';
                 clearCanvasBtn.style.display = 'flex';
             } else {
-                isDrawingMode = false;
                 board.classList.remove('drawing-mode');
                 brushToggleBtn.classList.remove('active');
                 brushColorsBox.style.display = 'none';
@@ -371,9 +573,8 @@
             }
         });
 
-        // 選擇畫筆顏色
         document.querySelectorAll('.brush-dot').forEach(dot => {
-            dot.addEventListener('click', (e) => {
+            dot.addEventListener('click', () => {
                 document.querySelector('.brush-dot.active').classList.remove('active');
                 dot.classList.add('active');
                 currentBrushColor = dot.dataset.color;
@@ -385,7 +586,6 @@
             isDrawing = true;
             ctx.beginPath();
             ctx.moveTo(e.clientX, e.clientY);
-            // 建立一條新線的結構
             linesData.push({ color: currentBrushColor, points: [{x: e.clientX, y: e.clientY}] });
         });
 
@@ -396,21 +596,17 @@
             ctx.strokeStyle = currentBrushColor;
             ctx.lineTo(e.clientX, e.clientY);
             ctx.stroke();
-            
-            // 記錄點座標
             linesData[linesData.length - 1].points.push({x: e.clientX, y: e.clientY});
         });
 
         canvas.addEventListener('mouseup', async () => {
             if (!isDrawing) return;
             isDrawing = false;
-            // 畫完一筆，整坨線條上傳雲端
             showStatus("⚡ 正在同步手繪線條...", "#f59e0b");
             await setDoc(doc(canvasRef, "drawing_layer"), { lines: JSON.stringify(linesData) });
             showStatus("✅ 雲端已即時同步", "#10b981");
         });
 
-        // 清除畫布
         clearCanvasBtn.addEventListener('click', async () => {
             linesData = [];
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -433,7 +629,6 @@
             });
         }
 
-        // 監聽雲端畫布
         onSnapshot(doc(canvasRef, "drawing_layer"), (doc) => {
             if (doc.exists() && !isDrawing) {
                 const data = doc.data();
@@ -442,8 +637,7 @@
             }
         });
 
-
-        // --- 物件（便利貼 / 磁鐵）雲端監聽與生成 ---
+        // --- 物件雲端監聽與生成 ---
         async function uploadItem(id, data) {
             showStatus("⚡ 正在同步雲端...", "#f59e0b");
             await setDoc(doc(itemsRef, id), data, { merge: true });
@@ -462,13 +656,9 @@
                 let el = document.getElementById(id);
 
                 if (!el) {
-                    if (data.type === 'note') {
-                        renderNote(id, data);
-                    } else if (data.type === 'magnet') {
-                        renderMagnet(id, data);
-                    }
+                    if (data.type === 'note') renderNote(id, data);
+                    else if (data.type === 'magnet') renderMagnet(id, data);
                 } else {
-                    // 同步位置與內容
                     if (data.type === 'note') {
                         const contentNode = el.querySelector('.note-content');
                         if (document.activeElement !== contentNode) {
@@ -492,33 +682,30 @@
             });
         });
 
-        // 按鈕點擊：新增便利貼
         addNoteBtn.addEventListener('click', async () => {
             const id = 'note_' + Date.now();
             await uploadItem(id, {
                 type: 'note',
                 html: '新注意事項...',
-                left: `${Math.random() * (window.innerWidth - 300) + 60}px`,
-                top: `${Math.random() * (window.innerHeight - 300) + 120}px`,
+                left: `${Math.random() * (board.clientWidth - 300) + 60}px`,
+                top: `${Math.random() * (board.clientHeight - 300) + 120}px`,
                 bg: noteColors[Math.floor(Math.random() * noteColors.length)],
                 zIndex: zIndexCounter++,
                 rotate: (Math.random() * 2 - 1).toFixed(1)
             });
         });
 
-        // 按鈕點擊：新增磁鐵
         addMagnetBtn.addEventListener('click', async () => {
             const id = 'magnet_' + Date.now();
             await uploadItem(id, {
                 type: 'magnet',
-                left: `${Math.random() * (window.innerWidth - 100) + 60}px`,
-                top: `${Math.random() * (window.innerHeight - 100) + 120}px`,
+                left: `${Math.random() * (board.clientWidth - 100) + 60}px`,
+                top: `${Math.random() * (board.clientHeight - 100) + 120}px`,
                 bg: magnetColors[Math.floor(Math.random() * magnetColors.length)],
                 zIndex: zIndexCounter++
             });
         });
 
-        // 渲染便利貼到畫面上
         function renderNote(id, data) {
             const note = document.createElement('div');
             note.className = 'board-item note';
@@ -567,7 +754,6 @@
                 zIndex: note.style.zIndex
             });
 
-            // 工具按鈕
             note.querySelector('.btn-bold').addEventListener('click', () => { document.execCommand('bold', false, null); uploadItem(id, getArgs()); });
             
             let savedSel = null;
@@ -576,7 +762,6 @@
 
             note.querySelector('.select-size').addEventListener('change', (e) => { if(e.target.value){ contentNode.focus(); resSel(); document.execCommand('fontSize', false, e.target.value); uploadItem(id, getArgs()); e.target.value=""; } });
             note.querySelector('.select-color').addEventListener('change', (e) => { if(e.target.value){ contentNode.focus(); resSel(); document.execCommand('foreColor', false, e.target.value); uploadItem(id, getArgs()); e.target.value=""; } });
-            
             note.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => { note.style.backgroundColor = d.dataset.color; uploadItem(id, getArgs()); }));
 
             contentNode.addEventListener('input', () => uploadItem(id, getArgs()));
@@ -588,7 +773,6 @@
             board.appendChild(note);
         }
 
-        // 渲染磁鐵到畫面上
         function renderMagnet(id, data) {
             const mag = document.createElement('div');
             mag.className = 'board-item magnet';
@@ -597,20 +781,15 @@
             mag.style.top = data.top;
             mag.style.backgroundColor = data.bg;
             mag.style.zIndex = data.zIndex;
-            mag.innerHTML = `<div class="delete-btn">✕</div>`; // 磁鐵直接自身就是把手
+            mag.innerHTML = `<div class="delete-btn">✕</div>`;
 
-            const getArgs = () => ({
-                left: mag.style.left,
-                top: mag.style.top,
-                zIndex: mag.style.zIndex
-            });
+            const getArgs = () => ({ left: mag.style.left, top: mag.style.top, zIndex: mag.style.zIndex });
 
             bindDrag(mag, mag, id, 'magnet', getArgs);
             mag.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); removeItem(id, mag); });
             board.appendChild(mag);
         }
 
-        // 通用拖曳綁定
         function bindDrag(el, handleEl, id, type, getArgsFunc) {
             let isDragging = false;
             let startX, startY, startLeft, startTop;
@@ -622,10 +801,8 @@
                 el.classList.add('dragging');
                 el.style.zIndex = zIndexCounter++;
 
-                startX = e.clientX;
-                startY = e.clientY;
-                startLeft = parseInt(el.style.left);
-                startTop = parseInt(el.style.top);
+                startX = e.clientX; startY = e.clientY;
+                startLeft = parseInt(el.style.left); startTop = parseInt(el.style.top);
 
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
@@ -637,17 +814,15 @@
                 let nt = startTop + (e.clientY - startY);
 
                 if (nl < 0) nl = 0; if (nt < 0) nt = 0;
-                if (nl > window.innerWidth - el.offsetWidth) nl = window.innerWidth - el.offsetWidth;
-                if (nt > window.innerHeight - el.offsetHeight) nt = window.innerHeight - el.offsetHeight;
+                if (nl > board.clientWidth - el.offsetWidth) nl = board.clientWidth - el.offsetWidth;
+                if (nt > board.clientHeight - el.offsetHeight) nt = board.clientHeight - el.offsetHeight;
 
-                el.style.left = `${nl}px`;
-                el.style.top = `${nt}px`;
+                el.style.left = `${nl}px`; el.style.top = `${nt}px`;
             }
 
             async function onMouseUp() {
                 if (isDragging) {
-                    isDragging = false;
-                    isDraggingGlobal = false;
+                    isDragging = false; isDraggingGlobal = false;
                     el.classList.remove('dragging');
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
