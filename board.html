@@ -68,13 +68,12 @@
             position: relative;
         }
 
-        /* 便利貼主體 */
         .note {
             position: absolute;
             width: 250px; 
             min-height: 180px;
             height: auto;
-            padding: 15px 15px 15px 30px; /* 左邊留空間給拖曳手把 */
+            padding: 15px 15px 15px 30px; 
             box-sizing: border-box;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
             display: flex;
@@ -89,7 +88,7 @@
             z-index: 999 !important;
         }
 
-        /* 👑 核心改良：左側拖曳手把條 */
+        /* 左側拖曳手把條 */
         .drag-handle {
             position: absolute;
             left: 0;
@@ -172,7 +171,6 @@
             border: 1px solid rgba(0,0,0,0.2);
         }
 
-        /* 文字內容區：預設直接開啟原生的可編輯與選字 */
         .note-content {
             width: 100%;
             height: auto;
@@ -283,7 +281,6 @@
                     createNoteNode(noteId, data.html, data.left, data.top, data.bg, data.zIndex, data.rotate);
                 } else {
                     const contentNode = existingNote.querySelector('.note-content');
-                    // 只有當使用者此時此刻沒有聚焦在打字時，才覆蓋內容，防止打字被打斷
                     if (document.activeElement !== contentNode) {
                         existingNote.style.left = data.left;
                         existingNote.style.top = data.top;
@@ -330,13 +327,13 @@
             note.style.zIndex = zIndex;
             note.style.transform = `rotate(${rotate}deg)`;
 
-            // 結構調整：加入 drag-handle 條，且 contenteditable 預設為 true！
             note.innerHTML = `
                 <div class="drag-handle">⋮⋮</div>
                 <div class="delete-btn">✕</div>
                 <div class="note-toolbar">
                     <button class="toolbar-item btn-bold" title="粗體">B</button>
                     <select class="toolbar-item select-font" title="切換字體">
+                        <option value="">— 選擇字體 —</option>
                         <option value="system-ui, sans-serif">預設黑體</option>
                         <option value="'BiauKai', '標楷體', sans-serif">標楷體</option>
                         <option value="'PMingLiU', '新細明體', serif">新細明體</option>
@@ -344,11 +341,13 @@
                         <option value="'YuGothic', 'Mplus 1p', 'Rounded Mplus 1c', sans-serif">原體/圓體</option>
                     </select>
                     <select class="toolbar-item select-size" title="字體大小">
-                        <option value="3">中</option>
+                        <option value="">— 大小 —</option>
                         <option value="2">小</option>
+                        <option value="3">中</option>
                         <option value="5">大</option>
                     </select>
                     <select class="toolbar-item select-color" title="文字顏色">
+                        <option value="">— 顏色 —</option>
                         <option value="#334155">黑</option>
                         <option value="#ef4444">紅</option>
                         <option value="#2563eb">藍</option>
@@ -372,7 +371,12 @@
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
 
-            toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
+            // 👑 核心修復：阻止工具列內部的 mousedown 事件！
+            // 這會阻止瀏覽器將焦點移出文字編輯區，從而完美鎖定反白範圍
+            toolbar.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
 
             const saveCurrentState = () => {
                 uploadNoteToCloud(noteId, {
@@ -384,11 +388,36 @@
                 });
             };
 
-            // 工具列指令
-            btnBold.addEventListener('click', () => { document.execCommand('bold', false, null); saveCurrentState(); });
-            selectFont.addEventListener('change', (e) => { document.execCommand('fontName', false, e.target.value); saveCurrentState(); });
-            selectSize.addEventListener('change', (e) => { document.execCommand('fontSize', false, e.target.value); saveCurrentState(); });
-            selectColor.addEventListener('change', (e) => { document.execCommand('foreColor', false, e.target.value); saveCurrentState(); });
+            // 格式修改功能（現在反白不會消失了！）
+            btnBold.addEventListener('click', () => { 
+                document.execCommand('bold', false, null); 
+                saveCurrentState(); 
+            });
+            
+            selectFont.addEventListener('change', (e) => { 
+                if (e.target.value) {
+                    document.execCommand('fontName', false, e.target.value); 
+                    saveCurrentState(); 
+                    e.target.value = ""; // 重設選單標題
+                }
+            });
+            
+            selectSize.addEventListener('change', (e) => { 
+                if (e.target.value) {
+                    document.execCommand('fontSize', false, e.target.value); 
+                    saveCurrentState(); 
+                    e.target.value = ""; 
+                }
+            });
+            
+            selectColor.addEventListener('change', (e) => { 
+                if (e.target.value) {
+                    document.execCommand('foreColor', false, e.target.value); 
+                    saveCurrentState(); 
+                    e.target.value = ""; 
+                }
+            });
+
             dots.forEach(dot => {
                 dot.addEventListener('click', () => {
                     note.style.backgroundColor = dot.getAttribute('data-color');
@@ -396,17 +425,15 @@
                 });
             });
 
-            // 即時輸入與失去焦點都儲存
             contentNode.addEventListener('input', saveCurrentState);
             contentNode.addEventListener('blur', saveCurrentState);
 
-            // 👑 當滑鼠在打字區點擊或拖曳反白時，完全切斷，不與外層拖曳打架
             contentNode.addEventListener('mousedown', (e) => {
                 e.stopPropagation();
-                note.style.zIndex = zIndexCounter++; // 點擊文字也順便提到最上層
+                note.style.zIndex = zIndexCounter++; 
             });
 
-            // 👑 拖曳改由 drag-handle 完全全權掌控！
+            // 拖曳處理
             let isDragging = false;
             let startX, startY, startLeft, startTop;
 
