@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式雲端白板便利貼</title>
+    <title>極致便利！雲端白板便利貼</title>
     <style>
         body {
             margin: 0;
@@ -68,16 +68,15 @@
             position: relative;
         }
 
+        /* 便利貼主體 */
         .note {
             position: absolute;
-            width: 240px; 
+            width: 250px; 
             min-height: 180px;
             height: auto;
-            padding: 15px; 
+            padding: 15px 15px 15px 30px; /* 左邊留空間給拖曳手把 */
             box-sizing: border-box;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
-            cursor: move;
-            user-select: none;
             display: flex;
             flex-direction: column;
             border-radius: 2px;
@@ -88,6 +87,27 @@
             transform: scale(1.03) rotate(-1deg) !important;
             box-shadow: 5px 15px 25px rgba(0,0,0,0.18);
             z-index: 999 !important;
+        }
+
+        /* 👑 核心改良：左側拖曳手把條 */
+        .drag-handle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 18px;
+            background: rgba(0, 0, 0, 0.05);
+            border-right: 1px dashed rgba(0, 0, 0, 0.1);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(0, 0, 0, 0.3);
+            font-size: 12px;
+            user-select: none;
+        }
+        .note:hover .drag-handle {
+            background: rgba(0, 0, 0, 0.08);
         }
 
         /* 懸浮工具列 */
@@ -152,6 +172,7 @@
             border: 1px solid rgba(0,0,0,0.2);
         }
 
+        /* 文字內容區：預設直接開啟原生的可編輯與選字 */
         .note-content {
             width: 100%;
             height: auto;
@@ -162,10 +183,10 @@
             line-height: 1.6;
             color: #334155;
             outline: none;
-            cursor: text; /* 編輯區預設就是提示可以選字 */
+            cursor: text; 
             word-break: break-all;
             white-space: pre-wrap;
-            user-select: text; /* 確保內容可以被反白 */
+            user-select: text; 
         }
 
         .delete-btn {
@@ -262,7 +283,8 @@
                     createNoteNode(noteId, data.html, data.left, data.top, data.bg, data.zIndex, data.rotate);
                 } else {
                     const contentNode = existingNote.querySelector('.note-content');
-                    if (contentNode.contentEditable !== "true") {
+                    // 只有當使用者此時此刻沒有聚焦在打字時，才覆蓋內容，防止打字被打斷
+                    if (document.activeElement !== contentNode) {
                         existingNote.style.left = data.left;
                         existingNote.style.top = data.top;
                         existingNote.style.backgroundColor = data.bg;
@@ -308,7 +330,9 @@
             note.style.zIndex = zIndex;
             note.style.transform = `rotate(${rotate}deg)`;
 
+            // 結構調整：加入 drag-handle 條，且 contenteditable 預設為 true！
             note.innerHTML = `
+                <div class="drag-handle">⋮⋮</div>
                 <div class="delete-btn">✕</div>
                 <div class="note-toolbar">
                     <button class="toolbar-item btn-bold" title="粗體">B</button>
@@ -334,11 +358,12 @@
                         ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
                     </div>
                 </div>
-                <div class="note-content" contenteditable="false">${htmlContent}</div>
+                <div class="note-content" contenteditable="true">${htmlContent}</div>
             `;
 
             const contentNode = note.querySelector('.note-content');
             const deleteBtn = note.querySelector('.delete-btn');
+            const handle = note.querySelector('.drag-handle');
             const toolbar = note.querySelector('.note-toolbar');
             
             const btnBold = note.querySelector('.btn-bold');
@@ -347,7 +372,6 @@
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
 
-            // 工具列內部不觸發任何外層事件
             toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
 
             const saveCurrentState = () => {
@@ -360,27 +384,11 @@
                 });
             };
 
-            // 格式修改功能
-            btnBold.addEventListener('click', () => {
-                document.execCommand('bold', false, null);
-                saveCurrentState();
-            });
-
-            selectFont.addEventListener('change', (e) => {
-                document.execCommand('fontName', false, e.target.value);
-                saveCurrentState();
-            });
-
-            selectSize.addEventListener('change', (e) => {
-                document.execCommand('fontSize', false, e.target.value);
-                saveCurrentState();
-            });
-
-            selectColor.addEventListener('change', (e) => {
-                document.execCommand('foreColor', false, e.target.value);
-                saveCurrentState();
-            });
-
+            // 工具列指令
+            btnBold.addEventListener('click', () => { document.execCommand('bold', false, null); saveCurrentState(); });
+            selectFont.addEventListener('change', (e) => { document.execCommand('fontName', false, e.target.value); saveCurrentState(); });
+            selectSize.addEventListener('change', (e) => { document.execCommand('fontSize', false, e.target.value); saveCurrentState(); });
+            selectColor.addEventListener('change', (e) => { document.execCommand('foreColor', false, e.target.value); saveCurrentState(); });
             dots.forEach(dot => {
                 dot.addEventListener('click', () => {
                     note.style.backgroundColor = dot.getAttribute('data-color');
@@ -388,38 +396,21 @@
                 });
             });
 
-            // 雙擊進入編輯狀態
-            contentNode.addEventListener('dblclick', (e) => {
-                e.stopPropagation(); // 阻止事件向上冒泡
-                contentNode.contentEditable = "true";
-                contentNode.classList.add('editing');
-                contentNode.focus();
-            });
-
-            // 結束編輯狀態
-            contentNode.addEventListener('blur', () => {
-                contentNode.contentEditable = "false";
-                contentNode.classList.remove('editing');
-                saveCurrentState();
-            });
-
+            // 即時輸入與失去焦點都儲存
             contentNode.addEventListener('input', saveCurrentState);
+            contentNode.addEventListener('blur', saveCurrentState);
 
-            // 👑 解決反白衝突核心：在編輯狀態下，完全切斷 mousedown 事件傳給外層，保留原生選字功能
+            // 👑 當滑鼠在打字區點擊或拖曳反白時，完全切斷，不與外層拖曳打架
             contentNode.addEventListener('mousedown', (e) => {
-                if (contentNode.contentEditable === "true") {
-                    e.stopPropagation(); 
-                }
+                e.stopPropagation();
+                note.style.zIndex = zIndexCounter++; // 點擊文字也順便提到最上層
             });
 
-            // 拖曳處理
+            // 👑 拖曳改由 drag-handle 完全全權掌控！
             let isDragging = false;
             let startX, startY, startLeft, startTop;
 
-            note.addEventListener('mousedown', (e) => {
-                // 如果正在編輯文字，或者點擊到工具列、刪除鍵，絕對不允許觸發拖曳
-                if (contentNode.contentEditable === "true" || e.target === deleteBtn) return;
-
+            handle.addEventListener('mousedown', (e) => {
                 isDragging = true;
                 isDraggingGlobal = true;
                 note.classList.add('dragging');
