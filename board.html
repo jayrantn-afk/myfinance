@@ -3,184 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>極致便利！雲端白板便利貼</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+    <title>Jayran Studio | 雲端極簡互動白板</title>
     <style>
+        /* 全域極簡現代感設計 */
         body {
             margin: 0;
             padding: 0;
-            background-color: #f4f5f7;
-            background-image: 
-                radial-gradient(#e0e2e6 1.5px, transparent 1.5px), 
-                radial-gradient(#e0e2e6 1.5px, #f4f5f7 1.5px);
-            background-size: 30px 30px;
-            background-position: 0 0, 15px 15px;
+            background-color: #f7f8fa;
+            background-image: radial-gradient(#e1e4eb 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
+            user-select: none;
         }
 
+        /* 頂部高級感毛玻璃功能列 */
         .controls {
             position: fixed;
-            top: 20px;
+            top: 24px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 20px;
-            border-radius: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            backdrop-filter: blur(5px);
+            background: rgba(255, 255, 255, 0.75);
+            padding: 8px 24px;
+            border-radius: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
         }
 
         .btn {
-            background-color: #2563eb;
-            color: white;
+            background-color: #1e293b;
+            color: #f8fafc;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: background 0.2s, transform 0.1s;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn:hover {
-            background-color: #1d4ed8;
+            background-color: #0f172a;
+            transform: translateY(-1px);
         }
 
-        .btn:active {
-            transform: scale(0.95);
+        .btn.active {
+            background-color: #2563eb;
+            box-shadow: 0 0 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .divider {
+            width: 1px;
+            height: 20px;
+            background-color: #e2e8f0;
+            margin: 0 4px;
         }
 
         .status {
             font-size: 12px;
-            color: #10b981;
-            font-weight: bold;
+            color: #64748b;
+            font-weight: 500;
         }
 
+        /* 畫筆顏色選擇器 */
+        .brush-colors {
+            display: flex;
+            gap: 6px;
+        }
+        .brush-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.1s;
+        }
+        .brush-dot.active {
+            transform: scale(1.2);
+            border-color: #ffffff;
+            box-shadow: 0 0 0 1.5px #1e293b;
+        }
+
+        /* 画布區域 */
         #board {
             width: 100%;
             height: 100%;
             position: relative;
         }
 
-        .note {
+        #drawing-canvas {
             position: absolute;
-            width: 250px; 
-            min-height: 180px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none; /* 平時不擋住卡片點擊 */
+        }
+        #board.drawing-mode #drawing-canvas {
+            pointer-events: auto; /* 畫筆模式時開啟點擊 */
+            cursor: crosshair;
+        }
+
+        /* 項目容器的通用的層級 */
+        .board-item {
+            position: absolute;
+            z-index: 2;
+        }
+
+        /* 1. 精緻日系便利貼樣式 */
+        .note {
+            width: 240px; 
+            min-height: 160px;
             height: auto;
-            padding: 15px 15px 15px 30px; 
+            padding: 16px 16px 16px 32px; 
             box-sizing: border-box;
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05), 0 2px 6px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            border-radius: 2px;
-            transition: transform 0.1s, box-shadow 0.1s;
+            border-radius: 8px; /* 圓角微調更有氣質 */
+            border: 1px solid rgba(0,0,0,0.03);
         }
 
-        .note.dragging {
-            transform: scale(1.03) rotate(-1deg) !important;
-            box-shadow: 5px 15px 25px rgba(0,0,0,0.18);
-            z-index: 999 !important;
-        }
-
-        /* 左側拖曳手把條 */
+        /* 左側高質感手把 */
         .drag-handle {
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
-            width: 18px;
-            background: rgba(0, 0, 0, 0.05);
-            border-right: 1px dashed rgba(0, 0, 0, 0.1);
+            width: 20px;
+            background: rgba(0, 0, 0, 0.02);
+            border-right: 1px dashed rgba(0, 0, 0, 0.06);
             cursor: move;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: rgba(0, 0, 0, 0.3);
-            font-size: 12px;
-            user-select: none;
+            color: rgba(0, 0, 0, 0.2);
+            font-size: 10px;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
         }
         .note:hover .drag-handle {
-            background: rgba(0, 0, 0, 0.08);
+            background: rgba(0, 0, 0, 0.04);
         }
 
-        /* 懸浮工具列 */
+        /* 簡潔型懸浮工具列 */
         .note-toolbar {
             position: absolute;
-            top: -42px; 
+            top: -38px; 
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 5px;
+            gap: 6px;
             align-items: center;
             background: #ffffff;
-            padding: 5px 8px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            padding: 4px 8px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             opacity: 0;
             pointer-events: none; 
-            transition: opacity 0.2s, top 0.2s;
-            cursor: default;
-            white-space: nowrap;
+            transition: all 0.2s ease;
             z-index: 100;
+            border: 1px solid #f1f5f9;
         }
-
         .note:hover .note-toolbar {
             opacity: 1;
             pointer-events: auto;
-            top: -36px; 
+            top: -32px; 
         }
 
         .toolbar-item {
             font-size: 11px;
-            padding: 2px 4px;
-            border: 1px solid rgba(0,0,0,0.15);
+            padding: 2px 6px;
+            border: 1px solid #e2e8f0;
             background: white;
-            border-radius: 4px;
+            border-radius: 12px;
             cursor: pointer;
-            color: #334155;
-            font-weight: bold;
-            height: 24px;
-            box-sizing: border-box;
+            color: #475569;
+            font-weight: 600;
+            height: 22px;
         }
         .toolbar-item:hover {
-            background: #f1f5f9;
-        }
-
-        select.toolbar-item {
-            font-weight: normal;
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .color-dots {
             display: flex;
-            gap: 4px;
+            gap: 5px;
             border-left: 1px solid #e2e8f0;
             padding-left: 6px;
-            margin-left: 2px;
         }
         .dot {
-            width: 13px;
-            height: 13px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             cursor: pointer;
-            border: 1px solid rgba(0,0,0,0.2);
+            border: 1px solid rgba(0,0,0,0.1);
         }
 
+        /* 內文區域 */
         .note-content {
             width: 100%;
             height: auto;
-            min-height: 140px;
+            min-height: 120px;
             border: none;
             background: transparent;
-            font-size: 15px;
+            font-size: 14px;
             line-height: 1.6;
             color: #334155;
             outline: none;
@@ -190,47 +231,76 @@
             user-select: text; 
         }
 
+        /* 2. 磁鐵主體樣式 */
+        .magnet {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15), inset 0 -3px 0 rgba(0,0,0,0.15);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: transform 0.1s;
+        }
+        .magnet:active {
+            transform: scale(1.1);
+        }
+
+        /* 通用圓形紅色軟刪除鈕 */
         .delete-btn {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 22px;
-            height: 22px;
+            top: -6px;
+            right: -6px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             background: #ef4444;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 10px;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(239,68,68,0.3);
             opacity: 0;
-            transition: opacity 0.2s, transform 0.1s;
+            transition: opacity 0.2s;
             z-index: 101;
         }
-
-        .note:hover .delete-btn {
+        .note:hover .delete-btn, .magnet:hover .delete-btn {
             opacity: 1;
         }
-        .delete-btn:hover {
-            transform: scale(1.1);
-        }
+
     </style>
 </head>
 <body>
 
     <div class="controls">
-        <button class="btn" id="add-btn">+ 新增雲端便利貼</button>
-        <span class="status" id="sync-status">☁️ 雲端同步中...</span>
+        <button class="btn" id="add-note-btn">📄 新增便利貼</button>
+        <button class="btn" id="add-magnet-btn">🧲 新增磁鐵</button>
+        <div class="divider"></div>
+        <button class="btn" id="brush-toggle-btn">🖌️ 麥克筆模式</button>
+        <div class="brush-colors" id="brush-colors-box" style="display:none;">
+            <div class="brush-dot active" style="background:#1e293b" data-color="#1e293b"></div>
+            <div class="brush-dot" style="background:#ef4444" data-color="#ef4444"></div>
+            <div class="brush-dot" style="background:#2563eb" data-color="#2563eb"></div>
+            <div class="brush-dot" style="background:#10b981" data-color="#10b981"></div>
+        </div>
+        <button class="btn" id="clear-canvas-btn" style="background:#f1f5f9; color:#475569; display:none;">🧹 清除塗鴉</button>
+        <div class="divider"></div>
+        <span class="status" id="sync-status">☁️ 雲端已同步</span>
     </div>
 
-    <div id="board"></div>
+    <div id="board">
+        <canvas id="drawing-canvas"></canvas>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+        // 沿用你的 Firebase 金鑰
         const firebaseConfig = {
             apiKey: "AIzaSyC5DspOkctRSuXJojh8iJu1uJ31E9ykN10",
             authDomain: "my-sticky-notes-5929c.firebaseapp.com",
@@ -242,235 +312,320 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const notesRef = collection(db, "sticky_notes");
+        
+        // 分離集合：物件與畫布
+        const itemsRef = collection(db, "board_items");
+        const canvasRef = collection(db, "board_canvas");
 
         const board = document.getElementById('board');
-        const addBtn = document.getElementById('add-btn');
+        const canvas = document.getElementById('drawing-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const addNoteBtn = document.getElementById('add-note-btn');
+        const addMagnetBtn = document.getElementById('add-magnet-btn');
+        const brushToggleBtn = document.getElementById('brush-toggle-btn');
+        const brushColorsBox = document.getElementById('brush-colors-box');
+        const clearCanvasBtn = document.getElementById('clear-canvas-btn');
         const syncStatus = document.getElementById('sync-status');
         
-        const colors = ['#fff9db', '#e7f5ff', '#e6fcf5', '#fff0f6', '#f3f0ff', '#fff4e6'];
-        let zIndexCounter = 1;
-        let isDraggingGlobal = false; 
+        const noteColors = ['#fffbeb', '#f0fdf4', '#eff6ff', '#fdf2f8', '#faf5ff', '#fff7ed']; // 高級感淡調色
+        const magnetColors = ['#f43f5e', '#3b82f6', '#10b981', '#eab308', '#a855f7']; // 鮮艷磁鐵色
+        let zIndexCounter = 10;
+        let isDraggingGlobal = false;
+        
+        // 麥克筆畫布狀態
+        let isDrawingMode = false;
+        let isDrawing = false;
+        let currentBrushColor = '#1e293b';
+        let linesData = []; // 用來存放所有線條
 
-        function showSavedStatus() {
-            syncStatus.textContent = "✅ 雲端已即時同步";
-            syncStatus.style.color = "#10b981";
+        // 初始化畫布尺寸
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            redrawCanvas();
         }
-        function showSavingStatus() {
-            syncStatus.textContent = "⚡ 正在儲存至雲端...";
-            syncStatus.style.color = "#f59e0b";
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function showStatus(text, color) {
+            syncStatus.textContent = text;
+            syncStatus.style.color = color;
         }
 
-        async function uploadNoteToCloud(noteId, data) {
-            showSavingStatus();
-            await setDoc(doc(notesRef, noteId), data, { merge: true });
-            showSavedStatus();
+        // --- 麥克筆畫筆核心事件 ---
+        brushToggleBtn.addEventListener('click', () => {
+            isDrawingMode = !isDrawingMode;
+            if (isDrawingMode) {
+                isDrawingMode = true;
+                board.classList.add('drawing-mode');
+                brushToggleBtn.classList.add('active');
+                brushColorsBox.style.display = 'flex';
+                clearCanvasBtn.style.display = 'flex';
+            } else {
+                isDrawingMode = false;
+                board.classList.remove('drawing-mode');
+                brushToggleBtn.classList.remove('active');
+                brushColorsBox.style.display = 'none';
+                clearCanvasBtn.style.display = 'none';
+            }
+        });
+
+        // 選擇畫筆顏色
+        document.querySelectorAll('.brush-dot').forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                document.querySelector('.brush-dot.active').classList.remove('active');
+                dot.classList.add('active');
+                currentBrushColor = dot.dataset.color;
+            });
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (!isDrawingMode) return;
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.clientX, e.clientY);
+            // 建立一條新線的結構
+            linesData.push({ color: currentBrushColor, points: [{x: e.clientX, y: e.clientY}] });
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawingMode || !isDrawing) return;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = currentBrushColor;
+            ctx.lineTo(e.clientX, e.clientY);
+            ctx.stroke();
+            
+            // 記錄點座標
+            linesData[linesData.length - 1].points.push({x: e.clientX, y: e.clientY});
+        });
+
+        canvas.addEventListener('mouseup', async () => {
+            if (!isDrawing) return;
+            isDrawing = false;
+            // 畫完一筆，整坨線條上傳雲端
+            showStatus("⚡ 正在同步手繪線條...", "#f59e0b");
+            await setDoc(doc(canvasRef, "drawing_layer"), { lines: JSON.stringify(linesData) });
+            showStatus("✅ 雲端已即時同步", "#10b981");
+        });
+
+        // 清除畫布
+        clearCanvasBtn.addEventListener('click', async () => {
+            linesData = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            await setDoc(doc(canvasRef, "drawing_layer"), { lines: JSON.stringify([]) });
+        });
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            linesData.forEach(line => {
+                if (line.points.length < 1) return;
+                ctx.beginPath();
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = line.color;
+                ctx.moveTo(line.points[0].x, line.points[0].y);
+                for(let i=1; i<line.points.length; i++) {
+                    ctx.lineTo(line.points[i].x, line.points[i].y);
+                }
+                ctx.stroke();
+            });
         }
 
-        onSnapshot(notesRef, (snapshot) => {
-            if (isDraggingGlobal) return; 
+        // 監聽雲端畫布
+        onSnapshot(doc(canvasRef, "drawing_layer"), (doc) => {
+            if (doc.exists() && !isDrawing) {
+                const data = doc.data();
+                linesData = data.lines ? JSON.parse(data.lines) : [];
+                redrawCanvas();
+            }
+        });
 
-            const currentNotes = document.querySelectorAll('.note');
+
+        // --- 物件（便利貼 / 磁鐵）雲端監聽與生成 ---
+        async function uploadItem(id, data) {
+            showStatus("⚡ 正在同步雲端...", "#f59e0b");
+            await setDoc(doc(itemsRef, id), data, { merge: true });
+            showStatus("✅ 雲端已即時同步", "#10b981");
+        }
+
+        onSnapshot(itemsRef, (snapshot) => {
+            if (isDraggingGlobal) return;
+            const currentItems = document.querySelectorAll('.board-item');
             const cloudIds = [];
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                const noteId = doc.id;
-                cloudIds.push(noteId);
+                const id = doc.id;
+                cloudIds.push(id);
+                let el = document.getElementById(id);
 
-                let existingNote = document.getElementById(noteId);
-
-                if (!existingNote) {
-                    createNoteNode(noteId, data.html, data.left, data.top, data.bg, data.zIndex, data.rotate);
+                if (!el) {
+                    if (data.type === 'note') {
+                        renderNote(id, data);
+                    } else if (data.type === 'magnet') {
+                        renderMagnet(id, data);
+                    }
                 } else {
-                    const contentNode = existingNote.querySelector('.note-content');
-                    if (document.activeElement !== contentNode) {
-                        existingNote.style.left = data.left;
-                        existingNote.style.top = data.top;
-                        existingNote.style.backgroundColor = data.bg;
-                        existingNote.style.zIndex = data.zIndex;
-                        contentNode.innerHTML = data.html;
+                    // 同步位置與內容
+                    if (data.type === 'note') {
+                        const contentNode = el.querySelector('.note-content');
+                        if (document.activeElement !== contentNode) {
+                            el.style.left = data.left;
+                            el.style.top = data.top;
+                            el.style.backgroundColor = data.bg;
+                            el.style.zIndex = data.zIndex;
+                            contentNode.innerHTML = data.html;
+                        }
+                    } else if (data.type === 'magnet') {
+                        el.style.left = data.left;
+                        el.style.top = data.top;
+                        el.style.zIndex = data.zIndex;
                     }
                 }
                 if (parseInt(data.zIndex) >= zIndexCounter) zIndexCounter = parseInt(data.zIndex) + 1;
             });
 
-            currentNotes.forEach(note => {
-                if (!cloudIds.includes(note.id)) {
-                    note.remove();
-                }
+            currentItems.forEach(item => {
+                if (!cloudIds.includes(item.id)) item.remove();
             });
-            showSavedStatus();
         });
 
-        addBtn.addEventListener('click', async () => {
-            const noteId = 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-            const x = `${Math.random() * (window.innerWidth - 280) + 50}px`;
-            const y = `${Math.random() * (window.innerHeight - 350) + 100}px`;
-            const rotateVal = (Math.random() * 3 - 1.5).toFixed(1);
-            const defaultBg = colors[Math.floor(Math.random() * colors.length)];
-
-            await uploadNoteToCloud(noteId, {
-                html: "新注意事項...",
-                left: x,
-                top: y,
-                bg: defaultBg,
+        // 按鈕點擊：新增便利貼
+        addNoteBtn.addEventListener('click', async () => {
+            const id = 'note_' + Date.now();
+            await uploadItem(id, {
+                type: 'note',
+                html: '新注意事項...',
+                left: `${Math.random() * (window.innerWidth - 300) + 60}px`,
+                top: `${Math.random() * (window.innerHeight - 300) + 120}px`,
+                bg: noteColors[Math.floor(Math.random() * noteColors.length)],
                 zIndex: zIndexCounter++,
-                rotate: rotateVal
+                rotate: (Math.random() * 2 - 1).toFixed(1)
             });
         });
 
-        function createNoteNode(noteId, htmlContent, left, top, bg, zIndex, rotate) {
-            const note = document.createElement('div');
-            note.className = 'note';
-            note.id = noteId;
-            note.style.left = left;
-            note.style.top = top;
-            note.style.backgroundColor = bg;
-            note.style.zIndex = zIndex;
-            note.style.transform = `rotate(${rotate}deg)`;
+        // 按鈕點擊：新增磁鐵
+        addMagnetBtn.addEventListener('click', async () => {
+            const id = 'magnet_' + Date.now();
+            await uploadItem(id, {
+                type: 'magnet',
+                left: `${Math.random() * (window.innerWidth - 100) + 60}px`,
+                top: `${Math.random() * (window.innerHeight - 100) + 120}px`,
+                bg: magnetColors[Math.floor(Math.random() * magnetColors.length)],
+                zIndex: zIndexCounter++
+            });
+        });
 
-            // 👑 核心修復：所有的 value 全部替換成標準的英文系統字型家族名稱
+        // 渲染便利貼到畫面上
+        function renderNote(id, data) {
+            const note = document.createElement('div');
+            note.className = 'board-item note';
+            note.id = id;
+            note.style.left = data.left;
+            note.style.top = data.top;
+            note.style.backgroundColor = data.bg;
+            note.style.zIndex = data.zIndex;
+            note.style.transform = `rotate(${data.rotate}deg)`;
+
             note.innerHTML = `
                 <div class="drag-handle">⋮⋮</div>
                 <div class="delete-btn">✕</div>
                 <div class="note-toolbar">
-                    <button class="toolbar-item btn-bold" title="粗體">B</button>
-                    <select class="toolbar-item select-font" title="切換字體">
-                        <option value="">— 選擇字體 —</option>
-                        <option value="system-ui, -apple-system, sans-serif">預設黑體</option>
-                        <option value="'Microsoft JhengHei', sans-serif">微軟正黑體</option>
-                        <option value="'Kosugi Maru', sans-serif">原體/圓體</option>
-                        <option value="'DFKai-SB', 'BiauKai', sans-serif">標楷體</option>
-                        <option value="'PMingLiU', serif">新細明體</option>
-                    </select>
-                    <select class="toolbar-item select-size" title="字體大小">
-                        <option value="">— 大小 —</option>
+                    <button class="toolbar-item btn-bold">B</button>
+                    <select class="toolbar-item select-size">
+                        <option value="">大小</option>
                         <option value="2">小</option>
                         <option value="3">中</option>
                         <option value="5">大</option>
                     </select>
-                    <select class="toolbar-item select-color" title="文字顏色">
-                        <option value="">— 顏色 —</option>
+                    <select class="toolbar-item select-color">
+                        <option value="">顏色</option>
                         <option value="#334155">黑</option>
                         <option value="#ef4444">紅</option>
                         <option value="#2563eb">藍</option>
-                        <option value="#10b981">綠</option>
                     </select>
                     <div class="color-dots">
-                        ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
+                        ${noteColors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
                     </div>
                 </div>
-                <div class="note-content" contenteditable="true">${htmlContent}</div>
+                <div class="note-content" contenteditable="true">${data.html}</div>
             `;
 
             const contentNode = note.querySelector('.note-content');
-            const deleteBtn = note.querySelector('.delete-btn');
-            const handle = note.querySelector('.drag-handle');
             const toolbar = note.querySelector('.note-toolbar');
+            const handle = note.querySelector('.drag-handle');
+
+            toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
+
+            const getArgs = () => ({
+                html: contentNode.innerHTML,
+                left: note.style.left,
+                top: note.style.top,
+                bg: note.style.backgroundColor,
+                zIndex: note.style.zIndex
+            });
+
+            // 工具按鈕
+            note.querySelector('.btn-bold').addEventListener('click', () => { document.execCommand('bold', false, null); uploadItem(id, getArgs()); });
             
-            const btnBold = note.querySelector('.btn-bold');
-            const selectFont = note.querySelector('.select-font');
-            const selectSize = note.querySelector('.select-size');
-            const selectColor = note.querySelector('.select-color');
-            const dots = note.querySelectorAll('.dot');
+            let savedSel = null;
+            contentNode.addEventListener('mouseup', () => { let s = window.getSelection(); if(s.rangeCount>0) savedSel = s.getRangeAt(0).cloneRange(); });
+            const resSel = () => { if(savedSel){ let s=window.getSelection(); s.removeAllRanges(); s.addRange(savedSel); } };
 
-            toolbar.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-            });
-
-            const saveCurrentState = () => {
-                uploadNoteToCloud(noteId, {
-                    html: contentNode.innerHTML,
-                    left: note.style.left,
-                    top: note.style.top,
-                    bg: note.style.backgroundColor,
-                    zIndex: note.style.zIndex
-                });
-            };
-
-            btnBold.addEventListener('click', () => { 
-                document.execCommand('bold', false, null); 
-                saveCurrentState(); 
-            });
+            note.querySelector('.select-size').addEventListener('change', (e) => { if(e.target.value){ contentNode.focus(); resSel(); document.execCommand('fontSize', false, e.target.value); uploadItem(id, getArgs()); e.target.value=""; } });
+            note.querySelector('.select-color').addEventListener('change', (e) => { if(e.target.value){ contentNode.focus(); resSel(); document.execCommand('foreColor', false, e.target.value); uploadItem(id, getArgs()); e.target.value=""; } });
             
-            let savedSelection = null;
-            function keepSelection() {
-                const sel = window.getSelection();
-                if (sel.rangeCount > 0) {
-                    savedSelection = sel.getRangeAt(0).cloneRange();
-                }
-            }
+            note.querySelectorAll('.dot').forEach(d => d.addEventListener('click', () => { note.style.backgroundColor = d.dataset.color; uploadItem(id, getArgs()); }));
 
-            function restoreSelection() {
-                if (savedSelection) {
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(savedSelection);
-                }
-            }
+            contentNode.addEventListener('input', () => uploadItem(id, getArgs()));
+            contentNode.addEventListener('blur', () => uploadItem(id, getArgs()));
+            contentNode.addEventListener('mousedown', (e) => { e.stopPropagation(); note.style.zIndex = zIndexCounter++; });
 
-            contentNode.addEventListener('keyup', keepSelection);
-            contentNode.addEventListener('mouseup', keepSelection);
+            bindDrag(note, handle, id, 'note', getArgs);
+            note.querySelector('.delete-btn').addEventListener('click', () => removeItem(id, note));
+            board.appendChild(note);
+        }
 
-            selectFont.addEventListener('change', (e) => { 
-                if (e.target.value) {
-                    contentNode.focus();
-                    restoreSelection(); 
-                    document.execCommand('fontName', false, e.target.value); 
-                    saveCurrentState(); 
-                    e.target.value = ""; 
-                }
-            });
-            
-            selectSize.addEventListener('change', (e) => { 
-                if (e.target.value) {
-                    contentNode.focus();
-                    restoreSelection();
-                    document.execCommand('fontSize', false, e.target.value); 
-                    saveCurrentState(); 
-                    e.target.value = ""; 
-                }
-            });
-            
-            selectColor.addEventListener('change', (e) => { 
-                if (e.target.value) {
-                    contentNode.focus();
-                    restoreSelection();
-                    document.execCommand('foreColor', false, e.target.value); 
-                    saveCurrentState(); 
-                    e.target.value = ""; 
-                }
+        // 渲染磁鐵到畫面上
+        function renderMagnet(id, data) {
+            const mag = document.createElement('div');
+            mag.className = 'board-item magnet';
+            mag.id = id;
+            mag.style.left = data.left;
+            mag.style.top = data.top;
+            mag.style.backgroundColor = data.bg;
+            mag.style.zIndex = data.zIndex;
+            mag.innerHTML = `<div class="delete-btn">✕</div>`; // 磁鐵直接自身就是把手
+
+            const getArgs = () => ({
+                left: mag.style.left,
+                top: mag.style.top,
+                zIndex: mag.style.zIndex
             });
 
-            dots.forEach(dot => {
-                dot.addEventListener('click', () => {
-                    note.style.backgroundColor = dot.getAttribute('data-color');
-                    saveCurrentState();
-                });
-            });
+            bindDrag(mag, mag, id, 'magnet', getArgs);
+            mag.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); removeItem(id, mag); });
+            board.appendChild(mag);
+        }
 
-            contentNode.addEventListener('input', saveCurrentState);
-            contentNode.addEventListener('blur', saveCurrentState);
-
-            contentNode.addEventListener('mousedown', (e) => {
-                e.stopPropagation();
-                note.style.zIndex = zIndexCounter++; 
-            });
-
+        // 通用拖曳綁定
+        function bindDrag(el, handleEl, id, type, getArgsFunc) {
             let isDragging = false;
             let startX, startY, startLeft, startTop;
 
-            handle.addEventListener('mousedown', (e) => {
+            handleEl.addEventListener('mousedown', (e) => {
+                if (isDrawingMode || e.target.classList.contains('delete-btn')) return;
                 isDragging = true;
                 isDraggingGlobal = true;
-                note.classList.add('dragging');
-                note.style.zIndex = zIndexCounter++;
+                el.classList.add('dragging');
+                el.style.zIndex = zIndexCounter++;
 
                 startX = e.clientX;
                 startY = e.clientY;
-                startLeft = parseInt(note.style.left);
-                startTop = parseInt(note.style.top);
+                startLeft = parseInt(el.style.left);
+                startTop = parseInt(el.style.top);
 
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
@@ -478,37 +633,34 @@
 
             function onMouseMove(e) {
                 if (!isDragging) return;
-                let newLeft = startLeft + (e.clientX - startX);
-                let newTop = startTop + (e.clientY - startY);
+                let nl = startLeft + (e.clientX - startX);
+                let nt = startTop + (e.clientY - startY);
 
-                if (newLeft < 0) newLeft = 0;
-                if (newTop < 0) newTop = 0;
-                if (newLeft > window.innerWidth - note.offsetWidth) newLeft = window.innerWidth - note.offsetWidth;
-                if (newTop > window.innerHeight - note.offsetHeight) newTop = window.innerHeight - note.offsetHeight;
+                if (nl < 0) nl = 0; if (nt < 0) nt = 0;
+                if (nl > window.innerWidth - el.offsetWidth) nl = window.innerWidth - el.offsetWidth;
+                if (nt > window.innerHeight - el.offsetHeight) nt = window.innerHeight - el.offsetHeight;
 
-                note.style.left = `${newLeft}px`;
-                note.style.top = `${newTop}px`;
+                el.style.left = `${nl}px`;
+                el.style.top = `${nt}px`;
             }
 
             async function onMouseUp() {
                 if (isDragging) {
                     isDragging = false;
                     isDraggingGlobal = false;
-                    note.classList.remove('dragging');
+                    el.classList.remove('dragging');
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
-                    saveCurrentState();
+                    await uploadItem(id, getArgsFunc());
                 }
             }
+        }
 
-            deleteBtn.addEventListener('click', async () => {
-                showSavingStatus();
-                note.remove();
-                await deleteDoc(doc(notesRef, noteId));
-                showSavedStatus();
-            });
-
-            board.appendChild(note);
+        async function removeItem(id, el) {
+            showStatus("⚡ 正在雲端刪除...", "#f59e0b");
+            el.remove();
+            await deleteDoc(doc(db, "board_items", id));
+            showStatus("✅ 雲端已即時同步", "#10b981");
         }
     </script>
 </body>
