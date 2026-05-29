@@ -68,13 +68,12 @@
             position: relative;
         }
 
-        /* 便利貼主體 */
         .note {
             position: absolute;
             width: 240px; 
             min-height: 180px;
             height: auto;
-            padding: 15px; /* 增加留白 */
+            padding: 15px; 
             box-sizing: border-box;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
             cursor: move;
@@ -91,10 +90,10 @@
             z-index: 999 !important;
         }
 
-        /* 👑 改良版：懸浮工具列 (移到便利貼外側最上方) */
+        /* 懸浮工具列 */
         .note-toolbar {
             position: absolute;
-            top: -42px; /* 懸浮在卡片上方外側 */
+            top: -42px; 
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -105,14 +104,13 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             opacity: 0;
-            pointer-events: none; /* 平時隱藏時不可點擊 */
+            pointer-events: none; 
             transition: opacity 0.2s, top 0.2s;
             cursor: default;
             white-space: nowrap;
             z-index: 100;
         }
 
-        /* 滑鼠移入便利貼時，工具列優雅浮現 */
         .note:hover .note-toolbar {
             opacity: 1;
             pointer-events: auto;
@@ -154,7 +152,6 @@
             border: 1px solid rgba(0,0,0,0.2);
         }
 
-        /* 文字內容區：現在擁有 100% 完整空間 */
         .note-content {
             width: 100%;
             height: auto;
@@ -165,16 +162,12 @@
             line-height: 1.6;
             color: #334155;
             outline: none;
-            cursor: move;
+            cursor: text; /* 編輯區預設就是提示可以選字 */
             word-break: break-all;
             white-space: pre-wrap;
+            user-select: text; /* 確保內容可以被反白 */
         }
 
-        .note-content.editing {
-            cursor: text;
-        }
-
-        /* 刪除按鈕 */
         .delete-btn {
             position: absolute;
             top: -8px;
@@ -216,7 +209,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 已保留你的專屬 Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyC5DspOkctRSuXJojh8iJu1uJ31E9ykN10",
             authDomain: "my-sticky-notes-5929c.firebaseapp.com",
@@ -253,7 +245,6 @@
             showSavedStatus();
         }
 
-        // 監聽雲端資料庫變動
         onSnapshot(notesRef, (snapshot) => {
             if (isDraggingGlobal) return; 
 
@@ -356,7 +347,7 @@
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
 
-            // 阻止點擊工具列觸發拖曳
+            // 工具列內部不觸發任何外層事件
             toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
 
             const saveCurrentState = () => {
@@ -369,27 +360,24 @@
                 });
             };
 
+            // 格式修改功能
             btnBold.addEventListener('click', () => {
                 document.execCommand('bold', false, null);
-                contentNode.focus();
                 saveCurrentState();
             });
 
             selectFont.addEventListener('change', (e) => {
                 document.execCommand('fontName', false, e.target.value);
-                contentNode.focus();
                 saveCurrentState();
             });
 
             selectSize.addEventListener('change', (e) => {
                 document.execCommand('fontSize', false, e.target.value);
-                contentNode.focus();
                 saveCurrentState();
             });
 
             selectColor.addEventListener('change', (e) => {
                 document.execCommand('foreColor', false, e.target.value);
-                contentNode.focus();
                 saveCurrentState();
             });
 
@@ -400,12 +388,15 @@
                 });
             });
 
-            contentNode.addEventListener('dblclick', () => {
+            // 雙擊進入編輯狀態
+            contentNode.addEventListener('dblclick', (e) => {
+                e.stopPropagation(); // 阻止事件向上冒泡
                 contentNode.contentEditable = "true";
                 contentNode.classList.add('editing');
                 contentNode.focus();
             });
 
+            // 結束編輯狀態
             contentNode.addEventListener('blur', () => {
                 contentNode.contentEditable = "false";
                 contentNode.classList.remove('editing');
@@ -413,15 +404,21 @@
             });
 
             contentNode.addEventListener('input', saveCurrentState);
+
+            // 👑 解決反白衝突核心：在編輯狀態下，完全切斷 mousedown 事件傳給外層，保留原生選字功能
             contentNode.addEventListener('mousedown', (e) => {
-                if (contentNode.contentEditable === "true") e.stopPropagation(); 
+                if (contentNode.contentEditable === "true") {
+                    e.stopPropagation(); 
+                }
             });
 
+            // 拖曳處理
             let isDragging = false;
             let startX, startY, startLeft, startTop;
 
             note.addEventListener('mousedown', (e) => {
-                if (e.target === deleteBtn || contentNode.contentEditable === "true") return;
+                // 如果正在編輯文字，或者點擊到工具列、刪除鍵，絕對不允許觸發拖曳
+                if (contentNode.contentEditable === "true" || e.target === deleteBtn) return;
 
                 isDragging = true;
                 isDraggingGlobal = true;
