@@ -68,19 +68,19 @@
             position: relative;
         }
 
+        /* 便利貼主體 */
         .note {
             position: absolute;
-            width: 240px; /* 稍微加寬容納更多工具 */
+            width: 240px; 
             min-height: 180px;
             height: auto;
-            padding: 12px;
+            padding: 15px; /* 增加留白 */
             box-sizing: border-box;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
             cursor: move;
             user-select: none;
             display: flex;
             flex-direction: column;
-            gap: 10px;
             border-radius: 2px;
             transition: transform 0.1s, box-shadow 0.1s;
         }
@@ -91,33 +91,44 @@
             z-index: 999 !important;
         }
 
+        /* 👑 改良版：懸浮工具列 (移到便利貼外側最上方) */
         .note-toolbar {
+            position: absolute;
+            top: -42px; /* 懸浮在卡片上方外側 */
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            flex-wrap: wrap; /* 讓工具過多時能自動折行 */
-            gap: 4px;
+            gap: 5px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.5);
-            padding: 4px 6px;
-            border-radius: 4px;
+            background: #ffffff;
+            padding: 5px 8px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             opacity: 0;
-            transition: opacity 0.2s;
+            pointer-events: none; /* 平時隱藏時不可點擊 */
+            transition: opacity 0.2s, top 0.2s;
             cursor: default;
+            white-space: nowrap;
+            z-index: 100;
         }
 
+        /* 滑鼠移入便利貼時，工具列優雅浮現 */
         .note:hover .note-toolbar {
             opacity: 1;
+            pointer-events: auto;
+            top: -36px; 
         }
 
         .toolbar-item {
             font-size: 11px;
             padding: 2px 4px;
-            border: 1px solid rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.15);
             background: white;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
             color: #334155;
             font-weight: bold;
-            height: 22px;
+            height: 24px;
             box-sizing: border-box;
         }
         .toolbar-item:hover {
@@ -131,24 +142,27 @@
         .color-dots {
             display: flex;
             gap: 4px;
-            margin-left: auto;
+            border-left: 1px solid #e2e8f0;
+            padding-left: 6px;
+            margin-left: 2px;
         }
         .dot {
-            width: 12px;
-            height: 12px;
+            width: 13px;
+            height: 13px;
             border-radius: 50%;
             cursor: pointer;
-            border: 1px solid rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.2);
         }
 
+        /* 文字內容區：現在擁有 100% 完整空間 */
         .note-content {
             width: 100%;
             height: auto;
-            min-height: 100px;
+            min-height: 140px;
             border: none;
             background: transparent;
             font-size: 15px;
-            line-height: 1.5;
+            line-height: 1.6;
             color: #334155;
             outline: none;
             cursor: move;
@@ -160,6 +174,7 @@
             cursor: text;
         }
 
+        /* 刪除按鈕 */
         .delete-btn {
             position: absolute;
             top: -8px;
@@ -177,7 +192,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             opacity: 0;
             transition: opacity 0.2s, transform 0.1s;
-            z-index: 10;
+            z-index: 101;
         }
 
         .note:hover .delete-btn {
@@ -302,7 +317,6 @@
             note.style.zIndex = zIndex;
             note.style.transform = `rotate(${rotate}deg)`;
 
-            // 升級工具列：加上字體切換功能
             note.innerHTML = `
                 <div class="delete-btn">✕</div>
                 <div class="note-toolbar">
@@ -342,6 +356,7 @@
             const selectColor = note.querySelector('.select-color');
             const dots = note.querySelectorAll('.dot');
 
+            // 阻止點擊工具列觸發拖曳
             toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
 
             const saveCurrentState = () => {
@@ -354,35 +369,30 @@
                 });
             };
 
-            // 粗體
             btnBold.addEventListener('click', () => {
                 document.execCommand('bold', false, null);
                 contentNode.focus();
                 saveCurrentState();
             });
 
-            // 💡 字體家族切換核心功能
             selectFont.addEventListener('change', (e) => {
                 document.execCommand('fontName', false, e.target.value);
                 contentNode.focus();
                 saveCurrentState();
             });
 
-            // 大小
             selectSize.addEventListener('change', (e) => {
                 document.execCommand('fontSize', false, e.target.value);
                 contentNode.focus();
                 saveCurrentState();
             });
 
-            // 顏色
             selectColor.addEventListener('change', (e) => {
                 document.execCommand('foreColor', false, e.target.value);
                 contentNode.focus();
                 saveCurrentState();
             });
 
-            // 卡片顏色
             dots.forEach(dot => {
                 dot.addEventListener('click', () => {
                     note.style.backgroundColor = dot.getAttribute('data-color');
