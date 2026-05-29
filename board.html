@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>互動式白板便利貼</title>
+    <title>互動式白板便利貼 Pro</title>
     <style>
+        /* 全域樣式：打造白板背景 */
         body {
             margin: 0;
             padding: 0;
@@ -20,13 +21,14 @@
             width: 100vw;
         }
 
+        /* 頂部功能列 */
         .controls {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             padding: 10px 20px;
             border-radius: 30px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -61,52 +63,95 @@
             color: #64748b;
         }
 
+        /* 白板畫布區域 */
         #board {
             width: 100%;
             height: 100%;
             position: relative;
         }
 
+        /* 便利貼主體：外層 */
         .note {
             position: absolute;
-            width: 180px;
+            width: 220px;
             min-height: 180px;
-            padding: 15px;
+            height: auto; /* 關鍵：讓高度隨內容自動撐開 */
+            padding: 12px;
             box-sizing: border-box;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.12);
             cursor: move;
             user-select: none;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            transition: transform 0.1s, box-shadow 0.1s;
+            gap: 10px;
             border-radius: 2px;
+            transition: transform 0.1s, box-shadow 0.1s;
         }
 
-        .note::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            right: 2px;
-            width: 30px;
-            height: 8px;
-            box-shadow: 5px 12px 10px rgba(0,0,0,0.15);
-            transform: rotate(3deg);
-            z-index: -1;
-        }
-
+        /* 拖曳中的樣式 */
         .note.dragging {
-            transform: scale(1.03) rotate(-1deg);
+            transform: scale(1.03) rotate(-1deg) !important;
             box-shadow: 5px 15px 25px rgba(0,0,0,0.18);
             z-index: 999 !important;
         }
 
+        /* 便利貼內建工具列 */
+        .note-toolbar {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 4px 6px;
+            border-radius: 4px;
+            opacity: 0; /* 平時隱藏 */
+            transition: opacity 0.2s;
+            cursor: default;
+        }
+
+        .note:hover .note-toolbar {
+            opacity: 1; /* 滑鼠移入時顯示 */
+        }
+
+        /* 工具列元件樣式 */
+        .toolbar-item {
+            font-size: 11px;
+            padding: 2px 5px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: white;
+            border-radius: 3px;
+            cursor: pointer;
+            color: #334155;
+            font-weight: bold;
+        }
+        .toolbar-item:hover {
+            background: #f1f5f9;
+        }
+
+        select.toolbar-item {
+            font-weight: normal;
+        }
+
+        /* 顏色選擇器色票 */
+        .color-dots {
+            display: flex;
+            gap: 4px;
+            margin-left: auto; /* 推到最右邊 */
+        }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+
+        /* 文字內容區 */
         .note-content {
             width: 100%;
-            height: 100%;
+            height: auto;
+            min-height: 100px;
             border: none;
             background: transparent;
-            resize: none;
             font-size: 15px;
             line-height: 1.5;
             color: #334155;
@@ -120,31 +165,32 @@
             cursor: text;
         }
 
+        /* 刪除按鈕 */
         .delete-btn {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 20px;
-            height: 20px;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            background: rgba(0,0,0,0.06);
-            color: rgba(0,0,0,0.4);
+            background: #ef4444;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             opacity: 0;
-            transition: opacity 0.2s, background 0.2s;
+            transition: opacity 0.2s, transform 0.1s;
+            z-index: 10;
         }
 
         .note:hover .delete-btn {
             opacity: 1;
         }
-
         .delete-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            transform: scale(1.1);
         }
     </style>
 </head>
@@ -152,7 +198,7 @@
 
     <div class="controls">
         <button class="btn" id="add-btn">+ 新增便利貼</button>
-        <span class="hint">💡 操作說明：拖曳頂端移動｜雙擊文字編輯｜滑鼠移到右上角可刪除</span>
+        <span class="hint">💡 操作說明：拖曳空白處移動｜雙擊文字編輯｜選取文字可局部改粗細顏色</span>
     </div>
 
     <div id="board"></div>
@@ -161,59 +207,117 @@
         const board = document.getElementById('board');
         const addBtn = document.getElementById('add-btn');
         
+        // 粉嫩色系庫
         const colors = [
             '#fff9db', '#e7f5ff', '#e6fcf5', '#fff0f6', '#f3f0ff', '#fff4e6'
         ];
 
         let zIndexCounter = 1;
 
-        // 預設兩張提示
-        createNote('歡迎使用數位白板！雙擊我可以修改內容。', 200, 150);
-        createNote('把你的注意事項寫在這裡，自由拖曳擺放吧！', 420, 250);
+        // 初始化範例
+        createNote('歡迎使用！<br><b>雙擊我</b>可以編輯。文字變多時，我也會自動向下變長喔！', 200, 150);
 
         addBtn.addEventListener('click', () => {
-            const x = Math.random() * (window.innerWidth - 250) + 50;
-            const y = Math.random() * (window.innerHeight - 300) + 100;
+            const x = Math.random() * (window.innerWidth - 280) + 50;
+            const y = Math.random() * (window.innerHeight - 350) + 100;
             createNote('新注意事項...', x, y);
         });
 
-        function createNote(text = '', left = 100, top = 100) {
+        function createNote(htmlContent = '', left = 100, top = 100) {
             const note = document.createElement('div');
             note.className = 'note';
             note.style.left = `${left}px`;
             note.style.top = `${top}px`;
-            note.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            const defaultBg = colors[Math.floor(Math.random() * colors.length)];
+            note.style.backgroundColor = defaultBg;
             note.style.zIndex = zIndexCounter++;
 
-            const randomRotate = (Math.random() * 4 - 2).toFixed(1);
+            // 微旋轉
+            const randomRotate = (Math.random() * 3 - 1.5).toFixed(1);
             note.style.transform = `rotate(${randomRotate}deg)`;
 
+            // 建立工具列與內容結構
             note.innerHTML = `
                 <div class="delete-btn">✕</div>
-                <div class="note-content" contenteditable="false">${text}</div>
+                <div class="note-toolbar">
+                    <button class="toolbar-item btn-bold" title="粗體">B</button>
+                    <select class="toolbar-item select-size" title="字體大小">
+                        <option value="3">中</option>
+                        <option value="2">小</option>
+                        <option value="5">大</option>
+                    </select>
+                    <select class="toolbar-item select-color" title="文字顏色">
+                        <option value="#334155">黑</option>
+                        <option value="#ef4444">紅</option>
+                        <option value="#2563eb">藍</option>
+                        <option value="#10b981">綠</option>
+                    </select>
+                    <div class="color-dots">
+                        ${colors.map(c => `<div class="dot" style="background:${c}" data-color="${c}"></div>`).join('')}
+                    </div>
+                </div>
+                <div class="note-content" contenteditable="false">${htmlContent}</div>
             `;
 
             const contentNode = note.querySelector('.note-content');
             const deleteBtn = note.querySelector('.delete-btn');
+            const toolbar = note.querySelector('.note-toolbar');
+            
+            // 工具列按鈕事件
+            const btnBold = note.querySelector('.btn-bold');
+            const selectSize = note.querySelector('.select-size');
+            const selectColor = note.querySelector('.select-color');
+            const dots = note.querySelectorAll('.dot');
 
+            // 點擊工具列內部時，阻止觸發便利貼的拖曳
+            toolbar.addEventListener('mousedown', (e) => e.stopPropagation());
+
+            // 粗體功能
+            btnBold.addEventListener('click', () => {
+                document.execCommand('bold', false, null);
+                contentNode.focus();
+            });
+
+            // 字體大小功能
+            selectSize.addEventListener('change', (e) => {
+                document.execCommand('fontSize', false, e.target.value);
+                contentNode.focus();
+            });
+
+            // 文字顏色功能
+            selectColor.addEventListener('change', (e) => {
+                document.execCommand('foreColor', false, e.target.value);
+                contentNode.focus();
+            });
+
+            // 便利貼更換背景色
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    note.style.backgroundColor = dot.getAttribute('data-color');
+                });
+            });
+
+            // 雙擊進入編輯
             contentNode.addEventListener('dblclick', (e) => {
                 contentNode.contentEditable = "true";
                 contentNode.classList.add('editing');
                 contentNode.focus();
-                document.execCommand('selectAll', false, null);
             });
 
+            // 結束編輯
             contentNode.addEventListener('blur', () => {
                 contentNode.contentEditable = "false";
                 contentNode.classList.remove('editing');
             });
 
+            // 編輯狀態下點擊文字不觸發拖曳
             contentNode.addEventListener('mousedown', (e) => {
                 if (contentNode.contentEditable === "true") {
                     e.stopPropagation(); 
                 }
             });
 
+            // 拖曳 (Drag and Drop)
             let isDragging = false;
             let startX, startY;
             let startLeft, startTop;
@@ -259,13 +363,12 @@
                 document.removeEventListener('mouseup', onMouseUp);
             }
 
-            deleteBtn.addEventListener('click', () => {
-                note.remove();
-            });
+            deleteBtn.addEventListener('click', () => note.remove());
 
             board.appendChild(note);
         }
 
+        // 視窗縮放防溢出
         window.addEventListener('resize', () => {
             const notes = document.querySelectorAll('.note');
             notes.forEach(note => {
