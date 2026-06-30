@@ -288,6 +288,7 @@
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
 
+<!-- 🔥 全域防抖計時器 -->
 <script>
     window.calcTimer1 = null;
     window.calcTimer2 = null;
@@ -421,6 +422,7 @@
                 <input type="hidden" id="ssStatus" value="">
             </div>
             
+            <input type="text" id="ssC" placeholder="👤 搜尋客戶" autocomplete="off" oninput="runSettleSearch()" style="width: 130px; flex-shrink: 0; text-align: center; font-weight: 900;">
             <input type="text" id="ssM" placeholder="📅 結算月 (ex:05)" autocomplete="off" oninput="checkMonthClients()" style="width: 130px; flex-shrink: 0; text-align: center; font-weight: 900;">
             <button id="openClientModalBtn" class="sync-btn" style="display:none; color:var(--primary); padding: 8px 20px; font-size: 13px; height: 38px;" onclick="openSettleClientModal()">👥 選擇客戶 (全選)</button>
         </div>
@@ -452,6 +454,7 @@
 
 <div class="viewport">
     <div class="slider-container" id="mainSlider">
+        <!-- Slide 0: 案件明細 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
@@ -480,6 +483,7 @@
             </div>
         </div>
         
+        <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
@@ -497,10 +501,11 @@
                         <table id="settleTable">
                             <thead>
                                 <tr>
+                                    <th style="width:6%; text-align:center;"><input type="checkbox" id="settleSelectAll" checked onchange="toggleAllSettle(this)"></th>
                                     <th style="width:12%">年月</th>
-                                    <th style="width:12%">編號</th>
+                                    <th style="width:10%">編號</th>
                                     <th style="width:16%">客戶</th>
-                                    <th style="width:36%; text-align:center;">案名</th>
+                                    <th style="width:32%; text-align:center;">案名</th>
                                     <th style="width:12%" id="sP">公司 %</th>
                                     <th style="width:12%" id="sA">金額 $</th>
                                 </tr>
@@ -537,8 +542,10 @@
             </div>
         </div>
 
+        <!-- Slide 2: 月報統計 -->
         <div class="page-content"><div class="white-card"><div class="table-scroll"><table id="reportTable"><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>夥伴分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
 
+        <!-- Slide 3: 報價系統 -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
                 <div class="quote-placeholder" id="quote-placeholder">🧾<br>請輸入搜尋條件產生報價單</div>
@@ -550,6 +557,7 @@
             </div>
         </div>
 
+        <!-- Slide 4: 發票管理 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
@@ -572,6 +580,7 @@
             </div>
         </div>
 
+        <!-- Slide 5: 📊 營運數據中心 -->
         <div class="page-content">
             <div class="dashboard-container">
                 <div class="dashboard-header">
@@ -626,6 +635,7 @@
             </div>
         </div>
 
+        <!-- Slide 6: 🏦 銀行帳本 -->
         <div class="page-content">
             <div class="white-card">
                 <div style="display: flex; justify-content: space-between; padding: 25px 30px; background: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(0,0,0,0.05);">
@@ -882,7 +892,6 @@ function applyTheme(y) { const themes=['','theme-green','theme-blue','theme-red'
 async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:", ""); if(y){ if(!yArr.includes(y)){yArr.push(y);yArr.sort();localStorage.setItem('vB_List',JSON.stringify(yArr));} changeYear(y); renderYearList(); } }
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
 
-// 🚨【防抖修復】切換分頁延遲排版，完全解決卡頓問題
 function switchSlide(idx, el) {
     document.getElementById('mainSlider').style.transform = `translateX(-${idx * 100}vw)`;
     document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active')); 
@@ -1258,14 +1267,40 @@ function updateClientFilterBtnText() {
     }
 }
 
+// 🚨 新增：動態計算有打勾的總金額
+function calcSettleTotal() {
+    let tot = 0;
+    document.querySelectorAll('.settle-cb:checked').forEach(cb => {
+        tot += parseFloat(cb.getAttribute('data-val')) || 0;
+    });
+    document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
+    
+    let allCbs = document.querySelectorAll('.settle-cb');
+    let checkedCbs = document.querySelectorAll('.settle-cb:checked');
+    let selectAllCb = document.getElementById('settleSelectAll');
+    if(selectAllCb) {
+        selectAllCb.checked = (allCbs.length > 0 && allCbs.length === checkedCbs.length);
+    }
+}
+
+// 🚨 新增：全選 / 全不選功能
+function toggleAllSettle(el) {
+    document.querySelectorAll('.settle-cb').forEach(cb => cb.checked = el.checked);
+    calcSettleTotal();
+}
+
 function runSettleSearch() {
     clearTimeout(window.settleTimer);
     window.settleTimer = setTimeout(() => {
-        let role = window.curRole, tb = document.getElementById('settle-tb'), tot = 0; tb.innerHTML = '';
+        let role = window.curRole, tb = document.getElementById('settle-tb'); tb.innerHTML = '';
         let statusF = document.getElementById('ssStatus').value;
         
         let smRaw = document.getElementById('ssM').value.trim();
         let sm = smRaw ? smRaw.replace(/\D/g, '').padStart(2, '0') : '00';
+        
+        // 🚨 讀取新的客戶搜尋框
+        let scRaw = document.getElementById('ssC');
+        let sc = scRaw ? scRaw.value.trim().toLowerCase() : '';
         
         let pIdx = (role==='公司'?14:(role==='老闆'?15:16));
         let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
@@ -1291,11 +1326,13 @@ function runSettleSearch() {
             if (statusF === 'unpaid' && unpaid <= 0) matchStatus = false;
 
             let isMonthMatch = (sm === '00' || rowMonth === sm);
-            
             let cName = d[2] ? d[2].trim() : "";
             let isClientMatch = selectedSettleClients.size === 0 || selectedSettleClients.has(cName);
+            
+            // 🚨 新增客戶文字搜尋條件
+            let isTextClientMatch = (sc === '') || cName.toLowerCase().includes(sc);
 
-            if(hasData && matchStatus && isMonthMatch && isClientMatch) {
+            if(hasData && matchStatus && isMonthMatch && isClientMatch && isTextClientMatch) {
                 matched.push(d);
             }
         }
@@ -1309,7 +1346,9 @@ function runSettleSearch() {
 
         matched.forEach(d => {
             let rowVal = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; 
-            tb.innerHTML += `<tr>
+            // 🚨 新增核取方塊並綁定計算事件
+            tb.innerHTML += `<tr class="settle-data-row">
+                <td class="calc-cell" style="padding:10px; text-align:center;"><input type="checkbox" class="settle-cb" data-val="${rowVal}" checked onchange="calcSettleTotal()"></td>
                 <td class="calc-cell" style="padding:10px;">${d[0]||''}</td>
                 <td class="calc-cell" style="padding:10px;">${d[1]||''}</td>
                 <td class="calc-cell" style="padding:10px; font-weight:800;">${d[2]||''}</td>
@@ -1317,9 +1356,12 @@ function runSettleSearch() {
                 <td class="calc-cell" style="padding:10px; color:var(--primary); font-weight:800;">${d[pIdx]||0}%</td>
                 <td class="calc-cell" style="padding:10px; font-weight:900; color:var(--primary);">${rowVal.toLocaleString()}</td>
             </tr>`;
-            tot += rowVal;
         });
-        document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
+        
+        // 🚨 重置全選與重新計算
+        let selectAllCb = document.getElementById('settleSelectAll');
+        if(selectAllCb) selectAllCb.checked = true;
+        calcSettleTotal();
     }, 250);
 }
 
@@ -1332,60 +1374,45 @@ function downloadSettlePDF() {
 
     let smRaw = document.getElementById('ssM').value.trim();
     let sm = smRaw ? smRaw.replace(/\D/g, '').padStart(2, '0') : '00';
+    
+    let scRaw = document.getElementById('ssC');
+    let sc = scRaw ? scRaw.value.trim() : '';
+    
     let monthStr = (sm !== '00') ? `${sm}月` : '全部月份';
-
-    let pdfTitle = `杰冉宇宙 ${curY}年 ${monthStr} - 夥伴分潤對帳單`;
-
-    let statusF = document.getElementById('ssStatus').value;
-    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let matched = [];
-
-    let empPIdx = 16; 
-    let empAIdx = 19; 
-
-    for(let i=0; i<count; i++) {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-        let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
-        
-        let rawMonth = (d[0]||"").split('-')[1] || "";
-        let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
-        let rawUnpaid = d[13], unpaid = 0;
-        if(rawUnpaid !== undefined && rawUnpaid !== "" && rawUnpaid !== null) { unpaid = parseFloat(String(rawUnpaid).replace(/,/g, '')); if(isNaN(unpaid)) unpaid = 0; }
-        if (statusF === 'paid' && unpaid > 0) continue; 
-        if (statusF === 'unpaid' && unpaid <= 0) continue; 
-        
-        let isMonthMatch = (sm === '00' || rowMonth === sm);
-        let cName = d[2] ? d[2].trim() : "";
-        let isClientMatch = selectedSettleClients.size === 0 || selectedSettleClients.has(cName);
-        
-        if(hasData && isMonthMatch && isClientMatch) matched.push(d);
-    }
-
-    matched.sort((a, b) => {
-        let mA = a[0] || "", mB = b[0] || "", iA = String(a[1] || ""), iB = String(b[1] || ""), cA = a[2] || "", cB = b[2] || "";
-        if (currentSettleSort === 'month') { if (mA !== mB) return mA.localeCompare(mB); if (cA !== cB) return cA.localeCompare(cB, 'zh-Hant'); return iA.localeCompare(iB); } 
-        else if (currentSettleSort === 'id') { let isUpperA = /^[A-Z]/.test(iA), isUpperB = /^[A-Z]/.test(iB); if (isUpperA && !isUpperB) return -1; if (!isUpperA && isUpperB) return 1; if (iA !== iB) return iA.localeCompare(iB); return mA.localeCompare(mB); } 
-        else { if (cA !== cB) return cA.localeCompare(cB, 'zh-Hant'); if (mA !== mB) return mA.localeCompare(mB); return iA.localeCompare(iB); }
-    });
+    let clientStr = sc ? ` - ${sc}` : '';
+    let pdfTitle = `杰冉宇宙 ${curY}年 ${monthStr}${clientStr} - 夥伴分潤對帳單`;
 
     document.getElementById('settle-export-title').innerText = pdfTitle;
     let printTb = document.getElementById('settle-export-tb');
     printTb.innerHTML = '';
     let totalSum = 0;
 
-    matched.forEach(d => {
-        let rowVal = parseFloat(String(d[empAIdx]).replace(/,/g, '')) || 0;
-        totalSum += rowVal;
-        printTb.innerHTML += `
-            <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[0]||''}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${d[1]||''}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${d[2]||''}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${d[3]||''}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${d[empPIdx]||0}%</td>
-                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${rowVal.toLocaleString()}</td>
-            </tr>
-        `;
+    // 🚨 直接抓畫面上「有打勾」的列寫入 PDF
+    let checkedRows = document.querySelectorAll('.settle-data-row');
+    checkedRows.forEach(row => {
+        let cb = row.querySelector('.settle-cb');
+        if (cb && cb.checked) {
+            let cells = row.querySelectorAll('td');
+            let cMonth = cells[1].innerText;
+            let cId = cells[2].innerText;
+            let cClient = cells[3].innerText;
+            let cProject = cells[4].innerText;
+            let cPercent = cells[5].innerText;
+            let cValStr = cells[6].innerText;
+            let cValNum = parseFloat(cValStr.replace(/,/g, '')) || 0;
+            
+            totalSum += cValNum;
+            printTb.innerHTML += `
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${cMonth}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${cId}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${cClient}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${cProject}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${cPercent}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${cValNum.toLocaleString()}</td>
+                </tr>
+            `;
+        }
     });
 
     document.getElementById('settle-export-total').innerText = `結算總額：$ ${totalSum.toLocaleString()}`;
@@ -1400,7 +1427,7 @@ function downloadSettlePDF() {
 
     let opt = { 
         margin:       [0.4, 0.4, 0.4, 0.4],
-        filename:     `${curY}年_${monthStr}_夥伴分潤對帳單.pdf`,
+        filename:     `${curY}年_${monthStr}${clientStr ? '_' + sc : ''}_夥伴分潤對帳單.pdf`,
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } 
