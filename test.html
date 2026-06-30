@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.30</title>
+    <title>杰冉宇宙營收表 v01.40</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -94,7 +94,7 @@
         .role-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
 
         .viewport { flex: 1; overflow: hidden; position: relative; width: 100vw; }
-        .slider-container { display: flex; width: 700vw; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
+        .slider-container { display: flex; width: 600vw; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .page-content { width: 100vw; height: 100%; padding: 0 30px 110px 30px; box-sizing: border-box; display: flex; flex-direction: column; flex-shrink: 0; }
         
         .white-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(30px); border-radius: 24px; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.04); position: relative; border: 1px solid var(--glass-border); }
@@ -112,7 +112,6 @@
         #settleTable { min-width: 100%; table-layout: fixed; }
         #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
-        #bankTable { min-width: 1000px; table-layout: fixed; }
 
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; box-sizing: border-box; }
         td { border-bottom: 1px solid rgba(0,0,0,0.03); height: 44px; text-align: center; font-size: 13px; position: relative; transition: background 0.2s; box-sizing: border-box; }
@@ -138,29 +137,6 @@
 
         td input.inv-invalid { color: #FF3B30 !important; font-weight: 900 !important; background: rgba(255, 59, 48, 0.08) !important; }
 
-        .bank-amount-input { font-size: 18px !important; font-weight: 900 !important; background: rgba(255,255,255,0.8) !important; border: 2px solid rgba(0,0,0,0.05) !important; border-radius: 12px !important; padding: 8px !important; height: 38px !important; transition: all 0.3s ease; }
-        .bank-amount-input:focus { border-color: var(--primary) !important; box-shadow: 0 0 15px rgba(0,122,255,0.2) !important; background: #fff !important; }
-        
-        .bank-type-toggle {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 34px;
-            width: 80%;
-            margin: 0 auto;
-            border-radius: 10px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
-            font-size: 13px;
-            border: 1px solid transparent;
-        }
-        .bank-type-toggle:hover { opacity: 0.8; }
-        .type-empty { color: var(--light); background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.08); }
-        .type-income { color: #00D26A; background: rgba(0,210,106,0.08); border-color: rgba(0,210,106,0.3);}
-        .type-expense { color: #FF3B30; background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.3);}
-
         .drag-handle { color: rgba(0,0,0,0.15); font-size: 16px; cursor: grab; user-select: none; display: flex; align-items: center; justify-content: center; height: 100%; transition: color 0.2s; }
         .drag-handle:hover { color: var(--primary); }
         tr.dragging td { opacity: 0.3; background: rgba(var(--primary-rgb), 0.05); }
@@ -169,6 +145,11 @@
         
         .cell-selected { background-color: rgba(var(--primary-rgb), 0.15) !important; outline: 1px solid rgba(var(--primary-rgb), 0.5); }
         .cell-selected input { color: var(--primary) !important; }
+
+        /* 🚨 新增：填充把手樣式 */
+        .fill-handle { position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; background: var(--primary); cursor: crosshair; opacity: 0; transition: opacity 0.2s; }
+        td:hover .fill-handle { opacity: 1; }
+        .cell-filling { background-color: rgba(var(--primary-rgb), 0.1) !important; outline: 1px dashed var(--primary); }
 
         .selection-stats-bar {
             position: fixed; bottom: 100px; right: 40px;
@@ -281,31 +262,25 @@
         .client-chip:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
         .client-chip.active { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); box-shadow: 0 4px 10px rgba(var(--primary-rgb), 0.3); }
 
-        /* 🚨 新增：刪除按鈕樣式 */
         .btn-row-del { color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s; user-select: none; }
         .btn-row-del:hover { color: #FF3B30; transform: scale(1.3); }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
 
-<!-- 🔥 全域防抖計時器 -->
 <script>
     window.calcTimer1 = null;
     window.calcTimer2 = null;
-    window.calcTimer3 = null;
     window.filterTimer1 = null;
     window.checkMonthTimer = null;
     window.settleTimer = null;
     window.invFilterTimer = null;
-    window.bankFilterTimer = null;
 </script>
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
-<div id="bankTypeDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 120px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px;">
-    <div class="status-option" style="color:#00D26A; text-align:center; font-weight:800;" onclick="selectBankType('收入')">收入</div>
-    <div class="status-option" style="color:#FF3B30; text-align:center; font-weight:800;" onclick="selectBankType('支出')">支出</div>
-</div>
+<!-- 🚨 新增：主表客戶專用下拉選單 -->
+<div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
     <h2 style="color: var(--primary); font-weight: 900; font-size: 28px; margin-bottom: 10px;">⏳ 正在為您產生對帳單...</h2>
@@ -353,8 +328,7 @@
 <div id="client-filter-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 500px; width: 90%;">
         <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">👥 選擇結算客戶 (可多選)</h3>
-        <div id="client-chip-grid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 30px; max-height: 40vh; overflow-y: auto; padding: 10px;">
-        </div>
+        <div id="client-chip-grid" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 30px; max-height: 40vh; overflow-y: auto; padding: 10px;"></div>
         <div class="custom-modal-actions">
             <button class="custom-modal-btn btn-cancel" onclick="document.getElementById('client-filter-modal').classList.remove('active')">取消</button>
             <button class="custom-modal-btn btn-confirm" onclick="applyClientFilter()">確定篩選</button>
@@ -429,7 +403,7 @@
 
         <div class="search-group" id="quoteSearchGroup" style="display:none;">
             <input type="text" id="qC" placeholder="👤 客戶 (空格隔開)" oninput="runQuoteSearch()">
-            <input type="text" id="qM" placeholder="📅 報價月 (ex:05)" oninput="runQuoteSearch()">
+            <input type="text" id="qM" placeholder="📅 請款月 (ex:05)" oninput="runQuoteSearch()">
         </div>
 
         <div class="search-group" id="invoiceManageSearchGroup" style="display:none;">
@@ -439,11 +413,6 @@
             <input type="text" id="invSearchK" placeholder="🔍 發票號/客戶/統編" oninput="filterInvoiceTable()" style="width: 220px;">
         </div>
 
-        <div class="search-group" id="bankManageSearchGroup" style="display:none;">
-            <input type="text" id="bankSearchK" placeholder="🔍 搜尋摘要/備註" oninput="filterBankTable()" style="width: 180px;">
-            <button class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="setBankBalance()">💰 設定起始本金</button>
-        </div>
-        
         <div class="role-btn-group" id="roleBtns">
             <button class="role-btn active" onclick="setRole('公司', this)">公司</button>
             <button class="role-btn" onclick="setRole('老闆', this)">老闆</button>
@@ -545,12 +514,12 @@
         <!-- Slide 2: 月報統計 -->
         <div class="page-content"><div class="white-card"><div class="table-scroll"><table id="reportTable"><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>夥伴分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
 
-        <!-- Slide 3: 報價系統 -->
+        <!-- Slide 3: 請款系統 -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
-                <div class="quote-placeholder" id="quote-placeholder">🧾<br>請輸入搜尋條件產生報價單</div>
+                <div class="quote-placeholder" id="quote-placeholder">🧾<br>請輸入搜尋條件產生請款單</div>
                 <div id="quote-content" style="display: none; height: 100%; flex-direction: column;">
-                    <div class="inv-header"><h1>報價 / 對帳明細單</h1><div style="display: flex; align-items: center; gap: 20px;"><button id="exportPdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="downloadPDF()">📥 一鍵匯出 PDF</button><div id="inv-cust-info" style="font-weight:800; font-size:16px; color:var(--mid);"></div></div></div>
+                    <div class="inv-header"><h1>請款 / 對帳明細單</h1><div style="display: flex; align-items: center; gap: 20px;"><button id="exportPdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="downloadPDF()">📥 一鍵匯出 PDF</button><div id="inv-cust-info" style="font-weight:800; font-size:16px; color:var(--mid);"></div></div></div>
                     <div id="inv-list-wrapper"></div>
                     <div class="inv-footer"><div class="inv-summary-box"><div class="inv-summary-row"><span class="inv-summary-label">未稅總計</span><span class="inv-total-pre" id="inv-total-pre">$ 0</span></div><div class="inv-summary-row"><span class="inv-summary-label" style="color: #D32F2F;">應付總計 (含稅)</span><span class="inv-total-amt" id="inv-total-amt">$ 0</span></div></div></div>
                 </div>
@@ -635,66 +604,6 @@
             </div>
         </div>
 
-        <!-- Slide 6: 🏦 銀行帳本 -->
-        <div class="page-content">
-            <div class="white-card">
-                <div style="display: flex; justify-content: space-between; padding: 25px 30px; background: rgba(255,255,255,0.6); border-bottom: 1px solid rgba(0,0,0,0.05);">
-                    <div style="display: flex; gap: 30px;">
-                        <div>
-                            <div style="font-size: 12px; color: var(--light); font-weight: 800; margin-bottom: 5px;">本月總入帳</div>
-                            <div id="bank-total-in" style="font-size: 24px; font-weight: 900; color: #00D26A;">$ 0</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 12px; color: var(--light); font-weight: 800; margin-bottom: 5px;">本月總出帳</div>
-                            <div id="bank-total-out" style="font-size: 24px; font-weight: 900; color: #FF3B30;">$ 0</div>
-                        </div>
-                        <div style="border-left: 2px solid rgba(0,0,0,0.08); padding-left: 30px;">
-                            <div style="font-size: 12px; color: var(--light); font-weight: 800; margin-bottom: 5px;">本月結餘</div>
-                            <div id="bank-total-net" style="font-size: 24px; font-weight: 900; color: var(--primary);">+$ 0</div>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 12px; color: var(--light); font-weight: 800; margin-bottom: 5px;">帳戶總餘額 (自動計算)</div>
-                        <div id="bank-global-balance" style="font-size: 24px; font-weight: 900; color: #1D1D1F;">$ 0</div>
-                    </div>
-                </div>
-
-                <div class="month-nav-wrapper">
-                    <div class="month-nav">
-                        <button class="month-btn active" onclick="selectBankMonth('all', this)">全部月份</button>
-                        <button class="month-btn" onclick="selectBankMonth('01', this)">1月</button>
-                        <button class="month-btn" onclick="selectBankMonth('02', this)">2月</button>
-                        <button class="month-btn" onclick="selectBankMonth('03', this)">3月</button>
-                        <button class="month-btn" onclick="selectBankMonth('04', this)">4月</button>
-                        <button class="month-btn" onclick="selectBankMonth('05', this)">5月</button>
-                        <button class="month-btn" onclick="selectBankMonth('06', this)">6月</button>
-                        <button class="month-btn" onclick="selectBankMonth('07', this)">7月</button>
-                        <button class="month-btn" onclick="selectBankMonth('08', this)">8月</button>
-                        <button class="month-btn" onclick="selectBankMonth('09', this)">9月</button>
-                        <button class="month-btn" onclick="selectBankMonth('10', this)">10月</button>
-                        <button class="month-btn" onclick="selectBankMonth('11', this)">11月</button>
-                        <button class="month-btn" onclick="selectBankMonth('12', this)">12月</button>
-                    </div>
-                </div>
-                <div class="table-scroll">
-                    <table id="bankTable">
-                        <thead>
-                            <tr>
-                                <th style="width:25px"></th>
-                                <th style="display:none;">隱藏月份</th>
-                                <th style="width:120px">日期</th>
-                                <th style="width:160px">金額</th>
-                                <th style="width:100px">收 / 支</th>
-                                <th style="width:200px">項目 / 摘要</th>
-                                <th style="width:250px">備註</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bank-tb"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
     </div>
 </div>
 
@@ -707,10 +616,9 @@
         <div class="tab-item active" onclick="switchSlide(0, this)">案件明細</div>
         <div class="tab-item" onclick="switchSlide(1, this)">分潤結算</div>
         <div class="tab-item" onclick="switchSlide(2, this)">月報統計</div>
-        <div class="tab-item" onclick="switchSlide(3, this)">報價系統</div>
+        <div class="tab-item" onclick="switchSlide(3, this)">請款系統</div>
         <div class="tab-item" onclick="switchSlide(4, this)">發票紀錄</div>
         <div class="tab-item" onclick="switchSlide(5, this)">數據中心</div>
-        <div class="tab-item" onclick="switchSlide(6, this)">🏦 銀行帳本</div>
     </div>
     <div class="btn-group-right"><button class="sync-btn" style="color:var(--text-main)" onclick="exportData()">📤 匯出電腦備份</button></div>
 </div>
@@ -775,6 +683,11 @@ document.addEventListener('click', function(e) {
     
     if (!e.target.closest('#invVipDropdown') && (!e.target.id || !e.target.id.includes('c2') || !e.target.id.startsWith('inv_r'))) {
         let dd = document.getElementById('invVipDropdown');
+        if(dd) dd.style.display = 'none';
+    }
+
+    if (!e.target.closest('#mainVipDropdown') && (!e.target.id || !e.target.id.includes('c2') || !e.target.id.startsWith('r'))) {
+        let dd = document.getElementById('mainVipDropdown');
         if(dd) dd.style.display = 'none';
     }
 
@@ -885,7 +798,7 @@ function changeYear(y) {
     curY=y; localStorage.setItem('vB_Y',y); 
     invPrefixes = JSON.parse(localStorage.getItem(`vB_InvPrefixes_${curY}`)) || {};
     document.getElementById('yDisp').innerText=y; 
-    applyTheme(y); initTable(); initInvoiceTable(); initBankTable(); renderDashboard(); 
+    applyTheme(y); initTable(); initInvoiceTable(); renderDashboard(); 
 }
 
 function applyTheme(y) { const themes=['','theme-green','theme-blue','theme-red','theme-purple']; document.body.className=themes[parseInt(y)%themes.length]; }
@@ -901,7 +814,6 @@ function switchSlide(idx, el) {
     document.getElementById('settleSearchGroup').style.display = (idx === 1) ? 'flex' : 'none';
     document.getElementById('quoteSearchGroup').style.display = (idx === 3) ? 'flex' : 'none';
     document.getElementById('invoiceManageSearchGroup').style.display = (idx === 4) ? 'flex' : 'none';
-    document.getElementById('bankManageSearchGroup').style.display = (idx === 6) ? 'flex' : 'none';
     
     document.getElementById('roleBtns').style.display = (idx === 1) ? 'flex' : 'none';
     document.getElementById('settle-bar').style.display = (idx === 1) ? 'flex' : 'none';
@@ -912,7 +824,6 @@ function switchSlide(idx, el) {
         if(idx === 2) updateMonthlyReport();
         if(idx === 4) filterInvoiceTable();
         if(idx === 5) renderDashboard(); 
-        if(idx === 6) { filterBankTable(); updateBankDashboard(); }
     }, 100);
 }
 
@@ -1267,7 +1178,6 @@ function updateClientFilterBtnText() {
     }
 }
 
-// 🚨 新增：動態計算有打勾的總金額
 function calcSettleTotal() {
     let tot = 0;
     document.querySelectorAll('.settle-cb:checked').forEach(cb => {
@@ -1283,7 +1193,6 @@ function calcSettleTotal() {
     }
 }
 
-// 🚨 新增：全選 / 全不選功能
 function toggleAllSettle(el) {
     document.querySelectorAll('.settle-cb').forEach(cb => cb.checked = el.checked);
     calcSettleTotal();
@@ -1298,7 +1207,6 @@ function runSettleSearch() {
         let smRaw = document.getElementById('ssM').value.trim();
         let sm = smRaw ? smRaw.replace(/\D/g, '').padStart(2, '0') : '00';
         
-        // 🚨 讀取新的客戶搜尋框
         let scRaw = document.getElementById('ssC');
         let sc = scRaw ? scRaw.value.trim().toLowerCase() : '';
         
@@ -1328,8 +1236,6 @@ function runSettleSearch() {
             let isMonthMatch = (sm === '00' || rowMonth === sm);
             let cName = d[2] ? d[2].trim() : "";
             let isClientMatch = selectedSettleClients.size === 0 || selectedSettleClients.has(cName);
-            
-            // 🚨 新增客戶文字搜尋條件
             let isTextClientMatch = (sc === '') || cName.toLowerCase().includes(sc);
 
             if(hasData && matchStatus && isMonthMatch && isClientMatch && isTextClientMatch) {
@@ -1346,7 +1252,6 @@ function runSettleSearch() {
 
         matched.forEach(d => {
             let rowVal = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; 
-            // 🚨 新增核取方塊並綁定計算事件
             tb.innerHTML += `<tr class="settle-data-row">
                 <td class="calc-cell" style="padding:10px; text-align:center;"><input type="checkbox" class="settle-cb" data-val="${rowVal}" checked onchange="calcSettleTotal()"></td>
                 <td class="calc-cell" style="padding:10px;">${d[0]||''}</td>
@@ -1358,7 +1263,6 @@ function runSettleSearch() {
             </tr>`;
         });
         
-        // 🚨 重置全選與重新計算
         let selectAllCb = document.getElementById('settleSelectAll');
         if(selectAllCb) selectAllCb.checked = true;
         calcSettleTotal();
@@ -1387,7 +1291,6 @@ function downloadSettlePDF() {
     printTb.innerHTML = '';
     let totalSum = 0;
 
-    // 🚨 直接抓畫面上「有打勾」的列寫入 PDF
     let checkedRows = document.querySelectorAll('.settle-data-row');
     checkedRows.forEach(row => {
         let cb = row.querySelector('.settle-cb');
@@ -1476,7 +1379,7 @@ function runQuoteSearch() {
 function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
     btn.style.display = 'none'; let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
-    let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_報價單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
+    let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
     let oh = element.style.height, ow = wrapper.style.overflow; element.style.height = 'auto'; wrapper.style.overflow = 'visible';
     html2pdf().set(opt).from(element).save().then(() => { btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; });
 }
@@ -1492,6 +1395,8 @@ function initTable() {
 function setRole(r, el) { window.curRole = r; document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active')); el.classList.add('active'); runSettleSearch(); }
 
 let dragSrcRow = null;
+let fStart = null, fCur = null, fCol = null;
+
 function createRow(r) {
     let tr = document.createElement('tr'); tr.id = `r${r}`;
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
@@ -1501,8 +1406,17 @@ function createRow(r) {
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
-        if(c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
-        else if(c===4 || c===6) {
+        
+        if (c===1) {
+            // 🚨 新增：編號欄位的下拉遞增按鈕
+            td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
+        }
+        else if (c===2) {
+            // 🚨 新增：客戶欄位專屬下拉選單
+            td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
+        }
+        else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
+        else if (c===4 || c===6) {
             let ops = (opts[c]||[]).map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
             td.innerHTML = `<select id="r${r}c${c}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${ops}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
         } else {
@@ -1518,6 +1432,135 @@ function createRow(r) {
     tr.appendChild(delTd);
     
     return tr;
+}
+
+// 🚨 新增：主表明細的下拉客戶選單
+let currentMainRow = null;
+function openMainVipMenu(el, r) {
+    currentMainRow = r;
+    let rect = el.getBoundingClientRect();
+    let dd = document.getElementById('mainVipDropdown');
+    dd.style.top = (rect.bottom + 5) + 'px';
+    dd.style.left = rect.left + 'px';
+    dd.style.width = Math.max(200, rect.width) + 'px';
+    dd.style.display = 'flex';
+    renderMainVipMenu(el.value);
+}
+
+function renderMainVipMenu(filterStr = "") {
+    let dd = document.getElementById('mainVipDropdown');
+    dd.innerHTML = '';
+    let f = filterStr.trim().toLowerCase();
+    let keys = vipClients;
+    if (f) keys = keys.filter(k => k.toLowerCase().includes(f));
+    
+    if (keys.length === 0) {
+        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手動輸入)</span></div>`;
+    } else {
+        keys.sort().forEach(k => {
+            let div = document.createElement('div');
+            div.className = 'status-option';
+            div.innerHTML = `<div style="font-weight:900; color:var(--primary); font-size:14px; margin-bottom:2px;">${k}</div>`;
+            div.style.textAlign = "left";
+            div.style.padding = "8px 14px";
+            div.onmousedown = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                selectMainVip(k);
+            };
+            dd.appendChild(div);
+        });
+    }
+    let addBtn = document.createElement('div');
+    addBtn.style = "margin-top: 5px; padding: 8px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 12px; font-weight: 800; color: var(--primary); text-align: center; cursor: pointer;";
+    addBtn.innerText = "+ 新增/管理客戶";
+    addBtn.onmousedown = (e) => { 
+        e.preventDefault(); e.stopPropagation(); 
+        dd.style.display='none'; 
+        manageVip('add'); 
+    };
+    dd.appendChild(addBtn);
+}
+
+function filterMainVipMenu(val) {
+    let dd = document.getElementById('mainVipDropdown');
+    if (dd.style.display === 'flex') renderMainVipMenu(val);
+}
+
+function selectMainVip(k) {
+    if (currentMainRow === null) return;
+    document.getElementById(`r${currentMainRow}c2`).value = k;
+    calc(currentMainRow, 2, true);
+    document.getElementById('mainVipDropdown').style.display = 'none';
+}
+
+// 🚨 新增：自動遞增編號拖曳邏輯
+function startFill(e, r, c) {
+    e.preventDefault(); e.stopPropagation();
+    fStart = r; fCur = r; fCol = c;
+    document.addEventListener('mousemove', onFillMove);
+    document.addEventListener('mouseup', onFillEnd);
+    highlightFill();
+}
+
+function onFillMove(e) {
+    let el = document.elementFromPoint(e.clientX, e.clientY);
+    if (el) {
+        let td = el.closest('td');
+        if (td) {
+            let tr = td.closest('tr');
+            if (tr && tr.id.startsWith('r')) {
+                let r = parseInt(tr.id.replace('r', ''));
+                if (r >= fStart) {
+                    fCur = r;
+                    highlightFill();
+                }
+            }
+        }
+    }
+}
+
+function highlightFill() {
+    document.querySelectorAll('.cell-filling').forEach(td => td.classList.remove('cell-filling'));
+    for(let i = fStart; i <= fCur; i++) {
+        let cell = document.getElementById(`r${i}c${fCol}`);
+        if(cell) cell.closest('td').classList.add('cell-filling');
+    }
+}
+
+function onFillEnd(e) {
+    document.removeEventListener('mousemove', onFillMove);
+    document.removeEventListener('mouseup', onFillEnd);
+    document.querySelectorAll('.cell-filling').forEach(td => td.classList.remove('cell-filling'));
+    
+    if (fStart !== null && fCur > fStart) {
+        let startVal = document.getElementById(`r${fStart}c${fCol}`).value;
+        let match = startVal.match(/^(.*?)(\d+)$/);
+        let prefix = "", num = 0, pad = 0;
+        if (match) {
+            prefix = match[1];
+            pad = match[2].length;
+            num = parseInt(match[2], 10);
+        } else if (/^\d+$/.test(startVal)) {
+            pad = startVal.length;
+            num = parseInt(startVal, 10);
+        } else {
+            prefix = startVal;
+        }
+        
+        for(let i = fStart + 1; i <= fCur; i++) {
+            let nextVal = startVal;
+            if (match || /^\d+$/.test(startVal)) {
+                num++;
+                nextVal = prefix + String(num).padStart(pad, '0');
+            }
+            document.getElementById(`r${i}c${fCol}`).value = nextVal;
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+            d[fCol] = nextVal;
+            localStorage.setItem(`d_${curY}_${i}`, JSON.stringify(d));
+        }
+        calc(fCur, fCol, true);
+    }
+    fStart = null; fCur = null; fCol = null;
 }
 
 async function deleteProjectRow(r) {
@@ -1775,196 +1818,9 @@ function filterInvoiceTable() {
     }, 250);
 }
 
-let currentBankMonthFilter = 'all';
-
-function initBankTable() {
-    const b = document.getElementById('bank-tb'); b.innerHTML = ''; 
-    let count = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30; 
-    for(let r=0; r<count; r++) { b.appendChild(createBankRow(r)); calcBank(r, 0, false); }
-    let ec = 0; for(let i=count-1; i>=0; i--) { let d = JSON.parse(localStorage.getItem(`bank_${curY}_${i}`)) || {}; if (!d[1] && !d[2] && !d[3] && !d[4] && !d[5]) ec++; else break; }
-    if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createBankRow(count++)); } localStorage.setItem(`bankCount_${curY}`, count); }
-    flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" });
-    updateBankDashboard();
-}
-
-function toggleBankType(r) {
-    let hiddenInput = document.getElementById(`bank_r${r}c3`);
-    if (!hiddenInput) return;
-    let current = hiddenInput.value;
-    let next = current === '收入' ? '支出' : (current === '支出' ? '' : '收入');
-    hiddenInput.value = next;
-    calcBank(r, 3, true);
-}
-
-function createBankRow(r) {
-    let tr = document.createElement('tr'); tr.id = `bank_r${r}`;
-    tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
-    let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
-    tr.appendChild(hTd);
-    let saved = JSON.parse(localStorage.getItem(`bank_${curY}_${r}`)) || {};
-    
-    for(let c=0; c<6; c++) {
-        let td = document.createElement('td'), val = saved[c] || '';
-        td.className = 'calc-cell'; 
-        
-        if(c===0) { 
-            td.style.display = 'none'; 
-            td.innerHTML = `<input type="hidden" id="bank_r${r}c${c}" value="${val}">`; 
-        } 
-        else if (c===1) { 
-            td.innerHTML = `<input type="text" id="bank_r${r}c${c}" value="${val}" class="custom-date-picker" placeholder="選擇日期" onchange="calcBank(${r},${c})">`; 
-        } 
-        else if (c===2) {
-            let typeVal = saved[3] || '';
-            let amtColor = typeVal === '收入' ? '#00D26A' : (typeVal === '支出' ? '#FF3B30' : 'var(--primary)');
-            td.innerHTML = `<input type="text" id="bank_r${r}c${c}" value="${val}" placeholder="0" class="bank-amount-input" style="color: ${amtColor};" oninput="calcBank(${r},${c})" onblur="formatBankAmount(${r})">`;
-        }
-        else if (c===3) {
-            let colorClass = val === '收入' ? 'type-income' : (val === '支出' ? 'type-expense' : 'type-empty');
-            let dispVal = val || '--';
-            td.innerHTML = `<div id="bank_r${r}c${c}_trig" class="bank-type-toggle ${colorClass}" onclick="toggleBankType(${r})">${dispVal}</div><input type="hidden" id="bank_r${r}c${c}" value="${val}">`;
-        }
-        else { 
-            td.innerHTML = `<input type="text" id="bank_r${r}c${c}" value="${val}" oninput="calcBank(${r},${c})">`; 
-        }
-        tr.appendChild(td);
-    }
-    return tr;
-}
-
-function selectBankMonth(m, el) { 
-    currentBankMonthFilter = m; 
-    let navs = el.parentElement.querySelectorAll('.month-btn');
-    navs.forEach(b => b.classList.remove('active')); el.classList.add('active'); 
-    filterBankTable(); 
-    updateBankDashboard();
-}
-
-function calcBank(r, c, save=true) {
-    const g = (col) => { let el = document.getElementById(`bank_r${r}c${col}`); return el ? el.value : ""; };
-    const s = (col, val) => { if(document.getElementById(`bank_r${r}c${col}`)) document.getElementById(`bank_r${r}c${col}`).value = val; };
-    
-    let dateStr = g(1);
-    if(dateStr) {
-        let mMatch = dateStr.match(/(?:-|^)(\d{1,2})(?:-|$)/);
-        if(mMatch) s(0, mMatch[1].padStart(2, '0'));
-    } else {
-        s(0, "");
-    }
-    
-    if(c === 3 || c === 2) {
-        let typeVal = g(3);
-        let trig = document.getElementById(`bank_r${r}c3_trig`);
-        let amtInput = document.getElementById(`bank_r${r}c2`);
-        if(trig) {
-            trig.innerText = typeVal || '--';
-            trig.className = "bank-type-toggle " + (typeVal === '收入' ? 'type-income' : (typeVal === '支出' ? 'type-expense' : 'type-empty'));
-        }
-        if(amtInput) {
-            amtInput.style.color = (typeVal === '收入') ? '#00D26A' : ((typeVal === '支出') ? '#FF3B30' : 'var(--primary)');
-        }
-    }
-
-    if(save) {
-        let rc = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30;
-        let d = {}; for(let i=0; i<6; i++) d[i] = g(i); 
-        localStorage.setItem(`bank_${curY}_${r}`, JSON.stringify(d)); 
-        
-        if(window.calcTimer3) clearTimeout(window.calcTimer3);
-        window.calcTimer3 = setTimeout(() => {
-            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = JSON.parse(localStorage.getItem(`bank_${curY}_${i}`))||{}; if(!dr[1]&&!dr[2]&&!dr[3]&&!dr[4]&&!dr[5]) ec++; else break; }
-            if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('bank-tb').appendChild(createBankRow(rc++)); } localStorage.setItem(`bankCount_${curY}`, rc); flatpickr(".custom-date-picker", { dateFormat: "Y-m-d", disableMobile: "true" }); }
-            
-            filterBankTable();
-            updateBankDashboard();
-        }, 400);
-    }
-}
-
-function formatBankAmount(r) {
-    let el = document.getElementById(`bank_r${r}c2`);
-    if(el && el.value) {
-        let num = parseFloat(el.value.replace(/,/g, ''));
-        if(!isNaN(num)) {
-            el.value = num.toLocaleString();
-            calcBank(r, 2, true);
-        }
-    }
-}
-
-function filterBankTable() {
-    clearTimeout(window.bankFilterTimer);
-    window.bankFilterTimer = setTimeout(() => {
-        let sk = document.getElementById('bankSearchK').value.trim().toLowerCase();
-        let rc = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30;
-        let terms = sk ? sk.split(/[\s,，]+/) : [];
-        let emptyVisible = 0; 
-        
-        for(let r=0; r<rc; r++) {
-            let tr = document.getElementById(`bank_r${r}`); if(!tr) continue;
-            let d = JSON.parse(localStorage.getItem(`bank_${curY}_${r}`)) || {};
-            let matchK = terms.length === 0 ? true : terms.some(term => (d[4]||"").toLowerCase().includes(term) || (d[5]||"").toLowerCase().includes(term));
-            let matchM = (currentBankMonthFilter === 'all') || (d[0] === currentBankMonthFilter) || (!d[0]);
-            let hasData = !!d[1] || !!d[2] || !!d[3] || !!d[4] || !!d[5];
-            
-            if (!hasData) { if (sk === "" && emptyVisible < 10) { tr.style.display = ''; emptyVisible++; } else tr.style.display = 'none'; } 
-            else { if (matchK && matchM) tr.style.display = ''; else tr.style.display = 'none'; }
-        }
-    }, 250);
-}
-
-function updateBankDashboard() {
-    let rc = parseInt(localStorage.getItem(`bankCount_${curY}`)) || 30;
-    
-    let monthIn = 0;
-    let monthOut = 0;
-    let yearIn = 0;
-    let yearOut = 0;
-    
-    for(let r=0; r<rc; r++) {
-        let d = JSON.parse(localStorage.getItem(`bank_${curY}_${r}`)) || {};
-        let amt = parseFloat(String(d[2]).replace(/,/g, '')) || 0;
-        let type = d[3];
-        
-        if(type && amt) {
-            if(type === '收入') {
-                yearIn += amt;
-                if (currentBankMonthFilter === 'all' || d[0] === currentBankMonthFilter) monthIn += amt;
-            } else if(type === '支出') {
-                yearOut += amt;
-                if (currentBankMonthFilter === 'all' || d[0] === currentBankMonthFilter) monthOut += amt;
-            }
-        }
-    }
-    
-    let monthNet = monthIn - monthOut;
-    
-    document.getElementById('bank-total-in').innerText = `$ ${monthIn.toLocaleString()}`;
-    document.getElementById('bank-total-out').innerText = `$ ${monthOut.toLocaleString()}`;
-    
-    let netEl = document.getElementById('bank-total-net');
-    netEl.innerText = `${monthNet >= 0 ? '+' : '-'}$ ${Math.abs(monthNet).toLocaleString()}`;
-    netEl.style.color = monthNet >= 0 ? 'var(--primary)' : '#FF3B30';
-
-    let initialBalance = parseFloat(localStorage.getItem(`bankInitialBalance_${curY}`)) || 0;
-    let globalBalance = initialBalance + yearIn - yearOut;
-    document.getElementById('bank-global-balance').innerText = `$ ${globalBalance.toLocaleString()}`;
-}
-
-async function setBankBalance() {
-    let current = localStorage.getItem(`bankInitialBalance_${curY}`) || "0";
-    let res = await uiPrompt(`請輸入 ${curY} 年的「起始帳戶本金」：\n(目前設定為: $${parseFloat(current).toLocaleString()})\n\n系統將會自動以這筆本金，加上所有的收入並扣除支出，計算出現有總餘額。`, current);
-    if(res !== null) {
-        let num = parseFloat(res.replace(/,/g, '')) || 0;
-        localStorage.setItem(`bankInitialBalance_${curY}`, num);
-        updateBankDashboard();
-        await uiAlert(`✅ 起始本金已設定為 $${num.toLocaleString()}，總餘額已自動更新！`);
-    }
-}
-
 let isSelecting = false; let selectedCells = new Set(); let dragStartCell = null;
 document.addEventListener('mousedown', function(e) {
-    if (e.target.tagName === 'INPUT' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.closest('.drag-handle')) return;
+    if (e.target.tagName === 'INPUT' || e.target.type === 'checkbox' || e.target.tagName === 'SELECT' || e.target.closest('.drag-handle') || e.target.classList.contains('fill-handle')) return;
     let td = e.target.closest('td.calc-cell'); 
     if (td && e.button === 0) { isSelecting = true; dragStartCell = td; clearSelection(); selectCell(td); } 
     else { if(!e.target.closest('.selection-stats-bar')) clearSelection(); }
@@ -2000,7 +1856,6 @@ function handleDrop(e) {
         if (e.clientY - o > 0) ti++; if (si < ti) ti--; 
         
         if (tBody.id === 'inv-tb') reorderData(si, ti, 'inv');
-        else if (tBody.id === 'bank-tb') reorderData(si, ti, 'bank');
         else reorderData(si, ti, 'main');
     } return false; 
 }
@@ -2011,7 +1866,6 @@ function reorderData(si, ti, type = 'main') {
     let prefix = '', countKey = '', rc = 0;
     
     if(type === 'inv') { prefix = 'inv_'; countKey = `invCount_${curY}`; rc = parseInt(localStorage.getItem(countKey)) || 30; }
-    else if(type === 'bank') { prefix = 'bank_'; countKey = `bankCount_${curY}`; rc = parseInt(localStorage.getItem(countKey)) || 30; }
     else { prefix = 'd_'; countKey = `rowCount_${curY}`; rc = parseInt(localStorage.getItem(countKey)) || 65; }
 
     let all = [];
@@ -2020,7 +1874,6 @@ function reorderData(si, ti, type = 'main') {
     for (let i = 0; i < rc; i++) localStorage.setItem(`${prefix}${curY}_${i}`, JSON.stringify(all[i]));
     
     if (type === 'inv') { initInvoiceTable(); filterInvoiceTable(); } 
-    else if (type === 'bank') { initBankTable(); filterBankTable(); }
     else { initTable(); filterTable(); }
 }
 
@@ -2067,7 +1920,14 @@ function calc(r, c, save=true) {
     let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
     s(10, tax); s(11, total); s(13, rem); 
     s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
-    let row = document.getElementById(`r${r}`); if (row) { if (net > 0 && rem <= 0) row.classList.add('is-settled'); else row.classList.remove('is-settled'); }
+    
+    // 🚨 判斷：免費專案或已結清反灰
+    let row = document.getElementById(`r${r}`); 
+    if (row) { 
+        let isFree = (String(g(9)).trim() === '0'); 
+        if ((net > 0 && rem <= 0) || isFree) row.classList.add('is-settled'); 
+        else row.classList.remove('is-settled'); 
+    }
     
     if(save) {
         localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)}));
@@ -2094,8 +1954,7 @@ document.addEventListener('keydown', function(e) {
     if (!e.target.matches('input[type="text"], select, input[type="checkbox"]')) return;
     let id = e.target.id;
     let isInv = id.startsWith('inv_r');
-    let isBank = id.startsWith('bank_r');
-    let prefix = isInv ? 'inv_r' : (isBank ? 'bank_r' : 'r');
+    let prefix = isInv ? 'inv_r' : 'r';
     
     if (!id.startsWith(prefix) || !id.includes('c')) return;
     let parts = id.replace(prefix, '').split('c'), r = parseInt(parts[0]), c = parseInt(parts[1]), nextId = null;
@@ -2139,7 +1998,6 @@ window.onload = () => {
     document.getElementById('yDisp').innerText = curY; 
     initTable(); 
     initInvoiceTable();
-    initBankTable();
     renderYearList(); 
     let activeTab = document.querySelector('.tab-item.active');
     if (activeTab && activeTab.innerText.includes('數據中心')) renderDashboard();
@@ -2197,7 +2055,7 @@ window.onload = () => {
             let fullData = {};
             for(let i=0; i<localStorage.length; i++){
                 let k = localStorage.key(i);
-                if(k && (k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_') || k.startsWith('bank_') || k.startsWith('bankCount_'))) {
+                if(k && (k.startsWith('d_') || k.startsWith('vB_') || k.startsWith('rowCount_') || k.startsWith('inv_') || k.startsWith('invCount_'))) {
                     fullData[k] = localStorage.getItem(k);
                 }
             }
