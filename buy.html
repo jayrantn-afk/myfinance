@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顧客預約資料填寫</title>
+    <style>
+        /* 日系極簡風視覺設計 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #fafafa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .form-card {
+            background: #fff;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #eee;
+            box-sizing: border-box;
+        }
+        h2 {
+            font-size: 18px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-top: 0;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 10px 0;
+            border: none;
+            border-bottom: 1px solid #ccc;
+            outline: none;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+            background: transparent;
+        }
+        input:focus {
+            border-bottom-color: #000;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #111;
+            color: #fff;
+            border: none;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            letter-spacing: 2px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #333;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 錯誤與成功訊息的樣式 */
+        [data-fs-error] {
+            color: #d9383a;
+            font-size: 11px;
+            display: block;
+            margin-top: 4px;
+        }
+        .status-message {
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        /* 隱藏預設沒發生的狀態 */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-card">
+    <div data-fs-success class="status-message hidden">
+        <p>✓ 感謝您的填寫</p>
+        <p style="color: #888; font-size: 12px;">我們已收到您的預約資訊。</p>
+    </div>
+
+    <div data-fs-error class="status-message hidden" style="color: #d9383a; margin-bottom: 20px;">
+        提交失敗，請檢查欄位或稍後再試。
+    </div>
+
+    <form id="customerForm">
+        <h2>CLIENT INFORMATION</h2>
+        
+        <div class="input-group">
+            <label for="name">姓名 / NAME</label>
+            <input type="text" id="name" name="name" required data-fs-field>
+            <span data-fs-error="name"></span>
+        </div>
+        
+        <div class="input-group">
+            <label for="phone">電話 / PHONE</label>
+            <input type="tel" id="phone" name="phone" required data-fs-field>
+            <span data-fs-error="phone"></span>
+        </div>
+
+        <div class="input-group">
+            <label for="note">備註 / NOTE</label>
+            <input type="text" id="note" name="note" data-fs-field>
+            <span data-fs-error="note"></span>
+        </div>
+        
+        <button type="submit" data-fs-submit-btn>SUBMIT</button>
+    </form>
+</div>
+
+<script>
+    window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
+    // 這裡已自動帶入你的 Formspree 專屬表單 ID：mvzjvjby
+    formspree('initForm', { formElement: '#customerForm', formId: 'mvzjvjby' });
+</script>
+<script src="https://unpkg.com/@formspree/ajax@1" defer></script>
+
+</body>
+</html>
