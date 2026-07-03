@@ -22,7 +22,7 @@
             background: #fff;
             padding: 40px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             border: 1px solid #eee;
             box-sizing: border-box;
         }
@@ -42,9 +42,10 @@
             display: block;
             font-size: 12px;
             color: #888;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
         }
-        input {
+        input[type="text"], input[type="tel"] {
             width: 100%;
             padding: 10px 0;
             border: none;
@@ -58,27 +59,56 @@
         input:focus {
             border-bottom-color: #000;
         }
-        button {
+        
+        /* 數量選擇按鈕樣式 */
+        .quantity-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 5px;
+        }
+        .quantity-btn {
+            padding: 10px;
+            background: #fff;
+            color: #333;
+            border: 1px solid #ccc;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .quantity-btn:hover {
+            border-color: #000;
+        }
+        /* 被選中時的黑底白字樣式 */
+        .quantity-btn.active {
+            background: #111;
+            color: #fff;
+            border-color: #111;
+        }
+
+        /* 提交按鈕 */
+        .submit-btn {
             width: 100%;
             padding: 12px;
             background: #111;
             color: #fff;
             border: none;
-            margin-top: 10px;
+            margin-top: 15px;
             cursor: pointer;
             font-size: 14px;
             letter-spacing: 2px;
             transition: background 0.2s;
         }
-        button:hover {
+        .submit-btn:hover {
             background: #333;
         }
-        button:disabled {
+        .submit-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
 
-        /* 錯誤與成功訊息的樣式 */
+        /* 錯誤與成功訊息 */
         [data-fs-error] {
             color: #d9383a;
             font-size: 11px;
@@ -90,7 +120,6 @@
             font-size: 14px;
             line-height: 1.6;
         }
-        /* 隱藏預設沒發生的狀態 */
         .hidden {
             display: none;
         }
@@ -99,43 +128,81 @@
 <body>
 
 <div class="form-card">
+    <!-- 成功提交後顯示的區塊 -->
     <div data-fs-success class="status-message hidden">
         <p>✓ 感謝您的填寫</p>
         <p style="color: #888; font-size: 12px;">我們已收到您的預約資訊。</p>
     </div>
 
+    <!-- 系統發生錯誤時顯示的區塊 -->
     <div data-fs-error class="status-message hidden" style="color: #d9383a; margin-bottom: 20px;">
         提交失敗，請檢查欄位或稍後再試。
     </div>
 
+    <!-- 表單本體 -->
     <form id="customerForm">
         <h2>CLIENT INFORMATION</h2>
         
+        <!-- 姓名防呆 -->
         <div class="input-group">
-            <label for="name">姓名 / NAME</label>
-            <input type="text" id="name" name="name" required data-fs-field>
+            <label for="name">姓名 (暱稱) / NAME</label>
+            <input type="text" id="name" name="name" placeholder="請輸入姓名或暱稱" required data-fs-field>
             <span data-fs-error="name"></span>
         </div>
         
+        <!-- 手機 10 碼防呆 (使用 pattern 限制只能數字且剛好 10 碼) -->
         <div class="input-group">
-            <label for="phone">電話 / PHONE</label>
-            <input type="tel" id="phone" name="phone" required data-fs-field>
+            <label for="phone">手機號碼 / PHONE</label>
+            <input type="tel" id="phone" name="phone" placeholder="範例：0912345678" required pattern="\d{10}" title="請輸入完整 10 位數字的手機號碼" data-fs-field>
             <span data-fs-error="phone"></span>
         </div>
 
+        <!-- 預購數量按鈕區塊 -->
         <div class="input-group">
-            <label for="note">備註 / NOTE</label>
-            <input type="text" id="note" name="note" data-fs-field>
+            <label>預購 BAL 天然配方 / QUANTITY</label>
+            <!-- 隱藏的 input，用來偷偷把按鈕選的值帶入 Formspree 後台 -->
+            <input type="hidden" id="selected_quantity" name="預購數量" value="1組" required>
+            
+            <div class="quantity-options">
+                <div class="quantity-btn active" onclick="selectQuantity('1組')">1組</div>
+                <div class="quantity-btn" onclick="selectQuantity('2組')">2組</div>
+                <div class="quantity-btn" onclick="selectQuantity('3組')">3組</div>
+                <div class="quantity-btn" onclick="selectQuantity('4組')">4組</div>
+                <div class="quantity-btn" onclick="selectQuantity('5組')">5組</div>
+                <div class="quantity-btn" onclick="selectQuantity('5組以上')">5組以上</div>
+            </div>
+        </div>
+
+        <!-- 備註欄位 -->
+        <div class="input-group">
+            <label for="note">填寫5組以上的組數 / 備註</label>
+            <input type="text" id="note" name="note" placeholder="選5組以上請在此註明數量，或輸入其他備註" data-fs-field>
             <span data-fs-error="note"></span>
         </div>
         
-        <button type="submit" data-fs-submit-btn>SUBMIT</button>
+        <button type="submit" class="submit-btn" data-fs-submit-btn>SUBMIT</button>
     </form>
 </div>
 
 <script>
+    // 處理數量按鈕選取的 JavaScript 邏輯
+    function selectQuantity(amount) {
+        // 更新隱藏的 input 欄位數值
+        document.getElementById('selected_quantity').value = amount;
+        
+        // 切換按鈕的視覺外觀 (黑底白字)
+        const buttons = document.querySelectorAll('.quantity-btn');
+        buttons.forEach(btn => {
+            if (btn.textContent === amount) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    // Formspree 官方 Ajax 腳本與初始化
     window.formspree = window.formspree || function () { (formspree.q = formspree.q || []).push(arguments); };
-    // 這裡已自動帶入你的 Formspree 專屬表單 ID：mvzjvjby
     formspree('initForm', { formElement: '#customerForm', formId: 'mvzjvjby' });
 </script>
 <script src="https://unpkg.com/@formspree/ajax@1" defer></script>
