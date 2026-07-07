@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.70</title>
+    <title>杰冉宇宙營收表 v01.60</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -180,6 +180,73 @@
         .btn-firebase { color: #FF9500; border: 1px solid rgba(255, 149, 0, 0.3); }
         .btn-firebase:hover { background: rgba(255, 149, 0, 0.1); }
 
+        #invoice-view { width: 100%; height: 100%; background: transparent; display: flex; padding: 25px 40px; box-sizing: border-box; flex-direction: column; overflow: hidden; }
+        
+        .quote-placeholder { 
+            flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; 
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.03) 0%, rgba(var(--primary-rgb), 0.08) 100%);
+            border: 2px dashed rgba(var(--primary-rgb), 0.2); border-radius: 24px; 
+            margin: 20px; transition: all 0.3s ease;
+        }
+        .quote-placeholder:hover {
+            border-color: rgba(var(--primary-rgb), 0.4);
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--primary-rgb), 0.1) 100%);
+        }
+        .quote-placeholder-icon {
+            font-size: 72px; margin-bottom: 20px; opacity: 0.9;
+            filter: drop-shadow(0 15px 25px rgba(var(--primary-rgb), 0.2));
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+        .quote-placeholder-title { font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px; letter-spacing: 1px; }
+        .quote-placeholder-desc { font-size: 14px; font-weight: 600; color: var(--mid); }
+        @keyframes floatIcon { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+
+        .inv-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 2px solid rgba(var(--primary-rgb), 0.2); padding-bottom: 10px; }
+        .inv-header h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 2px; color: var(--text-main); }
+        #inv-list-wrapper { flex: 1; column-count: 2; column-gap: 50px; column-rule: 1px solid rgba(0,0,0,0.05); overflow-y: auto; padding-right: 10px; }
+        .inv-item { break-inside: avoid; width: 100%; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); padding: 12px 15px 12px 0; box-sizing: border-box; }
+        .inv-col-id { width: 35px; color: var(--light); font-size: 12px; text-align: center; font-weight: 700; flex-shrink: 0; }
+        .inv-col-info { flex: 1; display: flex; flex-direction: column; padding: 0 10px; overflow: hidden; }
+        .inv-col-name { font-weight: 800; color: var(--text-main); font-size: 15px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .inv-col-prices { display: flex; flex-direction: row; gap: 15px; font-size: 12px; font-weight: 600; color: var(--mid); white-space: nowrap; }
+        .price-tag { color: var(--light); font-weight: 400; margin-right: 3px; }
+        .inv-col-total { width: 90px; text-align: right; font-weight: 900; color: var(--primary); font-size: 16px; flex-shrink: 0; padding-right: 10px; }
+        .inv-footer { margin-top: 30px; padding-top: 20px; display: flex; justify-content: flex-end; align-items: flex-end; border-top: 1px solid rgba(0,0,0,0.08); break-inside: avoid; }
+        .inv-summary-box { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .inv-summary-row { display: flex; align-items: baseline; justify-content: flex-end; width: 100%; gap: 20px; }
+        .inv-summary-label { font-size: 14px; font-weight: 700; color: var(--light); letter-spacing: 1px; text-transform: uppercase; }
+        .inv-total-pre { font-size: 32px; font-weight: 900; color: var(--mid); padding-right: 10px; width: 220px; text-align: right; }
+        .inv-total-amt { font-size: 32px; font-weight: 900; color: #D32F2F; line-height: 1; padding-right: 10px; width: 220px; text-align: right; }
+
+        .dashboard-container { padding: 30px 40px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
+        .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
+        .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
+        .db-controls { display: flex; gap: 15px; align-items: center; }
+        
+        .db-custom-select-container { position: relative; user-select: none; z-index: 1000; width: auto; display: inline-block; }
+        .db-custom-trigger { background: #FFFFFF; border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; min-width: 140px; white-space: nowrap; gap: 15px; }
+        .db-custom-trigger:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: rgba(var(--primary-rgb), 0.5); }
+        .db-custom-menu { position: absolute; top: 110%; left: 0; background: #FFFFFF; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); width: 100%; display: none; flex-direction: column; padding: 4px; max-height: 300px; overflow-y: auto; box-sizing: border-box;}
+        .db-custom-menu.active { display: flex; }
+        .db-custom-option { padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: 0.2s; text-align: center; }
+        .db-custom-option:hover { background: rgba(var(--primary-rgb), 0.05); color: var(--primary); }
+        .db-custom-option.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0; }
+        .kpi-card { background: #FFFFFF; border-radius: 16px; padding: 25px 20px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
+        .kpi-title { font-size: 14px; color: #6E6E73; font-weight: 800; margin-bottom: 12px; }
+        .kpi-value { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-shrink: 0; min-height: 350px; padding-bottom: 30px; }
+        .chart-card { background: #FFFFFF; border-radius: 16px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
+        .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
+
+        #barChart { cursor: default; transition: cursor 0.2s; }
+
         .login-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(244, 247, 246, 0.9); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
         .login-card { background: #FFF; padding: 40px 30px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); width: 90%; max-width: 360px; text-align: center; border: 1px solid var(--glass-border); }
         
@@ -215,7 +282,6 @@
         .btn-row-del { color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s; user-select: none; }
         .btn-row-del:hover { color: #FF3B30; transform: scale(1.3); }
 
-        /* 🚨 月度果凍方框 */
         .report-card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -278,46 +344,21 @@
             border-top-color: rgba(0,0,0,0.1);
             pointer-events: auto;
         }
-        .jelly-stat { display: flex; flex-direction: column; gap: 4px; }
-        .jelly-label { font-size: 11px; font-weight: 800; color: var(--light); text-transform: uppercase; }
-        .jelly-val { font-size: 15px; font-weight: 800; color: var(--text-main); }
-
-        /* 🚨 升級：請款單精美 Neumorphism 風格卡片化 */
-        #invoice-view { 
-            width: 100%; height: 100%; box-sizing: border-box; flex-direction: column; overflow: hidden; 
-            background: #F4F7F9; /* 淺灰藍背景 */
-            border-radius: 30px; /* 超大圓角 */
-            padding: 40px;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8); /* 微微內發光 */
-            border: none;
+        .jelly-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
-        .quote-placeholder { 
-            flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; 
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.02) 0%, rgba(var(--primary-rgb), 0.05) 100%);
-            border: 2px dashed rgba(var(--primary-rgb), 0.2); border-radius: 24px; 
-            margin: 20px; transition: all 0.3s ease;
+        .jelly-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--light);
+            text-transform: uppercase;
         }
-        .quote-placeholder:hover {
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.04) 0%, rgba(var(--primary-rgb), 0.08) 100%);
-        }
-        .quote-placeholder-icon {
-            font-size: 72px; margin-bottom: 20px; opacity: 0.9;
-            filter: drop-shadow(0 15px 25px rgba(var(--primary-rgb), 0.2));
-            animation: floatIcon 3s ease-in-out infinite;
-        }
-        .quote-placeholder-title { font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px; letter-spacing: 1px; }
-        .quote-placeholder-desc { font-size: 14px; font-weight: 600; color: var(--mid); }
-        @keyframes floatIcon { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-
-        #inv-list-wrapper { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; /* 卡片間距 */
-            overflow-y: auto; 
-            padding-right: 15px; 
-            padding-bottom: 20px;
+        .jelly-val {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-main);
         }
     </style>
 </head>
@@ -334,7 +375,6 @@
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
-<!-- 主表客戶專用下拉選單 -->
 <div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
@@ -573,7 +613,7 @@
             </div>
         </div>
 
-        <!-- Slide 3: 🚨 請款系統 (現代卡片 Neumorphism UI) -->
+        <!-- Slide 3: 🚨 請款系統 (已加上美化虛線框與核取邏輯) -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
                 <div class="quote-placeholder" id="quote-placeholder">
@@ -581,33 +621,10 @@
                     <div class="quote-placeholder-title">請輸入上方搜尋條件</div>
                     <div class="quote-placeholder-desc">支援客戶名稱或月份搜尋，可自由勾選項目生成精美請款單</div>
                 </div>
-                
                 <div id="quote-content" style="display: none; height: 100%; flex-direction: column;">
-                    <div class="inv-header" style="border:none; margin-bottom:10px;">
-                        <h1 style="font-size: 32px; color: #101828; letter-spacing: 0;">請款明細單</h1>
-                        <div style="display: flex; align-items: center; gap: 20px;">
-                            <div id="inv-cust-info" style="font-weight:800; font-size:16px; color:#475467; background: #FFF; padding: 8px 16px; border-radius: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);"></div>
-                            <button id="exportPdfBtn" class="sync-btn" style="background: var(--primary); color: white; padding: 10px 24px; font-size: 14px; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);" onclick="downloadPDF()">📥 匯出請款單 PDF</button>
-                        </div>
-                    </div>
-                    
-                    <div id="quote-th-cb" style="display:flex; padding: 0 24px 10px 24px; color: #98A2B3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <div style="width: 40px; margin-right: 15px;">選取</div>
-                        <div style="width: 48px; margin-right: 20px; text-align: center;">編號</div>
-                        <div style="flex: 1;">案件名稱</div>
-                        <div style="width: 150px;">未稅與稅金</div>
-                        <div style="width: 120px; text-align: right;">含稅總額</div>
-                    </div>
-
+                    <div class="inv-header"><h1>請款 / 對帳明細單</h1><div style="display: flex; align-items: center; gap: 20px;"><button id="exportPdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="downloadPDF()">📥 一鍵匯出 PDF</button><div id="inv-cust-info" style="font-weight:800; font-size:16px; color:var(--mid);"></div></div></div>
                     <div id="inv-list-wrapper"></div>
-                    
-                    <div class="inv-footer" style="background:#FFF; border-radius:24px; padding: 24px 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); margin-top:10px; border-top:none; display:flex; justify-content: space-between; align-items: center;">
-                        <div style="color: #667085; font-size: 14px; font-weight: 600;">※ 總金額將依照上方打勾項目即時計算</div>
-                        <div class="inv-summary-box">
-                            <div class="inv-summary-row"><span class="inv-summary-label">未稅總計</span><span class="inv-total-pre" id="inv-total-pre" style="font-size:24px; width: auto; padding-right:0;">$ 0</span></div>
-                            <div class="inv-summary-row" style="margin-top: 5px;"><span class="inv-summary-label" style="color: #D32F2F;">應付總計 (含稅)</span><span class="inv-total-amt" id="inv-total-amt" style="font-size:36px; color:#101828; width: auto; padding-right:0;">$ 0</span></div>
-                        </div>
-                    </div>
+                    <div class="inv-footer"><div class="inv-summary-box"><div class="inv-summary-row"><span class="inv-summary-label">未稅總計</span><span class="inv-total-pre" id="inv-total-pre">$ 0</span></div><div class="inv-summary-row"><span class="inv-summary-label" style="color: #D32F2F;">應付總計 (含稅)</span><span class="inv-total-amt" id="inv-total-amt">$ 0</span></div></div></div>
                 </div>
             </div>
         </div>
@@ -1445,54 +1462,37 @@ function calcQuoteTotal() {
     });
     document.getElementById('inv-total-pre').innerText = `$ ${totalPreSum.toLocaleString()}`;
     document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
-    
-    let allCbs = document.querySelectorAll('.quote-cb');
-    let checkedCbs = document.querySelectorAll('.quote-cb:checked');
-    let selectAllCb = document.getElementById('quoteSelectAll');
-    if(selectAllCb) selectAllCb.checked = (allCbs.length > 0 && allCbs.length === checkedCbs.length);
 }
 
-function toggleAllQuote(el) {
-    document.querySelectorAll('.quote-cb').forEach(cb => cb.checked = el.checked);
-    calcQuoteTotal();
-}
-
-// 🚨 升級：請款系統搜尋，套用全新 Modern UI 與勾選邏輯
+// 🚨 更新：請款系統搜尋，加上核取方塊
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let placeholder = document.getElementById('quote-placeholder'), content = document.getElementById('quote-content'), invWrapper = document.getElementById('inv-list-wrapper');
     if (sc !== "" || (sm !== "" && sm !== "00")) {
         placeholder.style.display = 'none'; content.style.display = 'flex'; invWrapper.innerHTML = '';
-        let terms = sc ? sc.split(/[\s,，]+/) : []; 
-        document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
-        
+        let terms = sc ? sc.split(/[\s,，]+/) : []; document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
         let results = [];
         for(let r=0; r<rowCount; r++){ 
             let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
             let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
             if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); }
         }
-        
+        let half = Math.ceil(results.length / 2);
         results.forEach((d, index) => {
+            let isLast = (index === half-1 || index === results.length-1);
             invWrapper.innerHTML += `
-            <div class="inv-item quote-data-row" style="background: #FFF; border-radius: 16px; padding: 16px 24px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: 0.3s; border: 1px solid rgba(0,0,0,0.03);">
-                <div class="quote-cb-wrap" style="width: 40px; display:flex; align-items:center;">
-                    <input type="checkbox" class="quote-cb" data-pre="${d[9]||0}" data-amt="${d[11]||0}" checked onchange="calcQuoteTotal()" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+            <div class="inv-item quote-data-row" style="${isLast?'border-bottom:none':''}">
+                <div class="quote-cb-wrap" style="display:flex; align-items:center; margin-right: 15px;">
+                    <input type="checkbox" class="quote-cb" data-pre="${d[9]||0}" data-amt="${d[11]||0}" checked onchange="calcQuoteTotal()" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
                 </div>
-                <div class="inv-col-id" style="width: 48px; height: 48px; background: #F4F7F9; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #475467; font-weight: 900; font-size: 15px; margin-right: 20px; flex-shrink: 0;">${String(index+1).padStart(2,'0')}</div>
-                <div class="inv-col-info" style="flex: 1; display:flex; flex-direction:column; gap:4px;">
-                    <div class="inv-col-name" style="font-size: 16px; font-weight: 800; color: #101828;">${d[3]}</div>
+                <div class="inv-col-id">${String(index+1).padStart(2,'0')}</div>
+                <div class="inv-col-info">
+                    <div class="inv-col-name">${d[3]}</div>
+                    <div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span></div>
                 </div>
-                <div style="width: 150px; display:flex; flex-direction:column; gap:4px; font-size:13px; color:#667085; font-weight:600;">
-                    <span><span style="color:#98A2B3; font-weight:400; margin-right:4px;">未稅:</span>${d[9]||'0'}</span>
-                    <span><span style="color:#98A2B3; font-weight:400; margin-right:4px;">稅金:</span>${d[10]||'0'}</span>
-                </div>
-                <div class="inv-col-total" style="width: 120px; text-align: right; background: rgba(10, 132, 255, 0.08); color: var(--primary); padding: 8px 16px; border-radius: 50px; font-size: 16px; font-weight: 900;">${d[11]||'0'}</div>
+                <div class="inv-col-total">${d[11]||'0'}</div>
             </div>`;
         });
-        
-        let selectAllCb = document.getElementById('quoteSelectAll');
-        if(selectAllCb) selectAllCb.checked = true;
         calcQuoteTotal();
     } else { placeholder.style.display = 'flex'; content.style.display = 'none'; }
 }
@@ -1509,9 +1509,6 @@ function downloadPDF() {
         let cbWrap = row.querySelector('.quote-cb-wrap');
         if(cbWrap) cbWrap.style.display = 'none';
     });
-    
-    let thCb = document.getElementById('quote-th-cb');
-    if(thCb) thCb.style.display = 'none';
 
     let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
     let oh = element.style.height, ow = wrapper.style.overflow; element.style.height = 'auto'; wrapper.style.overflow = 'visible';
@@ -1523,7 +1520,6 @@ function downloadPDF() {
             let cbWrap = row.querySelector('.quote-cb-wrap');
             if(cbWrap) cbWrap.style.display = 'flex';
         });
-        if(thCb) thCb.style.display = 'flex';
     });
 }
 
