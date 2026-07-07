@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.50</title>
+    <title>杰冉宇宙營收表 v01.60</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -182,7 +182,6 @@
 
         #invoice-view { width: 100%; height: 100%; background: transparent; display: flex; padding: 25px 40px; box-sizing: border-box; flex-direction: column; overflow: hidden; }
         
-        /* 🚨 請款單精美佔位區樣式 */
         .quote-placeholder { 
             flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; 
             background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.03) 0%, rgba(var(--primary-rgb), 0.08) 100%);
@@ -519,6 +518,7 @@
 
 <div class="viewport">
     <div class="slider-container" id="mainSlider">
+        <!-- Slide 0: 案件明細 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
@@ -547,6 +547,7 @@
             </div>
         </div>
         
+        <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
@@ -605,18 +606,20 @@
             </div>
         </div>
 
+        <!-- Slide 2: 🚨 月度總覽 -->
         <div class="page-content">
             <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
                 <div id="report-cards-container" class="report-card-grid"></div>
             </div>
         </div>
 
+        <!-- Slide 3: 🚨 請款系統 (已加上美化虛線框與核取邏輯) -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
                 <div class="quote-placeholder" id="quote-placeholder">
                     <div class="quote-placeholder-icon">🧾</div>
                     <div class="quote-placeholder-title">請輸入上方搜尋條件</div>
-                    <div class="quote-placeholder-desc">支援客戶名稱或月份搜尋，即可自動生成精美請款單</div>
+                    <div class="quote-placeholder-desc">支援客戶名稱或月份搜尋，可自由勾選項目生成精美請款單</div>
                 </div>
                 <div id="quote-content" style="display: none; height: 100%; flex-direction: column;">
                     <div class="inv-header"><h1>請款 / 對帳明細單</h1><div style="display: flex; align-items: center; gap: 20px;"><button id="exportPdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="downloadPDF()">📥 一鍵匯出 PDF</button><div id="inv-cust-info" style="font-weight:800; font-size:16px; color:var(--mid);"></div></div></div>
@@ -626,6 +629,7 @@
             </div>
         </div>
 
+        <!-- Slide 4: 發票管理 -->
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
@@ -648,6 +652,7 @@
             </div>
         </div>
 
+        <!-- Slide 5: 📊 營運數據中心 -->
         <div class="page-content">
             <div class="dashboard-container">
                 <div class="dashboard-header">
@@ -1448,33 +1453,74 @@ function downloadSettlePDF() {
     });
 }
 
+// 🚨 新增：請款系統專屬打勾金額計算
+function calcQuoteTotal() {
+    let totalPreSum = 0, totalSum = 0;
+    document.querySelectorAll('.quote-cb:checked').forEach(cb => {
+        totalPreSum += parseFloat(String(cb.getAttribute('data-pre')).replace(/,/g, '')) || 0;
+        totalSum += parseFloat(String(cb.getAttribute('data-amt')).replace(/,/g, '')) || 0;
+    });
+    document.getElementById('inv-total-pre').innerText = `$ ${totalPreSum.toLocaleString()}`;
+    document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
+}
+
+// 🚨 更新：請款系統搜尋，加上核取方塊
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let placeholder = document.getElementById('quote-placeholder'), content = document.getElementById('quote-content'), invWrapper = document.getElementById('inv-list-wrapper');
     if (sc !== "" || (sm !== "" && sm !== "00")) {
         placeholder.style.display = 'none'; content.style.display = 'flex'; invWrapper.innerHTML = '';
         let terms = sc ? sc.split(/[\s,，]+/) : []; document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
-        let results = [], totalSum = 0, totalPreSum = 0;
+        let results = [];
         for(let r=0; r<rowCount; r++){ 
             let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
             let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
-            if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); totalPreSum += parseFloat(String(d[9]).replace(/,/g,''))||0; totalSum += parseFloat(String(d[11]).replace(/,/g,''))||0; }
+            if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); }
         }
         let half = Math.ceil(results.length / 2);
         results.forEach((d, index) => {
             let isLast = (index === half-1 || index === results.length-1);
-            invWrapper.innerHTML += `<div class="inv-item" style="${isLast?'border-bottom:none':''}"><div class="inv-col-id">${String(index+1).padStart(2,'0')}</div><div class="inv-col-info"><div class="inv-col-name">${d[3]}</div><div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span></div></div><div class="inv-col-total">${d[11]||'0'}</div></div>`;
+            invWrapper.innerHTML += `
+            <div class="inv-item quote-data-row" style="${isLast?'border-bottom:none':''}">
+                <div class="quote-cb-wrap" style="display:flex; align-items:center; margin-right: 15px;">
+                    <input type="checkbox" class="quote-cb" data-pre="${d[9]||0}" data-amt="${d[11]||0}" checked onchange="calcQuoteTotal()" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+                </div>
+                <div class="inv-col-id">${String(index+1).padStart(2,'0')}</div>
+                <div class="inv-col-info">
+                    <div class="inv-col-name">${d[3]}</div>
+                    <div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span></div>
+                </div>
+                <div class="inv-col-total">${d[11]||'0'}</div>
+            </div>`;
         });
-        document.getElementById('inv-total-pre').innerText = `$ ${totalPreSum.toLocaleString()}`; document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
+        calcQuoteTotal();
     } else { placeholder.style.display = 'flex'; content.style.display = 'none'; }
 }
 
+// 🚨 更新：PDF 匯出時隱藏沒打勾的項目跟方塊
 function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
-    btn.style.display = 'none'; let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
+    btn.style.display = 'none'; 
+    let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
+    
+    document.querySelectorAll('.quote-data-row').forEach(row => {
+        let cb = row.querySelector('.quote-cb');
+        if(cb && !cb.checked) { row.style.display = 'none'; }
+        let cbWrap = row.querySelector('.quote-cb-wrap');
+        if(cbWrap) cbWrap.style.display = 'none';
+    });
+
     let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
     let oh = element.style.height, ow = wrapper.style.overflow; element.style.height = 'auto'; wrapper.style.overflow = 'visible';
-    html2pdf().set(opt).from(element).save().then(() => { btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; });
+    
+    html2pdf().set(opt).from(element).save().then(() => { 
+        btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; 
+        document.querySelectorAll('.quote-data-row').forEach(row => {
+            row.style.display = 'flex';
+            let cbWrap = row.querySelector('.quote-cb-wrap');
+            if(cbWrap) cbWrap.style.display = 'flex';
+        });
+    });
 }
 
 function initTable() { 
