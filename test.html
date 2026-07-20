@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.60</title>
+    <title>杰冉宇宙營收表  v01.40</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -110,6 +110,7 @@
         
         #mainTable { min-width: 1430px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
+        #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; box-sizing: border-box; }
@@ -145,6 +146,7 @@
         .cell-selected { background-color: rgba(var(--primary-rgb), 0.15) !important; outline: 1px solid rgba(var(--primary-rgb), 0.5); }
         .cell-selected input { color: var(--primary) !important; }
 
+        /* 🚨 新增：填充把手樣式 */
         .fill-handle { position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; background: var(--primary); cursor: crosshair; opacity: 0; transition: opacity 0.2s; }
         td:hover .fill-handle { opacity: 1; }
         .cell-filling { background-color: rgba(var(--primary-rgb), 0.1) !important; outline: 1px dashed var(--primary); }
@@ -181,26 +183,7 @@
         .btn-firebase:hover { background: rgba(255, 149, 0, 0.1); }
 
         #invoice-view { width: 100%; height: 100%; background: transparent; display: flex; padding: 25px 40px; box-sizing: border-box; flex-direction: column; overflow: hidden; }
-        
-        .quote-placeholder { 
-            flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; 
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.03) 0%, rgba(var(--primary-rgb), 0.08) 100%);
-            border: 2px dashed rgba(var(--primary-rgb), 0.2); border-radius: 24px; 
-            margin: 20px; transition: all 0.3s ease;
-        }
-        .quote-placeholder:hover {
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, rgba(var(--primary-rgb), 0.1) 100%);
-        }
-        .quote-placeholder-icon {
-            font-size: 72px; margin-bottom: 20px; opacity: 0.9;
-            filter: drop-shadow(0 15px 25px rgba(var(--primary-rgb), 0.2));
-            animation: floatIcon 3s ease-in-out infinite;
-        }
-        .quote-placeholder-title { font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px; letter-spacing: 1px; }
-        .quote-placeholder-desc { font-size: 14px; font-weight: 600; color: var(--mid); }
-        @keyframes floatIcon { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-
+        .quote-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--light); font-size: 16px; font-weight: 600; flex-direction: column; gap: 10px; }
         .inv-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 2px solid rgba(var(--primary-rgb), 0.2); padding-bottom: 10px; }
         .inv-header h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 2px; color: var(--text-main); }
         #inv-list-wrapper { flex: 1; column-count: 2; column-gap: 50px; column-rule: 1px solid rgba(0,0,0,0.05); overflow-y: auto; padding-right: 10px; }
@@ -281,85 +264,6 @@
 
         .btn-row-del { color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s; user-select: none; }
         .btn-row-del:hover { color: #FF3B30; transform: scale(1.3); }
-
-        .report-card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .jelly-card {
-            background: #FFFFFF;
-            border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 20px;
-            padding: 20px;
-            cursor: pointer;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            overflow: hidden;
-        }
-        .jelly-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
-            border-color: rgba(var(--primary-rgb), 0.3);
-        }
-        .jelly-card.expanded {
-            background: #FFFFFF;
-            border-color: var(--primary);
-            box-shadow: 0 15px 40px rgba(var(--primary-rgb), 0.15);
-        }
-        .jelly-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-        }
-        .jelly-month {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--text-main);
-        }
-        .jelly-card.expanded .jelly-arrow { transform: rotate(180deg) !important; color: var(--primary) !important; }
-        .jelly-total {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--primary);
-        }
-        .jelly-body {
-            max-height: 0;
-            opacity: 0;
-            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            margin-top: 0;
-            padding-top: 0;
-            border-top: 1px dashed transparent;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            pointer-events: none;
-        }
-        .jelly-card.expanded .jelly-body {
-            max-height: 300px;
-            opacity: 1;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top-color: rgba(0,0,0,0.1);
-            pointer-events: auto;
-        }
-        .jelly-stat {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .jelly-label {
-            font-size: 11px;
-            font-weight: 800;
-            color: var(--light);
-            text-transform: uppercase;
-        }
-        .jelly-val {
-            font-size: 15px;
-            font-weight: 800;
-            color: var(--text-main);
-        }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -375,6 +279,7 @@
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
+<!-- 🚨 新增：主表客戶專用下拉選單 -->
 <div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
@@ -391,8 +296,8 @@
 
 <div id="login-screen" class="login-screen">
     <div class="login-card">
-        <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">杰冉營收系統</h2>
-        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請輸入系統密碼以進入系統<br>(登入後將永久記住此裝置)</p>
+        <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">這不是你該來的地方</h2>
+        <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請離開<br>(請你離開)</p>
         <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
         <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 10px;" onclick="checkLogin()">登入</button>
     </div>
@@ -606,21 +511,13 @@
             </div>
         </div>
 
-        <!-- Slide 2: 🚨 月度總覽 -->
-        <div class="page-content">
-            <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
-                <div id="report-cards-container" class="report-card-grid"></div>
-            </div>
-        </div>
+        <!-- Slide 2: 月報統計 -->
+        <div class="page-content"><div class="white-card"><div class="table-scroll"><table id="reportTable"><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>夥伴分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
 
-        <!-- Slide 3: 🚨 請款系統 (已加上美化虛線框與核取邏輯) -->
+        <!-- Slide 3: 請款系統 -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
-                <div class="quote-placeholder" id="quote-placeholder">
-                    <div class="quote-placeholder-icon">🧾</div>
-                    <div class="quote-placeholder-title">請輸入上方搜尋條件</div>
-                    <div class="quote-placeholder-desc">支援客戶名稱或月份搜尋，可自由勾選項目生成精美請款單</div>
-                </div>
+                <div class="quote-placeholder" id="quote-placeholder">🧾<br>請輸入搜尋條件產生請款單</div>
                 <div id="quote-content" style="display: none; height: 100%; flex-direction: column;">
                     <div class="inv-header"><h1>請款 / 對帳明細單</h1><div style="display: flex; align-items: center; gap: 20px;"><button id="exportPdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="downloadPDF()">📥 一鍵匯出 PDF</button><div id="inv-cust-info" style="font-weight:800; font-size:16px; color:var(--mid);"></div></div></div>
                     <div id="inv-list-wrapper"></div>
@@ -718,7 +615,7 @@
     <div class="tab-bar-container">
         <div class="tab-item active" onclick="switchSlide(0, this)">案件明細</div>
         <div class="tab-item" onclick="switchSlide(1, this)">分潤結算</div>
-        <div class="tab-item" onclick="switchSlide(2, this)">月度總覽</div>
+        <div class="tab-item" onclick="switchSlide(2, this)">月報統計</div>
         <div class="tab-item" onclick="switchSlide(3, this)">請款系統</div>
         <div class="tab-item" onclick="switchSlide(4, this)">發票紀錄</div>
         <div class="tab-item" onclick="switchSlide(5, this)">數據中心</div>
@@ -792,6 +689,11 @@ document.addEventListener('click', function(e) {
     if (!e.target.closest('#mainVipDropdown') && (!e.target.id || !e.target.id.includes('c2') || !e.target.id.startsWith('r'))) {
         let dd = document.getElementById('mainVipDropdown');
         if(dd) dd.style.display = 'none';
+    }
+
+    if (!e.target.closest('#bankTypeDropdown') && !e.target.classList.contains('bank-type-select')) {
+        let bd = document.getElementById('bankTypeDropdown');
+        if(bd) bd.style.display = 'none';
     }
 });
 
@@ -1112,8 +1014,43 @@ function toggleVipFilter(clientName) {
 }
 
 async function manageVip(action) {
-    if (action === 'add') { let n = await uiPrompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
-    else if (action === 'del') { let target = await uiPrompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
+    if (action === 'add') { 
+        let n = await uiPrompt("新增常用客戶名稱:"); 
+        if (n && n.trim() !== "") { 
+            n = n.trim(); 
+            if (!vipClients.includes(n)) { 
+                vipClients.push(n); 
+                localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); 
+            } 
+            renderVipBubbles(); 
+        } 
+    } 
+    else if (action === 'del') { 
+        // 🚨 修改：改成列出清單讓使用者輸入「數字編號」刪除，解決打錯字無法完全匹配的問題
+        let listStr = vipClients.map((v, i) => `[${i + 1}] ${v}`).join('\n');
+        let target = await uiPrompt(`請輸入要刪除的客戶「編號」:\n\n${listStr}`);
+        
+        if (target && !isNaN(target)) {
+            let idx = parseInt(target) - 1;
+            if (idx >= 0 && idx < vipClients.length) {
+                let delName = vipClients[idx];
+                vipClients.splice(idx, 1);
+                localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
+                if(activeVipFilter === delName) toggleVipFilter(delName);
+                renderVipBubbles();
+                await uiAlert(`🗑️ 已成功刪除：${delName}`);
+            } else {
+                await uiAlert("❌ 找不到此編號");
+            }
+        } else if (target && vipClients.includes(target)) {
+            // 兼容原本手打名稱的刪除方式
+            vipClients = vipClients.filter(i => i !== target);
+            localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
+            if(activeVipFilter === target) toggleVipFilter(target);
+            renderVipBubbles();
+            await uiAlert(`🗑️ 已成功刪除：${target}`);
+        }
+    }
 }
 
 let currentMonthFilter = 'all';
@@ -1453,74 +1390,33 @@ function downloadSettlePDF() {
     });
 }
 
-// 🚨 新增：請款系統專屬打勾金額計算
-function calcQuoteTotal() {
-    let totalPreSum = 0, totalSum = 0;
-    document.querySelectorAll('.quote-cb:checked').forEach(cb => {
-        totalPreSum += parseFloat(String(cb.getAttribute('data-pre')).replace(/,/g, '')) || 0;
-        totalSum += parseFloat(String(cb.getAttribute('data-amt')).replace(/,/g, '')) || 0;
-    });
-    document.getElementById('inv-total-pre').innerText = `$ ${totalPreSum.toLocaleString()}`;
-    document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
-}
-
-// 🚨 更新：請款系統搜尋，加上核取方塊
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let placeholder = document.getElementById('quote-placeholder'), content = document.getElementById('quote-content'), invWrapper = document.getElementById('inv-list-wrapper');
     if (sc !== "" || (sm !== "" && sm !== "00")) {
         placeholder.style.display = 'none'; content.style.display = 'flex'; invWrapper.innerHTML = '';
         let terms = sc ? sc.split(/[\s,，]+/) : []; document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
-        let results = [];
+        let results = [], totalSum = 0, totalPreSum = 0;
         for(let r=0; r<rowCount; r++){ 
             let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
             let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
-            if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); }
+            if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); totalPreSum += parseFloat(String(d[9]).replace(/,/g,''))||0; totalSum += parseFloat(String(d[11]).replace(/,/g,''))||0; }
         }
         let half = Math.ceil(results.length / 2);
         results.forEach((d, index) => {
             let isLast = (index === half-1 || index === results.length-1);
-            invWrapper.innerHTML += `
-            <div class="inv-item quote-data-row" style="${isLast?'border-bottom:none':''}">
-                <div class="quote-cb-wrap" style="display:flex; align-items:center; margin-right: 15px;">
-                    <input type="checkbox" class="quote-cb" data-pre="${d[9]||0}" data-amt="${d[11]||0}" checked onchange="calcQuoteTotal()" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
-                </div>
-                <div class="inv-col-id">${String(index+1).padStart(2,'0')}</div>
-                <div class="inv-col-info">
-                    <div class="inv-col-name">${d[3]}</div>
-                    <div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span></div>
-                </div>
-                <div class="inv-col-total">${d[11]||'0'}</div>
-            </div>`;
+            invWrapper.innerHTML += `<div class="inv-item" style="${isLast?'border-bottom:none':''}"><div class="inv-col-id">${String(index+1).padStart(2,'0')}</div><div class="inv-col-info"><div class="inv-col-name">${d[3]}</div><div class="inv-col-prices"><span><span class="price-tag">未稅:</span>${d[9]||'0'}</span><span><span class="price-tag">稅金:</span>${d[10]||'0'}</span></div></div><div class="inv-col-total">${d[11]||'0'}</div></div>`;
         });
-        calcQuoteTotal();
+        document.getElementById('inv-total-pre').innerText = `$ ${totalPreSum.toLocaleString()}`; document.getElementById('inv-total-amt').innerText = `$ ${totalSum.toLocaleString()}`;
     } else { placeholder.style.display = 'flex'; content.style.display = 'none'; }
 }
 
-// 🚨 更新：PDF 匯出時隱藏沒打勾的項目跟方塊
 function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
-    btn.style.display = 'none'; 
-    let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
-    
-    document.querySelectorAll('.quote-data-row').forEach(row => {
-        let cb = row.querySelector('.quote-cb');
-        if(cb && !cb.checked) { row.style.display = 'none'; }
-        let cbWrap = row.querySelector('.quote-cb-wrap');
-        if(cbWrap) cbWrap.style.display = 'none';
-    });
-
+    btn.style.display = 'none'; let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
     let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
     let oh = element.style.height, ow = wrapper.style.overflow; element.style.height = 'auto'; wrapper.style.overflow = 'visible';
-    
-    html2pdf().set(opt).from(element).save().then(() => { 
-        btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; 
-        document.querySelectorAll('.quote-data-row').forEach(row => {
-            row.style.display = 'flex';
-            let cbWrap = row.querySelector('.quote-cb-wrap');
-            if(cbWrap) cbWrap.style.display = 'flex';
-        });
-    });
+    html2pdf().set(opt).from(element).save().then(() => { btn.style.display = 'flex'; element.style.height = oh; wrapper.style.overflow = ow; });
 }
 
 function initTable() { 
@@ -1547,9 +1443,11 @@ function createRow(r) {
         td.className = 'calc-cell'; 
         
         if (c===1) {
+            // 🚨 新增：編號欄位的下拉遞增按鈕
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
         }
         else if (c===2) {
+            // 🚨 新增：客戶欄位專屬下拉選單
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
         }
         else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
@@ -1571,6 +1469,7 @@ function createRow(r) {
     return tr;
 }
 
+// 🚨 新增：主表明細的下拉客戶選單
 let currentMainRow = null;
 function openMainVipMenu(el, r) {
     currentMainRow = r;
@@ -1629,6 +1528,7 @@ function selectMainVip(k) {
     document.getElementById('mainVipDropdown').style.display = 'none';
 }
 
+// 🚨 新增：自動遞增編號拖曳邏輯
 function startFill(e, r, c) {
     e.preventDefault(); e.stopPropagation();
     fStart = r; fCur = r; fCol = c;
@@ -2013,12 +1913,7 @@ function reorderData(si, ti, type = 'main') {
 }
 
 function updateMonthlyReport() {
-    const container = document.getElementById('report-cards-container'); 
-    if(!container) return;
-    container.innerHTML = ''; 
-    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let hasData = false;
-    
+    const rt = document.getElementById('report-tb'); rt.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     for(let m=1; m<=12; m++) {
         let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
         for(let i=0; i<count; i++) {
@@ -2034,30 +1929,7 @@ function updateMonthlyReport() {
                 ct++; 
             }
         }
-        if(ct > 0) {
-            hasData = true;
-            container.innerHTML += `
-            <div class="jelly-card" onclick="this.classList.toggle('expanded')">
-                <div class="jelly-header">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="jelly-month">${m} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
-                        <div style="font-size:12px; font-weight:800; color:var(--light); background: rgba(0,0,0,0.04); padding: 4px 10px; border-radius: 50px;">${ct} 件</div>
-                    </div>
-                    <div class="jelly-total">$ ${t.toLocaleString()}</div>
-                </div>
-                <div class="jelly-body">
-                    <div class="jelly-stat"><span class="jelly-label">未稅總收</span><span class="jelly-val">$ ${n.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">待收餘額</span><span class="jelly-val" style="color:#FF3B30;">$ ${re.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">已收金額</span><span class="jelly-val" style="color:#00D26A;">$ ${r.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">公司分潤</span><span class="jelly-val">$ ${c1.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">老闆分潤</span><span class="jelly-val">$ ${c2.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">夥伴分潤</span><span class="jelly-val" style="color:#BF5AF2;">$ ${c3.toLocaleString()}</span></div>
-                </div>
-            </div>`;
-        }
-    }
-    if(!hasData) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--light); font-weight: 800; font-size: 15px;">尚無任何月份的營收資料</div>`;
+        if(ct > 0) rt.innerHTML += `<tr><td class="calc-cell">${m}月</td><td class="calc-cell">${n.toLocaleString()}</td><td class="calc-cell">${t.toLocaleString()}</td><td class="calc-cell">${r.toLocaleString()}</td><td class="calc-cell">${re.toLocaleString()}</td><td class="calc-cell">${c1.toLocaleString()}</td><td class="calc-cell">${c2.toLocaleString()}</td><td class="calc-cell">${c3.toLocaleString()}</td><td class="calc-cell">${ct}</td></tr>`;
     }
 }
 
@@ -2066,6 +1938,13 @@ function calc(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
+    if(c === 2) {
+        let currentClient = g(2);
+        if(currentClient === 'A' || currentClient === 'a') {
+            s(2, '小花');
+        }
+    }
+
     if(c === 5) {
         let v = g(5).trim();
         if (v === "") {
@@ -2084,6 +1963,7 @@ function calc(r, c, save=true) {
     s(10, tax); s(11, total); s(13, rem); 
     s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
     
+    // 🚨 判斷：免費專案或已結清反灰
     let row = document.getElementById(`r${r}`); 
     if (row) { 
         let isFree = (String(g(9)).trim() === '0'); 
