@@ -1013,6 +1013,7 @@ function toggleVipFilter(clientName) {
     renderVipBubbles(); filterTable();      
 }
 
+// 🚨🚨🚨 【更新1】：主表常用客戶 (⭐) 的編號刪除機制
 async function manageVip(action) {
     if (action === 'add') { 
         let n = await uiPrompt("新增常用客戶名稱:"); 
@@ -1026,29 +1027,35 @@ async function manageVip(action) {
         } 
     } 
     else if (action === 'del') { 
-        // 🚨 修改：改成列出清單讓使用者輸入「數字編號」刪除，解決打錯字無法完全匹配的問題
+        if (vipClients.length === 0) {
+            await uiAlert("目前沒有常用客戶可刪除。");
+            return;
+        }
+        // 製作帶有數字編號的選單字串
         let listStr = vipClients.map((v, i) => `[${i + 1}] ${v}`).join('\n');
-        let target = await uiPrompt(`請輸入要刪除的客戶「編號」:\n\n${listStr}`);
+        let target = await uiPrompt(`請輸入要刪除的客戶「數字編號」:\n\n${listStr}`);
         
-        if (target && !isNaN(target)) {
-            let idx = parseInt(target) - 1;
-            if (idx >= 0 && idx < vipClients.length) {
-                let delName = vipClients[idx];
-                vipClients.splice(idx, 1);
+        if (target && target.trim() !== "") {
+            let num = parseInt(target.trim());
+            if (!isNaN(num) && num > 0 && num <= vipClients.length) {
+                // 如果輸入的是有效的數字編號
+                let delName = vipClients[num - 1];
+                vipClients.splice(num - 1, 1);
+                localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
+                if(activeVipFilter === delName) toggleVipFilter(delName);
+                renderVipBubbles();
+                await uiAlert(`🗑️ 已成功刪除：${delName}`);
+            } else if (vipClients.includes(target.trim())) {
+                // 如果使用者還是習慣打名字，也允許
+                let delName = target.trim();
+                vipClients = vipClients.filter(i => i !== delName);
                 localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
                 if(activeVipFilter === delName) toggleVipFilter(delName);
                 renderVipBubbles();
                 await uiAlert(`🗑️ 已成功刪除：${delName}`);
             } else {
-                await uiAlert("❌ 找不到此編號");
+                await uiAlert("❌ 找不到此編號或名稱，請再試一次。");
             }
-        } else if (target && vipClients.includes(target)) {
-            // 兼容原本手打名稱的刪除方式
-            vipClients = vipClients.filter(i => i !== target);
-            localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
-            if(activeVipFilter === target) toggleVipFilter(target);
-            renderVipBubbles();
-            await uiAlert(`🗑️ 已成功刪除：${target}`);
         }
     }
 }
@@ -1443,11 +1450,9 @@ function createRow(r) {
         td.className = 'calc-cell'; 
         
         if (c===1) {
-            // 🚨 新增：編號欄位的下拉遞增按鈕
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
         }
         else if (c===2) {
-            // 🚨 新增：客戶欄位專屬下拉選單
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
         }
         else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
@@ -1469,7 +1474,6 @@ function createRow(r) {
     return tr;
 }
 
-// 🚨 新增：主表明細的下拉客戶選單
 let currentMainRow = null;
 function openMainVipMenu(el, r) {
     currentMainRow = r;
@@ -1528,7 +1532,6 @@ function selectMainVip(k) {
     document.getElementById('mainVipDropdown').style.display = 'none';
 }
 
-// 🚨 新增：自動遞增編號拖曳邏輯
 function startFill(e, r, c) {
     e.preventDefault(); e.stopPropagation();
     fStart = r; fCur = r; fCol = c;
@@ -1695,6 +1698,7 @@ function selectInvVip(shortKey) {
     document.getElementById('invVipDropdown').style.display = 'none';
 }
 
+// 🚨🚨🚨 【更新2】：發票表常用客戶的編號刪除機制
 async function manageInvVips(action) {
     if (action === 'add') {
         let shortName = await uiPrompt("請輸入客戶「簡稱」 (下拉選單辨識用)\n例如：小花");
@@ -1708,13 +1712,31 @@ async function manageInvVips(action) {
         localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
         await uiAlert(`✅ 已成功儲存！\n\n簡稱：${shortName.trim()}\n全名：${fullName.trim()}\n統編：${taxId.trim() || '無'}`);
     } else if (action === 'del') {
-        let shortName = await uiPrompt("請輸入要刪除的發票客戶「簡稱」:");
-        if (shortName && invoiceVips[shortName]) {
-            delete invoiceVips[shortName];
-            localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
-            await uiAlert(`🗑️ 已成功刪除：${shortName}`);
-        } else if (shortName) {
-            await uiAlert(`❌ 找不到名為「${shortName}」的簡稱。`);
+        let keys = Object.keys(invoiceVips);
+        if (keys.length === 0) {
+            await uiAlert("目前沒有常用發票客戶可刪除。");
+            return;
+        }
+        // 製作帶有數字編號的選單字串
+        let listStr = keys.map((k, i) => `[${i + 1}] ${k} (${invoiceVips[k].full})`).join('\n');
+        let target = await uiPrompt(`請輸入要刪除的發票客戶「數字編號」:\n\n${listStr}`);
+        
+        if (target && target.trim() !== "") {
+            let num = parseInt(target.trim());
+            if (!isNaN(num) && num > 0 && num <= keys.length) {
+                // 如果輸入的是有效的數字編號
+                let shortName = keys[num - 1];
+                delete invoiceVips[shortName];
+                localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
+                await uiAlert(`🗑️ 已成功刪除：${shortName}`);
+            } else if (invoiceVips[target.trim()]) {
+                // 如果使用者還是習慣打簡稱，也允許
+                delete invoiceVips[target.trim()];
+                localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
+                await uiAlert(`🗑️ 已成功刪除：${target.trim()}`);
+            } else {
+                await uiAlert("❌ 找不到此編號或簡稱，請再試一次。");
+            }
         }
     }
 }
@@ -1802,6 +1824,23 @@ function calcInvoice(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`inv_r${r}c${col}`)) document.getElementById(`inv_r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30;
     
+    // 🚨🚨🚨 【更新3】：發票表 - 打 A 自動取代小花
+    if(c === 2) {
+        let v = g(2).trim();
+        // 如果未來有其他客戶快捷鍵可以加在這裡
+        let shortcuts = {
+            'a': '小花',
+            'A': '小花'
+        };
+        
+        if (shortcuts[v]) {
+            s(2, shortcuts[v]); // 自動填入小花
+            // 強制關閉下拉選單避免擋住視線
+            let dd = document.getElementById('invVipDropdown');
+            if (dd) dd.style.display = 'none';
+        }
+    }
+
     if(c === 1) {
         let invInput = document.getElementById(`inv_r${r}c1`);
         if(invInput) {
@@ -1938,10 +1977,19 @@ function calc(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
+    // 🚨🚨🚨 【更新4】：主表 - 打 A 自動取代小花
     if(c === 2) {
-        let currentClient = g(2);
-        if(currentClient === 'A' || currentClient === 'a') {
-            s(2, '小花');
+        let v = g(2).trim();
+        let shortcuts = {
+            'a': '小花',
+            'A': '小花'
+        };
+        
+        if (shortcuts[v]) {
+            s(2, shortcuts[v]); // 自動填入小花
+            // 強制關閉下拉選單避免擋住視線
+            let dd = document.getElementById('mainVipDropdown');
+            if (dd) dd.style.display = 'none';
         }
     }
 
