@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表  v01.9</title>
+    <title>杰冉宇宙營收表  v01.40</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -146,7 +146,7 @@
         .cell-selected { background-color: rgba(var(--primary-rgb), 0.15) !important; outline: 1px solid rgba(var(--primary-rgb), 0.5); }
         .cell-selected input { color: var(--primary) !important; }
 
-        /* 🚨 新增：填充把手樣式 */
+        /* 填充把手樣式 */
         .fill-handle { position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; background: var(--primary); cursor: crosshair; opacity: 0; transition: opacity 0.2s; }
         td:hover .fill-handle { opacity: 1; }
         .cell-filling { background-color: rgba(var(--primary-rgb), 0.1) !important; outline: 1px dashed var(--primary); }
@@ -1482,7 +1482,6 @@ function openMainVipMenu(el, r) {
     renderMainVipMenu(el.value);
 }
 
-// 🚨🚨🚨 【更新1】：主表下拉選單加入獨立刪除按鈕
 function renderMainVipMenu(filterStr = "") {
     let dd = document.getElementById('mainVipDropdown');
     dd.innerHTML = '';
@@ -1983,16 +1982,27 @@ function calc(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
-    // 🚨🚨🚨 【更新2】：主表 - 在「編號」(c=1) 輸入 A 開頭，隔壁(c=2)自動跳小花
+    // 🚨 修正：支援多種英文字母開頭，自動帶入對應客戶
     if(c === 1) {
         let v = g(1).trim().toUpperCase();
-        if (v.startsWith('A')) {
-            s(2, '小花');
+        let firstChar = v.charAt(0); // 抓取第一個英文字母
+        
+        // 📝 你的代號字典
+        let prefixMap = {
+            'A': '小花',
+            'N': '日幸',
+            'E': '博通',
+            'K': '游秉諭'
+        };
+
+        if (prefixMap[firstChar]) {
+            s(2, prefixMap[firstChar]);
             let dd = document.getElementById('mainVipDropdown');
-            if (dd) dd.style.display = 'none';
+            if (dd) dd.style.display = 'none'; // 順便把選單縮起來避免擋畫面
         }
     }
 
+    // 保留相容：如果你在「客戶」(c=2) 欄位單獨打 a 變小花
     if(c === 2) {
         let v = g(2).trim();
         let shortcuts = {
