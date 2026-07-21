@@ -146,7 +146,7 @@
         .cell-selected { background-color: rgba(var(--primary-rgb), 0.15) !important; outline: 1px solid rgba(var(--primary-rgb), 0.5); }
         .cell-selected input { color: var(--primary) !important; }
 
-        /* 🚨 新增：填充把手樣式 */
+        /* 填充把手樣式 */
         .fill-handle { position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; background: var(--primary); cursor: crosshair; opacity: 0; transition: opacity 0.2s; }
         td:hover .fill-handle { opacity: 1; }
         .cell-filling { background-color: rgba(var(--primary-rgb), 0.1) !important; outline: 1px dashed var(--primary); }
@@ -279,7 +279,7 @@
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
-<!-- 🚨 新增：主表客戶專用下拉選單 -->
+<!-- 主表客戶專用下拉選單 -->
 <div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
@@ -1014,8 +1014,46 @@ function toggleVipFilter(clientName) {
 }
 
 async function manageVip(action) {
-    if (action === 'add') { let n = await uiPrompt("新增常用客戶名稱:"); if (n && n.trim() !== "") { n = n.trim(); if (!vipClients.includes(n)) { vipClients.push(n); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); } renderVipBubbles(); } } 
-    else if (action === 'del') { let target = await uiPrompt("刪除常用客戶名稱:"); if (target && vipClients.includes(target)) { vipClients = vipClients.filter(i => i !== target); localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); if(activeVipFilter === target) toggleVipFilter(target); renderVipBubbles(); } }
+    if (action === 'add') { 
+        let n = await uiPrompt("新增常用客戶名稱:"); 
+        if (n && n.trim() !== "") { 
+            n = n.trim(); 
+            if (!vipClients.includes(n)) { 
+                vipClients.push(n); 
+                localStorage.setItem('vB_VipClients', JSON.stringify(vipClients)); 
+            } 
+            renderVipBubbles(); 
+        } 
+    } 
+    else if (action === 'del') { 
+        if (vipClients.length === 0) {
+            await uiAlert("目前沒有常用客戶可刪除。");
+            return;
+        }
+        let listStr = vipClients.map((v, i) => `[${i + 1}] ${v}`).join('\n');
+        let target = await uiPrompt(`請輸入要刪除的客戶「數字編號」:\n\n${listStr}`);
+        
+        if (target && target.trim() !== "") {
+            let num = parseInt(target.trim());
+            if (!isNaN(num) && num > 0 && num <= vipClients.length) {
+                let delName = vipClients[num - 1];
+                vipClients.splice(num - 1, 1);
+                localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
+                if(activeVipFilter === delName) toggleVipFilter(delName);
+                renderVipBubbles();
+                await uiAlert(`🗑️ 已成功刪除：${delName}`);
+            } else if (vipClients.includes(target.trim())) {
+                let delName = target.trim();
+                vipClients = vipClients.filter(i => i !== delName);
+                localStorage.setItem('vB_VipClients', JSON.stringify(vipClients));
+                if(activeVipFilter === delName) toggleVipFilter(delName);
+                renderVipBubbles();
+                await uiAlert(`🗑️ 已成功刪除：${delName}`);
+            } else {
+                await uiAlert("❌ 找不到此編號或名稱，請再試一次。");
+            }
+        }
+    }
 }
 
 let currentMonthFilter = 'all';
@@ -1408,11 +1446,9 @@ function createRow(r) {
         td.className = 'calc-cell'; 
         
         if (c===1) {
-            // 🚨 新增：編號欄位的下拉遞增按鈕
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
         }
         else if (c===2) {
-            // 🚨 新增：客戶欄位專屬下拉選單
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
         }
         else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
@@ -1434,7 +1470,6 @@ function createRow(r) {
     return tr;
 }
 
-// 🚨 新增：主表明細的下拉客戶選單
 let currentMainRow = null;
 function openMainVipMenu(el, r) {
     currentMainRow = r;
@@ -1470,15 +1505,31 @@ function renderMainVipMenu(filterStr = "") {
             dd.appendChild(div);
         });
     }
+
+    let actionRow = document.createElement('div');
+    actionRow.style = "display: flex; justify-content: space-between; margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(0,0,0,0.05);";
+
     let addBtn = document.createElement('div');
-    addBtn.style = "margin-top: 5px; padding: 8px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 12px; font-weight: 800; color: var(--primary); text-align: center; cursor: pointer;";
-    addBtn.innerText = "+ 新增/管理客戶";
+    addBtn.style = "padding: 8px; font-size: 12px; font-weight: 800; color: var(--primary); text-align: center; cursor: pointer; flex: 1;";
+    addBtn.innerText = "+ 新增";
     addBtn.onmousedown = (e) => { 
         e.preventDefault(); e.stopPropagation(); 
         dd.style.display='none'; 
         manageVip('add'); 
     };
-    dd.appendChild(addBtn);
+
+    let delBtn = document.createElement('div');
+    delBtn.style = "padding: 8px; font-size: 12px; font-weight: 800; color: #D32F2F; text-align: center; cursor: pointer; flex: 1; border-left: 1px solid rgba(0,0,0,0.05);";
+    delBtn.innerText = "- 刪除";
+    delBtn.onmousedown = (e) => { 
+        e.preventDefault(); e.stopPropagation(); 
+        dd.style.display='none'; 
+        manageVip('del'); 
+    };
+
+    actionRow.appendChild(addBtn);
+    actionRow.appendChild(delBtn);
+    dd.appendChild(actionRow);
 }
 
 function filterMainVipMenu(val) {
@@ -1493,7 +1544,6 @@ function selectMainVip(k) {
     document.getElementById('mainVipDropdown').style.display = 'none';
 }
 
-// 🚨 新增：自動遞增編號拖曳邏輯
 function startFill(e, r, c) {
     e.preventDefault(); e.stopPropagation();
     fStart = r; fCur = r; fCol = c;
@@ -1673,13 +1723,28 @@ async function manageInvVips(action) {
         localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
         await uiAlert(`✅ 已成功儲存！\n\n簡稱：${shortName.trim()}\n全名：${fullName.trim()}\n統編：${taxId.trim() || '無'}`);
     } else if (action === 'del') {
-        let shortName = await uiPrompt("請輸入要刪除的發票客戶「簡稱」:");
-        if (shortName && invoiceVips[shortName]) {
-            delete invoiceVips[shortName];
-            localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
-            await uiAlert(`🗑️ 已成功刪除：${shortName}`);
-        } else if (shortName) {
-            await uiAlert(`❌ 找不到名為「${shortName}」的簡稱。`);
+        let keys = Object.keys(invoiceVips);
+        if (keys.length === 0) {
+            await uiAlert("目前沒有常用發票客戶可刪除。");
+            return;
+        }
+        let listStr = keys.map((k, i) => `[${i + 1}] ${k} (${invoiceVips[k].full})`).join('\n');
+        let target = await uiPrompt(`請輸入要刪除的發票客戶「數字編號」:\n\n${listStr}`);
+        
+        if (target && target.trim() !== "") {
+            let num = parseInt(target.trim());
+            if (!isNaN(num) && num > 0 && num <= keys.length) {
+                let shortName = keys[num - 1];
+                delete invoiceVips[shortName];
+                localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
+                await uiAlert(`🗑️ 已成功刪除：${shortName}`);
+            } else if (invoiceVips[target.trim()]) {
+                delete invoiceVips[target.trim()];
+                localStorage.setItem('vB_InvVips', JSON.stringify(invoiceVips));
+                await uiAlert(`🗑️ 已成功刪除：${target.trim()}`);
+            } else {
+                await uiAlert("❌ 找不到此編號或簡稱，請再試一次。");
+            }
         }
     }
 }
@@ -1767,6 +1832,20 @@ function calcInvoice(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`inv_r${r}c${col}`)) document.getElementById(`inv_r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`invCount_${curY}`)) || 30;
     
+    if(c === 2) {
+        let v = g(2).trim();
+        let shortcuts = {
+            'a': '小花',
+            'A': '小花'
+        };
+        
+        if (shortcuts[v]) {
+            s(2, shortcuts[v]); 
+            let dd = document.getElementById('invVipDropdown');
+            if (dd) dd.style.display = 'none';
+        }
+    }
+
     if(c === 1) {
         let invInput = document.getElementById(`inv_r${r}c1`);
         if(invInput) {
@@ -1903,6 +1982,60 @@ function calc(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
+    // 🚨 智慧化抓取代號邏輯
+    if(c === 1) {
+        let v = g(1).trim().toUpperCase();
+        let firstChar = v.charAt(0); // 抓取第一個字元
+
+        // 如果是英文字母，且不是 Z (Z是大雜燴，不自動帶入)
+        if (firstChar >= 'A' && firstChar <= 'Y') {
+            
+            // 1. 預設字典 (來自你的截圖)
+            let clientName = {
+                'A': '小花宇宙', 'B': '醫敏家', 'C': '欣榮鑫', 'D': '海沃',
+                'E': '博通科技', 'F': '易裝修', 'G': '永騰', 'H': '保羅醫師',
+                'I': '有朗蘊', 'J': '徐仙梅', 'K': '游秉諭', 'L': '瑞迪健康',
+                'M': '中信', 'N': '日幸', 'O': '董鎮綱'
+            }[firstChar];
+
+            // 2. ✨ 自動學習機制：去讀取你已經存檔的資料
+            // 如果以後有新的代號 (例如 P)，只要你在表上打過一次 P001 = 某客戶
+            // 下次打 P002 時，它就會自動從舊資料找出來填入，再也不用改程式碼！
+            for(let i = rc - 1; i >= 0; i--) { // 從最新的歷史紀錄往下找
+                let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+                let existingId = (d[1] || "").trim().toUpperCase();
+                let existingClient = (d[2] || "").trim();
+                
+                if (existingId.startsWith(firstChar) && existingClient !== "") {
+                    clientName = existingClient;
+                    break;
+                }
+            }
+
+            // 3. 執行填入
+            if (clientName) {
+                s(2, clientName);
+                let dd = document.getElementById('mainVipDropdown');
+                if (dd) dd.style.display = 'none'; 
+            }
+        }
+    }
+
+    // 保留原本的小寫相容
+    if(c === 2) {
+        let v = g(2).trim();
+        let shortcuts = {
+            'a': '小花',
+            'A': '小花'
+        };
+        
+        if (shortcuts[v]) {
+            s(2, shortcuts[v]); 
+            let dd = document.getElementById('mainVipDropdown');
+            if (dd) dd.style.display = 'none';
+        }
+    }
+
     if(c === 5) {
         let v = g(5).trim();
         if (v === "") {
@@ -1921,7 +2054,6 @@ function calc(r, c, save=true) {
     s(10, tax); s(11, total); s(13, rem); 
     s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
     
-    // 🚨 判斷：免費專案或已結清反灰
     let row = document.getElementById(`r${r}`); 
     if (row) { 
         let isFree = (String(g(9)).trim() === '0'); 
