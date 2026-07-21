@@ -1982,27 +1982,46 @@ function calc(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
-    // 🚨 修正：支援多種英文字母開頭，自動帶入對應客戶
+    // 🚨 智慧化抓取代號邏輯
     if(c === 1) {
         let v = g(1).trim().toUpperCase();
-        let firstChar = v.charAt(0); // 抓取第一個英文字母
-        
-        // 📝 你的代號字典
-        let prefixMap = {
-            'A': '小花',
-            'N': '日幸',
-            'E': '博通',
-            'K': '游秉諭'
-        };
+        let firstChar = v.charAt(0); // 抓取第一個字元
 
-        if (prefixMap[firstChar]) {
-            s(2, prefixMap[firstChar]);
-            let dd = document.getElementById('mainVipDropdown');
-            if (dd) dd.style.display = 'none'; // 順便把選單縮起來避免擋畫面
+        // 如果是英文字母，且不是 Z (Z是大雜燴，不自動帶入)
+        if (firstChar >= 'A' && firstChar <= 'Y') {
+            
+            // 1. 預設字典 (來自你的截圖)
+            let clientName = {
+                'A': '小花宇宙', 'B': '醫敏家', 'C': '欣榮鑫', 'D': '海沃',
+                'E': '博通科技', 'F': '易裝修', 'G': '永騰', 'H': '保羅醫師',
+                'I': '有朗蘊', 'J': '徐仙梅', 'K': '游秉諭', 'L': '瑞迪健康',
+                'M': '中信', 'N': '日幸', 'O': '董鎮綱'
+            }[firstChar];
+
+            // 2. ✨ 自動學習機制：去讀取你已經存檔的資料
+            // 如果以後有新的代號 (例如 P)，只要你在表上打過一次 P001 = 某客戶
+            // 下次打 P002 時，它就會自動從舊資料找出來填入，再也不用改程式碼！
+            for(let i = rc - 1; i >= 0; i--) { // 從最新的歷史紀錄往下找
+                let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+                let existingId = (d[1] || "").trim().toUpperCase();
+                let existingClient = (d[2] || "").trim();
+                
+                if (existingId.startsWith(firstChar) && existingClient !== "") {
+                    clientName = existingClient;
+                    break;
+                }
+            }
+
+            // 3. 執行填入
+            if (clientName) {
+                s(2, clientName);
+                let dd = document.getElementById('mainVipDropdown');
+                if (dd) dd.style.display = 'none'; 
+            }
         }
     }
 
-    // 保留相容：如果你在「客戶」(c=2) 欄位單獨打 a 變小花
+    // 保留原本的小寫相容
     if(c === 2) {
         let v = g(2).trim();
         let shortcuts = {
