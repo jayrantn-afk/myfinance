@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.90</title>
+    <title>杰冉宇宙營收表 V2.0</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -108,7 +108,6 @@
         .table-scroll { flex: 1; overflow: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; }
         
-        /* 🚨 縮小總表寬度，因為藏了三個欄位 */
         #mainTable { min-width: 1200px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #reportTable { min-width: 1000px; table-layout: auto; }
@@ -568,8 +567,12 @@
             </div>
         </div>
 
-        <!-- Slide 2: 月報統計 -->
-        <div class="page-content"><div class="white-card"><div class="table-scroll"><table id="reportTable"><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>夥伴分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
+        <!-- Slide 2: 月度總覽 -->
+        <div class="page-content">
+            <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
+                <div id="report-cards-container" class="report-card-grid"></div>
+            </div>
+        </div>
 
         <!-- Slide 3: 🚨 請款系統 (完美還原參考圖佈局) -->
         <div class="page-content">
@@ -1549,7 +1552,6 @@ function updateMonthlyReport() {
     }
 }
 
-// 🚨 修正：請款系統全新搜尋排版邏輯
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
@@ -1560,7 +1562,6 @@ function runQuoteSearch() {
     let invWrapper = document.getElementById('inv-list-wrapper');
 
     if (sc !== "" || (sm !== "" && sm !== "00")) {
-        // 有輸入條件時，搜尋列往上縮，顯示請款內容
         searchBar.style.margin = "0 0 20px 0";
         pIcon.style.display = 'none';
         pText.style.display = 'none';
@@ -1584,7 +1585,7 @@ function runQuoteSearch() {
             invWrapper.innerHTML += `
             <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}">
                 <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
-                    <input type="checkbox" class="quote-cb" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
+                    <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
                 </div>
                 <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${d[1]||''}</div>
                 <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;">${d[3]}</div>
@@ -1597,7 +1598,6 @@ function runQuoteSearch() {
         document.getElementById('inv-discount-input').value = "100";
         calcQuoteTotal();
     } else { 
-        // 沒輸入條件時，搜尋列回歸畫面正中央
         searchBar.style.margin = "auto";
         pIcon.style.display = 'block';
         pText.style.display = 'block';
@@ -1605,7 +1605,6 @@ function runQuoteSearch() {
     }
 }
 
-// 🚨 修正：精準計算打勾項目的加總
 function calcQuoteTotal(el = null) {
     if (el) {
         let item = el.closest('.inv-item');
@@ -1619,27 +1618,21 @@ function calcQuoteTotal(el = null) {
     }
     
     let totalPre = 0, totalAmt = 0;
-    // 遍歷所有列表中的項目
     document.querySelectorAll('.inv-item').forEach(item => {
         let cb = item.querySelector('.quote-cb');
-        // 只有「有打勾」的才算錢！
         if (cb && cb.checked) {
             totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
-            totalAmt += parseFloat(item.getAttribute('data-total')) || 0; 
+            totalAmt += parseFloat(item.getAttribute('data-amt')) || 0; 
         }
     });
     
-    // 計算折扣
     let discountVal = parseFloat(document.getElementById('inv-discount-input').value);
     let discount = (isNaN(discountVal) || discountVal < 0) ? 1 : (discountVal / 100);
     
     let finalAmt = Math.round(totalAmt * discount);
     
-    // 更新顯示文字
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
-    
-    // 更新右下角跟右上角的大數字
     document.getElementById('inv-total-amt').innerText = `$ ${finalAmt.toLocaleString()}`;
     document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
 }
@@ -1649,7 +1642,6 @@ function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
     btn.style.display = 'none'; 
     
-    // 隱藏搜尋框避免印出
     let searchBar = document.getElementById('quote-search-bar');
     if (searchBar) searchBar.style.display = 'none';
     
@@ -1659,21 +1651,19 @@ function downloadPDF() {
         if (cb) {
             cb.style.display = 'none'; 
             if (!cb.checked) {
-                item.style.display = 'none'; // 隱藏沒打勾的項目
+                item.style.display = 'none'; 
                 hiddenItems.push(item);
             }
         }
     });
     
     let thCb = document.getElementById('quote-th-cb');
-    // 把選取的表頭文字隱藏
     if(thCb) thCb.firstElementChild.style.color = "transparent";
     
     let discountInput = document.getElementById('inv-discount-input');
     let origBorder = discountInput.style.border;
     discountInput.style.border = 'none';
     
-    // 把控制面板的框線拔掉
     let discountPanel = document.getElementById('inv-discount-panel');
     let origPanelBorder = discountPanel ? discountPanel.style.border : "";
     if (discountPanel) discountPanel.style.border = "none";
@@ -1720,12 +1710,10 @@ function createRow(r) {
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
-    
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
         
-        // 🚨 隱藏 付款(6)、尾款(12)、未收金額(13) 的欄位內容
         if (c === 6 || c === 12 || c === 13) {
             td.style.display = 'none';
         }
@@ -2241,66 +2229,20 @@ function reorderData(si, ti, type = 'main') {
     else { initTable(); filterTable(); }
 }
 
-function updateMonthlyReport() {
-    const container = document.getElementById('report-cards-container'); 
-    if(!container) return;
-    container.innerHTML = ''; 
-    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let hasData = false;
-    
-    for(let m=1; m<=12; m++) {
-        let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
-        for(let i=0; i<count; i++) {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-            if(d[0] === mStr) { 
-                n += parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
-                t += parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
-                r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0); 
-                re += parseFloat(String(d[13]).replace(/,/g,'')) || 0; 
-                c1 += parseFloat(String(d[17]).replace(/,/g,'')) || 0; 
-                c2 += parseFloat(String(d[18]).replace(/,/g,'')) || 0; 
-                c3 += parseFloat(String(d[19]).replace(/,/g,'')) || 0; 
-                ct++; 
-            }
-        }
-        if(ct > 0) {
-            hasData = true;
-            container.innerHTML += `
-            <div class="jelly-card" onclick="this.classList.toggle('expanded')">
-                <div class="jelly-header">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="jelly-month">${m} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
-                        <div style="font-size:12px; font-weight:800; color:var(--light); background: rgba(0,0,0,0.04); padding: 4px 10px; border-radius: 50px;">${ct} 件</div>
-                    </div>
-                    <div class="jelly-total">$ ${t.toLocaleString()}</div>
-                </div>
-                <div class="jelly-body">
-                    <div class="jelly-stat"><span class="jelly-label">未稅總收</span><span class="jelly-val">$ ${n.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">待收餘額</span><span class="jelly-val" style="color:#FF3B30;">$ ${re.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">已收金額</span><span class="jelly-val" style="color:#00D26A;">$ ${r.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">公司分潤</span><span class="jelly-val">$ ${c1.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">老闆分潤</span><span class="jelly-val">$ ${c2.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">夥伴分潤</span><span class="jelly-val" style="color:#BF5AF2;">$ ${c3.toLocaleString()}</span></div>
-                </div>
-            </div>`;
-        }
-    }
-    if(!hasData) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--light); font-weight: 800; font-size: 15px;">尚無任何月份的營收資料</div>`;
-    }
-}
-
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
+    // 🚨 智慧化抓取代號邏輯
     if(c === 1) {
         let v = g(1).trim().toUpperCase();
         let firstChar = v.charAt(0); 
 
+        // 如果是英文字母，且不是 Z (Z是大雜燴，不自動帶入)
         if (firstChar >= 'A' && firstChar <= 'Y') {
             
+            // 1. 預設字典 (來自你的截圖)
             let clientName = {
                 'A': '小花宇宙', 'B': '醫敏家', 'C': '欣榮鑫', 'D': '海沃',
                 'E': '博通科技', 'F': '易裝修', 'G': '永騰', 'H': '保羅醫師',
@@ -2308,7 +2250,8 @@ function calc(r, c, save=true) {
                 'M': '中信', 'N': '日幸', 'O': '董鎮綱'
             }[firstChar];
 
-            for(let i = rc - 1; i >= 0; i--) { 
+            // 2. ✨ 自動學習機制：去讀取你已經存檔的資料
+            for(let i = rc - 1; i >= 0; i--) { // 從最新的歷史紀錄往下找
                 let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
                 let existingId = (d[1] || "").trim().toUpperCase();
                 let existingClient = (d[2] || "").trim();
@@ -2319,6 +2262,7 @@ function calc(r, c, save=true) {
                 }
             }
 
+            // 3. 執行填入
             if (clientName) {
                 s(2, clientName);
                 let dd = document.getElementById('mainVipDropdown');
@@ -2327,6 +2271,7 @@ function calc(r, c, save=true) {
         }
     }
 
+    // 保留原本的小寫相容
     if(c === 2) {
         let v = g(2).trim();
         let shortcuts = {
@@ -2358,11 +2303,10 @@ function calc(r, c, save=true) {
     let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
     s(10, tax); s(11, total); s(13, rem); 
     
-    // 🚨 修正：發票打勾時，分潤基準扣除稅金成本
-    let profitBase = g(7) ? (net - tax) : net;
-    s(17, Math.round(profitBase*(parseFloat(g(14))/100 || 0))); 
-    s(18, Math.round(profitBase*(parseFloat(g(15))/100 || 0))); 
-    s(19, Math.round(profitBase*(parseFloat(g(16))/100 || 0)));
+    // 🚨 恢復：分潤基準直接使用「未稅額(net)」，不重複扣除稅金
+    s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); 
+    s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); 
+    s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
     
     let row = document.getElementById(`r${r}`); 
     if (row) { 
@@ -2519,4 +2463,51 @@ window.onload = () => {
                 await setDoc(docRef, { data: JSON.stringify(fullData), lastUpdate: new Date().toISOString() });
                 const partnerDocRef = doc(db, 'system_data', 'partner_view');
                 await setDoc(partnerDocRef, { data: JSON.stringify(partnerSafeData), lastUpdate: new Date().toISOString() });
-                await uiAlert("🔥 搬家我是一个文本 AI，在这方面爱莫能助。
+                await uiAlert("🔥 搬家成功！\n資料已完美備份！");
+            } catch(e) { 
+                console.error("上傳錯誤:", e); 
+                await uiAlert("❌ 上傳失敗！請確認網路連線。"); 
+            }
+            btn.innerText = oldText;
+            
+        } else {
+            if(!(await uiConfirm("⚠️ 注意：這將會清除目前電腦上的資料，並從雲端載入備份。\n確定要執行嗎？"))) return;
+            
+            let btnLoad = event.target;
+            let oldText = btnLoad.innerText;
+            btnLoad.innerText = "⏳ 載入中...";
+            
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    let cloudData = null;
+                    try { cloudData = JSON.parse(docSnap.data().data); } catch(e) {}
+                    
+                    if (!cloudData || Object.keys(cloudData).length === 0) {
+                        await uiAlert("❌ 雲端資料庫格式異常。已強制攔截載入，保護您目前的資料。");
+                        btnLoad.innerText = oldText;
+                        return;
+                    }
+
+                    localStorage.clear(); 
+                    Object.keys(cloudData).forEach(k => {
+                        if (cloudData[k] !== "undefined" && cloudData[k] !== "null") {
+                            localStorage.setItem(k, cloudData[k]);
+                        }
+                    });
+                    await uiAlert("✅ 載入成功！資料已完美同步。\n畫面即將重新整理。");
+                    location.reload(); 
+                } else { 
+                    await uiAlert("🤷‍♂️ 雲端資料庫目前是空的！"); 
+                    btnLoad.innerText = oldText;
+                }
+            } catch(e) { 
+                console.error("下載錯誤:", e); 
+                await uiAlert("❌ 載入失敗！請確認網路是否正常。"); 
+                btnLoad.innerText = oldText;
+            }
+        }
+    };
+</script>
+</body>
+</html>
