@@ -108,8 +108,10 @@
         .table-scroll { flex: 1; overflow: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; }
         
-        #mainTable { min-width: 1430px; table-layout: fixed; }
+        /* 🚨 縮小總表寬度，因為藏了三個欄位 */
+        #mainTable { min-width: 1200px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
+        #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; box-sizing: border-box; }
@@ -216,36 +218,6 @@
         .btn-row-del { color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s; user-select: none; }
         .btn-row-del:hover { color: #FF3B30; transform: scale(1.3); }
 
-        /* 🚨 補回數據中心專用 CSS */
-        .dashboard-container { padding: 30px 40px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%; }
-        .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
-        .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
-        .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
-        .db-controls { display: flex; gap: 15px; align-items: center; }
-        
-        .db-custom-select-container { position: relative; user-select: none; z-index: 1000; width: auto; display: inline-block; }
-        .db-custom-trigger { background: #FFFFFF; border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; min-width: 140px; white-space: nowrap; gap: 15px; }
-        .db-custom-trigger:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: rgba(var(--primary-rgb), 0.5); }
-        .db-custom-menu { position: absolute; top: 110%; left: 0; background: #FFFFFF; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); width: 100%; display: none; flex-direction: column; padding: 4px; max-height: 300px; overflow-y: auto; box-sizing: border-box;}
-        .db-custom-menu.active { display: flex; }
-        .db-custom-option { padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: 0.2s; text-align: center; }
-        .db-custom-option:hover { background: rgba(var(--primary-rgb), 0.05); color: var(--primary); }
-        .db-custom-option.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
-
-        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0; }
-        .kpi-card { background: #FFFFFF; border-radius: 16px; padding: 25px 20px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center; }
-        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
-        .kpi-title { font-size: 14px; color: #6E6E73; font-weight: 800; margin-bottom: 12px; }
-        .kpi-value { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
-        
-        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-shrink: 0; min-height: 350px; padding-bottom: 30px; }
-        .chart-card { background: #FFFFFF; border-radius: 16px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
-        .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
-        .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
-
-        #barChart { cursor: default; transition: cursor 0.2s; }
-
         /* 月度果凍方框 */
         .report-card-grid {
             display: grid;
@@ -319,6 +291,36 @@
             background: #F4F7F9; border-radius: 30px; padding: 40px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8); border: none;
         }
         #inv-list-wrapper { flex: 1; display: flex; flex-direction: column; gap: 0; overflow-y: auto; padding: 0; }
+        
+        /* 🚨 補回數據中心專屬 CSS */
+        .dashboard-container { padding: 30px 40px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
+        .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
+        .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
+        .db-controls { display: flex; gap: 15px; align-items: center; }
+        
+        .db-custom-select-container { position: relative; user-select: none; z-index: 1000; width: auto; display: inline-block; }
+        .db-custom-trigger { background: #FFFFFF; border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; min-width: 140px; white-space: nowrap; gap: 15px; }
+        .db-custom-trigger:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: rgba(var(--primary-rgb), 0.5); }
+        .db-custom-menu { position: absolute; top: 110%; left: 0; background: #FFFFFF; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); width: 100%; display: none; flex-direction: column; padding: 4px; max-height: 300px; overflow-y: auto; box-sizing: border-box;}
+        .db-custom-menu.active { display: flex; }
+        .db-custom-option { padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: 0.2s; text-align: center; }
+        .db-custom-option:hover { background: rgba(var(--primary-rgb), 0.05); color: var(--primary); }
+        .db-custom-option.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0; }
+        .kpi-card { background: #FFFFFF; border-radius: 16px; padding: 25px 20px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
+        .kpi-title { font-size: 14px; color: #6E6E73; font-weight: 800; margin-bottom: 12px; }
+        .kpi-value { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-shrink: 0; min-height: 350px; padding-bottom: 30px; }
+        .chart-card { background: #FFFFFF; border-radius: 16px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
+        .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
+
+        #barChart { cursor: default; transition: cursor 0.2s; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -334,6 +336,7 @@
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
+<!-- 主表客戶專用下拉選單 -->
 <div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
@@ -497,8 +500,9 @@
                     </div>
                 </div>
                 <div class="table-scroll" id="input-view">
+                    <!-- 🚨 隱藏 付款、尾款、未收金額 -->
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -564,12 +568,8 @@
             </div>
         </div>
 
-        <!-- Slide 2: 🚨 月度總覽 -->
-        <div class="page-content">
-            <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
-                <div id="report-cards-container" class="report-card-grid"></div>
-            </div>
-        </div>
+        <!-- Slide 2: 月報統計 -->
+        <div class="page-content"><div class="white-card"><div class="table-scroll"><table id="reportTable"><thead><tr><th>月份</th><th>未稅總收</th><th>含稅總收</th><th>已收金額</th><th>應收餘額</th><th>公司分潤</th><th>老闆分潤</th><th>夥伴分潤</th><th>案件數</th></tr></thead><tbody id="report-tb"></tbody></table></div></div></div>
 
         <!-- Slide 3: 🚨 請款系統 (完美還原參考圖佈局) -->
         <div class="page-content">
@@ -1549,6 +1549,7 @@ function updateMonthlyReport() {
     }
 }
 
+// 🚨 修正：請款系統全新搜尋排版邏輯
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
@@ -1559,6 +1560,7 @@ function runQuoteSearch() {
     let invWrapper = document.getElementById('inv-list-wrapper');
 
     if (sc !== "" || (sm !== "" && sm !== "00")) {
+        // 有輸入條件時，搜尋列往上縮，顯示請款內容
         searchBar.style.margin = "0 0 20px 0";
         pIcon.style.display = 'none';
         pText.style.display = 'none';
@@ -1582,7 +1584,7 @@ function runQuoteSearch() {
             invWrapper.innerHTML += `
             <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}">
                 <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
-                    <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
+                    <input type="checkbox" class="quote-cb" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
                 </div>
                 <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${d[1]||''}</div>
                 <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;">${d[3]}</div>
@@ -1595,6 +1597,7 @@ function runQuoteSearch() {
         document.getElementById('inv-discount-input').value = "100";
         calcQuoteTotal();
     } else { 
+        // 沒輸入條件時，搜尋列回歸畫面正中央
         searchBar.style.margin = "auto";
         pIcon.style.display = 'block';
         pText.style.display = 'block';
@@ -1602,6 +1605,7 @@ function runQuoteSearch() {
     }
 }
 
+// 🚨 修正：精準計算打勾項目的加總
 function calcQuoteTotal(el = null) {
     if (el) {
         let item = el.closest('.inv-item');
@@ -1615,23 +1619,25 @@ function calcQuoteTotal(el = null) {
     }
     
     let totalPre = 0, totalAmt = 0;
+    // 遍歷所有列表中的項目
     document.querySelectorAll('.inv-item').forEach(item => {
         let cb = item.querySelector('.quote-cb');
+        // 只有「有打勾」的才算錢！
         if (cb && cb.checked) {
             totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
             totalAmt += parseFloat(item.getAttribute('data-total')) || 0; 
         }
     });
     
+    // 計算折扣
     let discountVal = parseFloat(document.getElementById('inv-discount-input').value);
     let discount = (isNaN(discountVal) || discountVal < 0) ? 1 : (discountVal / 100);
     
     let finalAmt = Math.round(totalAmt * discount);
     
+    // 更新顯示文字
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
-    
-    document.getElementById('inv-total-amt').innerText = `$ ${finalAmt.toLocaleString()}`;
     document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
 }
 window.calcQuoteTotal = calcQuoteTotal; 
@@ -1640,6 +1646,7 @@ function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
     btn.style.display = 'none'; 
     
+    // 隱藏搜尋框避免印出
     let searchBar = document.getElementById('quote-search-bar');
     if (searchBar) searchBar.style.display = 'none';
     
@@ -1649,14 +1656,14 @@ function downloadPDF() {
         if (cb) {
             cb.style.display = 'none'; 
             if (!cb.checked) {
-                item.style.display = 'none'; 
+                item.style.display = 'none'; // 隱藏沒打勾的項目
                 hiddenItems.push(item);
             }
         }
     });
     
     let thCb = document.getElementById('quote-th-cb');
-    if(thCb) thCb.firstElementChild.style.color = "transparent";
+    if(thCb) thCb.firstElementChild.style.color = "transparent"; // 隱藏表頭的「選取」字樣
     
     let discountInput = document.getElementById('inv-discount-input');
     let origBorder = discountInput.style.border;
@@ -1708,9 +1715,15 @@ function createRow(r) {
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+    
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
+        
+        // 🚨 隱藏 付款(6)、尾款(12)、未收金額(13) 的欄位內容
+        if (c === 6 || c === 12 || c === 13) {
+            td.style.display = 'none';
+        }
         
         if (c===1) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
