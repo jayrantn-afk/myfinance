@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v2.0</title>
+    <title>杰冉宇宙營收表 v01.88</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -110,7 +110,6 @@
         
         #mainTable { min-width: 1430px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
-        #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; box-sizing: border-box; }
@@ -217,6 +216,36 @@
         .btn-row-del { color: rgba(0,0,0,0.15); cursor: pointer; font-weight: 900; font-size: 14px; transition: 0.2s; user-select: none; }
         .btn-row-del:hover { color: #FF3B30; transform: scale(1.3); }
 
+        /* 🚨 補回數據中心專用 CSS */
+        .dashboard-container { padding: 30px 40px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
+        .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
+        .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
+        .db-controls { display: flex; gap: 15px; align-items: center; }
+        
+        .db-custom-select-container { position: relative; user-select: none; z-index: 1000; width: auto; display: inline-block; }
+        .db-custom-trigger { background: #FFFFFF; border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; min-width: 140px; white-space: nowrap; gap: 15px; }
+        .db-custom-trigger:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: rgba(var(--primary-rgb), 0.5); }
+        .db-custom-menu { position: absolute; top: 110%; left: 0; background: #FFFFFF; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); width: 100%; display: none; flex-direction: column; padding: 4px; max-height: 300px; overflow-y: auto; box-sizing: border-box;}
+        .db-custom-menu.active { display: flex; }
+        .db-custom-option { padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: 0.2s; text-align: center; }
+        .db-custom-option:hover { background: rgba(var(--primary-rgb), 0.05); color: var(--primary); }
+        .db-custom-option.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0; }
+        .kpi-card { background: #FFFFFF; border-radius: 16px; padding: 25px 20px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
+        .kpi-title { font-size: 14px; color: #6E6E73; font-weight: 800; margin-bottom: 12px; }
+        .kpi-value { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-shrink: 0; min-height: 350px; padding-bottom: 30px; }
+        .chart-card { background: #FFFFFF; border-radius: 16px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
+        .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
+
+        #barChart { cursor: default; transition: cursor 0.2s; }
+
         /* 月度果凍方框 */
         .report-card-grid {
             display: grid;
@@ -305,7 +334,6 @@
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
-<!-- 主表客戶專用下拉選單 -->
 <div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
@@ -425,6 +453,10 @@
             <input type="text" id="ssC" placeholder="👤 搜尋客戶" autocomplete="off" oninput="runSettleSearch()" style="width: 130px; flex-shrink: 0; text-align: center; font-weight: 900;">
             <input type="text" id="ssM" placeholder="📅 結算月 (ex:05)" autocomplete="off" oninput="checkMonthClients()" style="width: 130px; flex-shrink: 0; text-align: center; font-weight: 900;">
             <button id="openClientModalBtn" class="sync-btn" style="display:none; color:var(--primary); padding: 8px 20px; font-size: 13px; height: 38px;" onclick="openSettleClientModal()">👥 選擇客戶 (全選)</button>
+        </div>
+
+        <div class="search-group" id="quoteSearchGroup" style="display:none;">
+            <!-- 請款搜尋區塊移至中心，故此處清空 -->
         </div>
 
         <div class="search-group" id="invoiceManageSearchGroup" style="display:none;">
@@ -1527,7 +1559,6 @@ function runQuoteSearch() {
     let invWrapper = document.getElementById('inv-list-wrapper');
 
     if (sc !== "" || (sm !== "" && sm !== "00")) {
-        // 觸發搜尋，把搜尋框頂上去，顯示請款內容
         searchBar.style.margin = "0 0 20px 0";
         pIcon.style.display = 'none';
         pText.style.display = 'none';
@@ -1564,7 +1595,6 @@ function runQuoteSearch() {
         document.getElementById('inv-discount-input').value = "100";
         calcQuoteTotal();
     } else { 
-        // 恢復初始置中狀態
         searchBar.style.margin = "auto";
         pIcon.style.display = 'block';
         pText.style.display = 'block';
@@ -1589,7 +1619,7 @@ function calcQuoteTotal(el = null) {
         let cb = item.querySelector('.quote-cb');
         if (cb && cb.checked) {
             totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
-            totalAmt += parseFloat(item.getAttribute('data-total')) || 0;
+            totalAmt += parseFloat(item.getAttribute('data-total')) || 0; 
         }
     });
     
@@ -1600,6 +1630,8 @@ function calcQuoteTotal(el = null) {
     
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
+    
+    document.getElementById('inv-total-amt').innerText = `$ ${finalAmt.toLocaleString()}`;
     document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
 }
 window.calcQuoteTotal = calcQuoteTotal; 
@@ -1608,7 +1640,6 @@ function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
     btn.style.display = 'none'; 
     
-    // 隱藏搜尋框避免印出
     let searchBar = document.getElementById('quote-search-bar');
     if (searchBar) searchBar.style.display = 'none';
     
@@ -2190,55 +2221,6 @@ function reorderData(si, ti, type = 'main') {
     
     if (type === 'inv') { initInvoiceTable(); filterInvoiceTable(); } 
     else { initTable(); filterTable(); }
-}
-
-function updateMonthlyReport() {
-    const container = document.getElementById('report-cards-container'); 
-    if(!container) return;
-    container.innerHTML = ''; 
-    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let hasData = false;
-    
-    for(let m=1; m<=12; m++) {
-        let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
-        for(let i=0; i<count; i++) {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-            if(d[0] === mStr) { 
-                n += parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
-                t += parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
-                r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0); 
-                re += parseFloat(String(d[13]).replace(/,/g,'')) || 0; 
-                c1 += parseFloat(String(d[17]).replace(/,/g,'')) || 0; 
-                c2 += parseFloat(String(d[18]).replace(/,/g,'')) || 0; 
-                c3 += parseFloat(String(d[19]).replace(/,/g,'')) || 0; 
-                ct++; 
-            }
-        }
-        if(ct > 0) {
-            hasData = true;
-            container.innerHTML += `
-            <div class="jelly-card" onclick="this.classList.toggle('expanded')">
-                <div class="jelly-header">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="jelly-month">${m} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
-                        <div style="font-size:12px; font-weight:800; color:var(--light); background: rgba(0,0,0,0.04); padding: 4px 10px; border-radius: 50px;">${ct} 件</div>
-                    </div>
-                    <div class="jelly-total">$ ${t.toLocaleString()}</div>
-                </div>
-                <div class="jelly-body">
-                    <div class="jelly-stat"><span class="jelly-label">未稅總收</span><span class="jelly-val">$ ${n.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">待收餘額</span><span class="jelly-val" style="color:#FF3B30;">$ ${re.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">已收金額</span><span class="jelly-val" style="color:#00D26A;">$ ${r.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">公司分潤</span><span class="jelly-val">$ ${c1.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">老闆分潤</span><span class="jelly-val">$ ${c2.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">夥伴分潤</span><span class="jelly-val" style="color:#BF5AF2;">$ ${c3.toLocaleString()}</span></div>
-                </div>
-            </div>`;
-        }
-    }
-    if(!hasData) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--light); font-weight: 800; font-size: 15px;">尚無任何月份的營收資料</div>`;
-    }
 }
 
 function calc(r, c, save=true) {
