@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.99</title>
+    <title>杰冉宇宙營收表 v01.88</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -567,7 +567,7 @@
             </div>
         </div>
 
-        <!-- Slide 2: 🚨 月度總覽 -->
+        <!-- Slide 2: 月報統計 -->
         <div class="page-content">
             <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
                 <div id="report-cards-container" class="report-card-grid"></div>
@@ -1537,8 +1537,8 @@ function calcQuoteTotal(el = null) {
     document.querySelectorAll('.inv-item').forEach(item => {
         let cb = item.querySelector('.quote-cb');
         if (cb && cb.checked) {
-            totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
-            totalAmt += parseFloat(item.getAttribute('data-amt')) || 0;
+            totalPre += parseFloat(cb.getAttribute('data-pre')) || 0;
+            totalAmt += parseFloat(cb.getAttribute('data-amt')) || 0;
         }
     });
     
@@ -2187,12 +2187,11 @@ function calc(r, c, save=true) {
     // 🚨 智慧化抓取代號邏輯
     if(c === 1) {
         let v = g(1).trim().toUpperCase();
-        let firstChar = v.charAt(0); // 抓取第一個字元
+        let firstChar = v.charAt(0); 
 
-        // 如果是英文字母，且不是 Z (Z是大雜燴，不自動帶入)
         if (firstChar >= 'A' && firstChar <= 'Y') {
             
-            // 1. 預設字典 (來自你的截圖)
+            // 1. 預設字典
             let clientName = {
                 'A': '小花宇宙', 'B': '醫敏家', 'C': '欣榮鑫', 'D': '海沃',
                 'E': '博通科技', 'F': '易裝修', 'G': '永騰', 'H': '保羅醫師',
@@ -2200,8 +2199,8 @@ function calc(r, c, save=true) {
                 'M': '中信', 'N': '日幸', 'O': '董鎮綱'
             }[firstChar];
 
-            // 2. ✨ 自動學習機制：去讀取你已經存檔的資料
-            for(let i = rc - 1; i >= 0; i--) { // 從最新的歷史紀錄往下找
+            // 2. ✨ 自動學習機制
+            for(let i = rc - 1; i >= 0; i--) { 
                 let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
                 let existingId = (d[1] || "").trim().toUpperCase();
                 let existingClient = (d[2] || "").trim();
@@ -2221,7 +2220,6 @@ function calc(r, c, save=true) {
         }
     }
 
-    // 保留原本的小寫相容
     if(c === 2) {
         let v = g(2).trim();
         let shortcuts = {
