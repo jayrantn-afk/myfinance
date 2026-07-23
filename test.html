@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.88</title>
+    <title>杰冉宇宙營收表 v01.888</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -110,6 +110,7 @@
         
         #mainTable { min-width: 1430px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
+        #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; box-sizing: border-box; }
@@ -283,43 +284,28 @@
         .jelly-label { font-size: 11px; font-weight: 800; color: var(--light); text-transform: uppercase; }
         .jelly-val { font-size: 15px; font-weight: 800; color: var(--text-main); }
 
-        /* 請款單精美 Neumorphism 風格卡片化 */
+        /* 請款單現代風格 */
         #invoice-view { 
             width: 100%; height: 100%; box-sizing: border-box; flex-direction: column; overflow: hidden; 
-            background: #F4F7F9; /* 淺灰藍背景 */
-            border-radius: 30px; /* 超大圓角 */
-            padding: 40px;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8); /* 微微內發光 */
-            border: none;
+            background: #F4F7F9; border-radius: 30px; padding: 40px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8); border: none;
         }
         .quote-placeholder { 
             flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; 
             background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.02) 0%, rgba(var(--primary-rgb), 0.05) 100%);
-            border: 2px dashed rgba(var(--primary-rgb), 0.2); border-radius: 24px; 
-            margin: 20px; transition: all 0.3s ease;
+            border: 2px dashed rgba(var(--primary-rgb), 0.2); border-radius: 24px; margin: 20px; transition: all 0.3s ease;
         }
         .quote-placeholder:hover {
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.04) 0%, rgba(var(--primary-rgb), 0.08) 100%);
+            border-color: rgba(var(--primary-rgb), 0.4); background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.04) 0%, rgba(var(--primary-rgb), 0.08) 100%);
         }
         .quote-placeholder-icon {
-            font-size: 72px; margin-bottom: 20px; opacity: 0.9;
-            filter: drop-shadow(0 15px 25px rgba(var(--primary-rgb), 0.2));
+            font-size: 72px; margin-bottom: 20px; opacity: 0.9; filter: drop-shadow(0 15px 25px rgba(var(--primary-rgb), 0.2));
             animation: floatIcon 3s ease-in-out infinite;
         }
         .quote-placeholder-title { font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px; letter-spacing: 1px; }
         .quote-placeholder-desc { font-size: 14px; font-weight: 600; color: var(--mid); }
         @keyframes floatIcon { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
 
-        #inv-list-wrapper { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; /* 卡片間距 */
-            overflow-y: auto; 
-            padding-right: 15px; 
-            padding-bottom: 20px;
-        }
+        #inv-list-wrapper { flex: 1; display: flex; flex-direction: column; gap: 0; overflow-y: auto; padding: 0; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -567,14 +553,14 @@
             </div>
         </div>
 
-        <!-- Slide 2: 月報統計 -->
+        <!-- Slide 2: 🚨 月度總覽 -->
         <div class="page-content">
             <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
                 <div id="report-cards-container" class="report-card-grid"></div>
             </div>
         </div>
 
-        <!-- Slide 3: 🚨 請款系統 (現代卡片 Neumorphism UI) -->
+        <!-- Slide 3: 🚨 請款系統 (現代卡片 UI 重新排版) -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
                 <div class="quote-placeholder" id="quote-placeholder">
@@ -584,38 +570,51 @@
                 </div>
                 
                 <div id="quote-content" style="display: none; height: 100%; flex-direction: column;">
-                    <div class="inv-header" style="border:none; margin-bottom:10px;">
-                        <h1 style="font-size: 32px; color: #101828; letter-spacing: 0;">請款明細單</h1>
-                        <div style="display: flex; align-items: center; gap: 20px;">
-                            <div id="inv-cust-info" style="font-weight:800; font-size:16px; color:#475467; background: #FFF; padding: 8px 16px; border-radius: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);"></div>
-                            <button id="exportPdfBtn" class="sync-btn" style="background: var(--primary); color: white; padding: 10px 24px; font-size: 14px; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);" onclick="downloadPDF()">📥 匯出請款單 PDF</button>
-                        </div>
-                    </div>
                     
-                    <div id="quote-th-cb" style="display:flex; padding: 0 24px 10px 24px; color: #98A2B3; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
-                        <div style="width: 40px; margin-right: 15px;">選取</div>
-                        <div style="width: 60px; margin-right: 20px; text-align: center;">編號</div>
-                        <div style="flex: 1;">案件名稱</div>
-                        <div style="width: 150px;">未稅與稅金</div>
-                        <div style="width: 120px; text-align: right;">含稅總額</div>
+                    <!-- 上方區塊：標題與最終大金額 -->
+                    <div style="background: #FFF; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div>
+                            <h1 style="margin: 0 0 10px 0; font-size: 24px; color: #101828;">請款 / 對帳明細單</h1>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <span id="inv-cust-info" style="font-weight:700; font-size:14px; color:#475467; background: #F2F4F7; padding: 4px 12px; border-radius: 50px;"></span>
+                                <button id="exportPdfBtn" class="sync-btn" style="background: var(--primary); color: white; padding: 6px 16px; font-size: 12px; box-shadow: none; border-radius: 50px;" onclick="downloadPDF()">📥 匯出 PDF</button>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #667085; font-size: 13px; font-weight: 700; margin-bottom: 4px;">折扣後應付總計 (含稅)</div>
+                            <div style="display: flex; align-items: baseline; gap: 8px; justify-content: flex-end;">
+                                <span style="font-size: 16px; color: var(--primary); font-weight: 800;">TWD</span>
+                                <span id="inv-top-total" style="font-size: 36px; font-weight: 900; color: #101828; line-height: 1;">0</span>
+                            </div>
+                            <div id="inv-discount-panel" style="margin-top: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 13px; color: #667085; font-weight: 600;">
+                                套用折扣: 
+                                <input type="number" step="1" id="inv-discount-input" value="100" oninput="calcQuoteTotal()" style="width: 50px; text-align: center; font-size: 14px; font-weight: 800; color: var(--primary); border: 1px solid #D0D5DD; border-radius: 6px; padding: 2px 4px; outline: none;"> %
+                            </div>
+                        </div>
                     </div>
 
-                    <div id="inv-list-wrapper"></div>
-                    
-                    <div class="inv-footer" style="background:#FFF; border-radius:24px; padding: 24px 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.06); margin-top:10px; border-top:none; display:flex; justify-content: space-between; align-items: center;">
-                        <div style="color: #667085; font-size: 14px; font-weight: 600;">※ 總金額將依照上方打勾項目即時計算</div>
-                        <div class="inv-summary-box">
-                            <div class="inv-summary-row"><span class="inv-summary-label">未稅總計</span><span class="inv-total-pre" id="inv-total-pre" style="font-size:20px; width: auto; padding-right:0;">$ 0</span></div>
-                            <div class="inv-summary-row"><span class="inv-summary-label">含稅總計 (原價)</span><span class="inv-total-amt" id="inv-total-orig" style="font-size:20px; color: var(--light); width: auto; padding-right:0; text-decoration: line-through;">$ 0</span></div>
-                            
-                            <div class="inv-summary-row" style="align-items: center; margin: 8px 0;">
-                                <span class="inv-summary-label" style="color:var(--primary);">套用折扣 (輸入 98 即為 98折)</span>
-                                <input type="number" step="1" id="inv-discount-input" value="100" oninput="calcQuoteTotal()" style="width: 80px; text-align: right; font-size: 24px; font-weight: 900; color: var(--primary); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 4px 8px; margin-right: 5px; outline: none; background: transparent;">
-                                <span style="font-size: 20px; font-weight: 900; color: var(--primary); margin-right: 10px;">%</span>
-                            </div>
-                            <div class="inv-summary-row"><span class="inv-summary-label" style="color: #D32F2F;">折扣後應付總計 (含稅)</span><span class="inv-total-amt" id="inv-total-amt" style="font-size:36px; color:#101828; width: auto; padding-right:0;">$ 0</span></div>
+                    <!-- 下方區塊：影片清單與小計 -->
+                    <div style="background: #FFF; border: 1px solid #E4E7EC; border-radius: 12px; flex: 1; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                        <!-- 表頭 -->
+                        <div id="quote-th-cb" style="background: #F9FAFB; border-bottom: 1px solid #E4E7EC; display: flex; padding: 12px 20px; font-size: 13px; font-weight: 700; color: #667085;">
+                            <div style="width: 40px; text-align: center;">選取</div>
+                            <div style="width: 80px;">編號</div>
+                            <div style="flex: 1;">案件名稱</div>
+                            <div style="width: 100px; text-align: right;">未稅額</div>
+                            <div style="width: 80px; text-align: right;">稅金</div>
+                            <div style="width: 120px; text-align: right;">含稅總額</div>
+                        </div>
+                        
+                        <!-- 影片列表 -->
+                        <div id="inv-list-wrapper" style="flex: 1; overflow-y: auto; padding: 0;"></div>
+                        
+                        <!-- 結算總計 -->
+                        <div id="quote-footer-box" style="background: #F9FAFB; border-top: 1px solid #E4E7EC; padding: 16px 20px; display: flex; justify-content: flex-end; gap: 24px; font-size: 14px; font-weight: 600; color: #475467;">
+                            <div>未稅總計: <span id="inv-total-pre" style="font-weight: 800; color: #101828; margin-left: 8px;">$ 0</span></div>
+                            <div>含稅總計 (原價): <span id="inv-total-orig" style="font-weight: 800; color: var(--light); text-decoration: line-through; margin-left: 8px;">$ 0</span></div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -1482,13 +1481,65 @@ function downloadSettlePDF() {
     });
 }
 
+function updateMonthlyReport() {
+    const container = document.getElementById('report-cards-container'); 
+    if(!container) return;
+    container.innerHTML = ''; 
+    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    let hasData = false;
+    
+    for(let m=1; m<=12; m++) {
+        let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
+        for(let i=0; i<count; i++) {
+            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+            if(d[0] === mStr) { 
+                n += parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
+                t += parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
+                r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0); 
+                re += parseFloat(String(d[13]).replace(/,/g,'')) || 0; 
+                c1 += parseFloat(String(d[17]).replace(/,/g,'')) || 0; 
+                c2 += parseFloat(String(d[18]).replace(/,/g,'')) || 0; 
+                c3 += parseFloat(String(d[19]).replace(/,/g,'')) || 0; 
+                ct++; 
+            }
+        }
+        if(ct > 0) {
+            hasData = true;
+            container.innerHTML += `
+            <div class="jelly-card" onclick="this.classList.toggle('expanded')">
+                <div class="jelly-header">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="jelly-month">${m} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
+                        <div style="font-size:12px; font-weight:800; color:var(--light); background: rgba(0,0,0,0.04); padding: 4px 10px; border-radius: 50px;">${ct} 件</div>
+                    </div>
+                    <div class="jelly-total">$ ${t.toLocaleString()}</div>
+                </div>
+                <div class="jelly-body">
+                    <div class="jelly-stat"><span class="jelly-label">未稅總收</span><span class="jelly-val">$ ${n.toLocaleString()}</span></div>
+                    <div class="jelly-stat"><span class="jelly-label">待收餘額</span><span class="jelly-val" style="color:#FF3B30;">$ ${re.toLocaleString()}</span></div>
+                    <div class="jelly-stat"><span class="jelly-label">已收金額</span><span class="jelly-val" style="color:#00D26A;">$ ${r.toLocaleString()}</span></div>
+                    <div class="jelly-stat"><span class="jelly-label">公司分潤</span><span class="jelly-val">$ ${c1.toLocaleString()}</span></div>
+                    <div class="jelly-stat"><span class="jelly-label">老闆分潤</span><span class="jelly-val">$ ${c2.toLocaleString()}</span></div>
+                    <div class="jelly-stat"><span class="jelly-label">夥伴分潤</span><span class="jelly-val" style="color:#BF5AF2;">$ ${c3.toLocaleString()}</span></div>
+                </div>
+            </div>`;
+        }
+    }
+    if(!hasData) {
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--light); font-weight: 800; font-size: 15px;">尚無任何月份的營收資料</div>`;
+    }
+}
+
+// 🚨🚨🚨 【更新3】：全新的搜尋與列表渲染邏輯，完美還原現代化卡片設計
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let placeholder = document.getElementById('quote-placeholder'), content = document.getElementById('quote-content'), invWrapper = document.getElementById('inv-list-wrapper');
+    
     if (sc !== "" || (sm !== "" && sm !== "00")) {
         placeholder.style.display = 'none'; content.style.display = 'flex'; invWrapper.innerHTML = '';
         let terms = sc ? sc.split(/[\s,，]+/) : []; document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
         let results = [];
+        
         for(let r=0; r<rowCount; r++){ 
             let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
             let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
@@ -1500,19 +1551,15 @@ function runQuoteSearch() {
             let totalAmt = parseFloat(String(d[11]).replace(/,/g,''))||0;
             
             invWrapper.innerHTML += `
-            <div class="inv-item quote-data-row" style="background: #FFF; border-radius: 16px; padding: 16px 24px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: 0.3s; border: 1px solid rgba(0,0,0,0.03); margin-bottom:12px;">
-                <div class="quote-cb-wrap" style="width: 40px; display:flex; align-items:center;">
-                    <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+            <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}">
+                <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
+                    <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
                 </div>
-                <div class="inv-col-id" style="width: 60px; height: 30px; background: #F4F7F9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #475467; font-weight: 900; font-size: 13px; margin-right: 20px; flex-shrink: 0;">${d[1]||''}</div>
-                <div class="inv-col-info" style="flex: 1; display:flex; flex-direction:column; gap:4px;">
-                    <div class="inv-col-name" style="font-size: 16px; font-weight: 800; color: #101828;">${d[3]}</div>
-                </div>
-                <div style="width: 150px; display:flex; flex-direction:column; gap:4px; font-size:13px; color:#667085; font-weight:600;">
-                    <span><span style="color:#98A2B3; font-weight:400; margin-right:4px;">未稅:</span>${d[9]||'0'}</span>
-                    <span><span style="color:#98A2B3; font-weight:400; margin-right:4px;">稅金:</span>${d[10]||'0'}</span>
-                </div>
-                <div class="inv-col-total" style="width: 120px; text-align: right; background: rgba(10, 132, 255, 0.08); color: var(--primary); padding: 8px 16px; border-radius: 50px; font-size: 16px; font-weight: 900;">${d[11]||'0'}</div>
+                <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${d[1]||''}</div>
+                <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;">${d[3]}</div>
+                <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${preTax.toLocaleString()}</div>
+                <div style="width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${(d[10]||0).toLocaleString()}</div>
+                <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${totalAmt.toLocaleString()}</div>
             </div>`;
         });
         
@@ -1537,8 +1584,8 @@ function calcQuoteTotal(el = null) {
     document.querySelectorAll('.inv-item').forEach(item => {
         let cb = item.querySelector('.quote-cb');
         if (cb && cb.checked) {
-            totalPre += parseFloat(cb.getAttribute('data-pre')) || 0;
-            totalAmt += parseFloat(cb.getAttribute('data-amt')) || 0;
+            totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
+            totalAmt += parseFloat(item.getAttribute('data-total')) || 0; // 改抓 data-total 以免錯亂
         }
     });
     
@@ -1547,9 +1594,13 @@ function calcQuoteTotal(el = null) {
     
     let finalAmt = Math.round(totalAmt * discount);
     
+    // 更新左下角的未稅跟原含稅
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
+    
+    // 更新右下角跟右上角的大數字
     document.getElementById('inv-total-amt').innerText = `$ ${finalAmt.toLocaleString()}`;
+    document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
 }
 window.calcQuoteTotal = calcQuoteTotal; 
 
@@ -1570,11 +1621,17 @@ function downloadPDF() {
     });
     
     let thCb = document.getElementById('quote-th-cb');
-    if(thCb) thCb.style.display = 'none';
+    // 把選取的表頭文字隱藏
+    if(thCb) thCb.firstElementChild.style.color = "transparent";
     
     let discountInput = document.getElementById('inv-discount-input');
     let origBorder = discountInput.style.border;
     discountInput.style.border = 'none';
+    
+    // 把控制面板的框線拔掉
+    let discountPanel = document.getElementById('inv-discount-panel');
+    let origPanelBorder = discountPanel ? discountPanel.style.border : "";
+    if (discountPanel) discountPanel.style.border = "none";
     
     let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
     let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
@@ -1591,8 +1648,9 @@ function downloadPDF() {
             if (cb) cb.style.display = 'block';
         });
         hiddenItems.forEach(item => item.style.display = 'flex');
-        if(thCb) thCb.style.display = 'flex';
+        if(thCb) thCb.firstElementChild.style.color = "#667085";
         discountInput.style.border = origBorder;
+        if (discountPanel) discountPanel.style.border = origPanelBorder;
     });
 }
 
@@ -2184,14 +2242,12 @@ function calc(r, c, save=true) {
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
-    // 🚨 智慧化抓取代號邏輯
     if(c === 1) {
         let v = g(1).trim().toUpperCase();
         let firstChar = v.charAt(0); 
 
         if (firstChar >= 'A' && firstChar <= 'Y') {
             
-            // 1. 預設字典
             let clientName = {
                 'A': '小花宇宙', 'B': '醫敏家', 'C': '欣榮鑫', 'D': '海沃',
                 'E': '博通科技', 'F': '易裝修', 'G': '永騰', 'H': '保羅醫師',
@@ -2199,7 +2255,6 @@ function calc(r, c, save=true) {
                 'M': '中信', 'N': '日幸', 'O': '董鎮綱'
             }[firstChar];
 
-            // 2. ✨ 自動學習機制
             for(let i = rc - 1; i >= 0; i--) { 
                 let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
                 let existingId = (d[1] || "").trim().toUpperCase();
@@ -2211,7 +2266,6 @@ function calc(r, c, save=true) {
                 }
             }
 
-            // 3. 執行填入
             if (clientName) {
                 s(2, clientName);
                 let dd = document.getElementById('mainVipDropdown');
