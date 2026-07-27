@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.9</title>
+    <title>杰冉宇宙營收表 V2.10</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -334,6 +334,12 @@
     // V2.3 跨搜尋記住分潤結算勾選狀態
     window.settleCheckedIdxs = new Set();
 </script>
+
+<!-- V2.10 新增：登入狀態標籤，讓使用者能明確看到自己是否真的登入、用哪個帳號 -->
+<div id="authStatusBadge" style="position: fixed; top: 14px; right: 20px; z-index: 999999; background: rgba(255,255,255,0.95); backdrop-filter: blur(15px); border-radius: 50px; padding: 8px 16px; font-size: 12px; font-weight: 800; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; border: 1px solid rgba(0,0,0,0.05);">
+    <span id="authStatusText" style="color: #D32F2F;">🔴 尚未登入</span>
+    <button id="authLogoutBtn" onclick="doLogout()" style="display:none; border: none; background: rgba(211,47,47,0.1); color: #D32F2F; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 50px; cursor: pointer;">登出</button>
+</div>
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
@@ -2601,18 +2607,43 @@ window.onload = () => {
 
         // V2.8：改用 Email/Password 驗證。只有登入成功的使用者，才會被 Firestore 規則允許讀寫。
         // 同時偵測「V2.4 舊版遺留的匿名登入」殘留 session，若發現則強制登出，避免卡在無法寫入的狀態。
+        // V2.10：同步更新畫面右上角的登入狀態標籤，讓使用者能明確看到目前是否登入、用哪個帳號。
         onAuthStateChanged(auth, (user) => {
+            const statusText = document.getElementById('authStatusText');
+            const logoutBtn = document.getElementById('authLogoutBtn');
+
             if (user && user.isAnonymous) {
                 signOut(auth);
                 return;
             }
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
+                if (statusText) {
+                    statusText.innerHTML = `🟢 已登入：${user.email}`;
+                    statusText.style.color = '#00A651';
+                }
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
+                if (statusText) {
+                    statusText.innerHTML = `🔴 尚未登入`;
+                    statusText.style.color = '#D32F2F';
+                }
+                if (logoutBtn) logoutBtn.style.display = 'none';
             }
         });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
+
+    // V2.10：手動登出，強制回到登入畫面重新輸入帳密
+    window.doLogout = async function() {
+        if (!(await uiConfirm("確定要登出嗎？登出後需要重新輸入帳號密碼才能使用雲端功能。", "登出確認"))) return;
+        try {
+            await signOut(auth);
+            location.reload();
+        } catch(e) {
+            console.error(e);
+        }
+    };
 
     // 供登入畫面呼叫的全域函式
     window.checkLogin = async function() {
