@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.3</title>
+    <title>杰冉宇宙營收表 V2.4</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -110,7 +110,6 @@
         
         #mainTable { min-width: 1200px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
-        #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
         th { background: rgba(255,255,255,0.85); backdrop-filter: blur(15px); color: var(--light); padding: 16px 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; position: sticky; top: 0; z-index: 10; border-bottom: 1px solid rgba(0,0,0,0.06); text-transform: uppercase; box-sizing: border-box; }
@@ -332,7 +331,7 @@
     window.settleTimer = null;
     window.invFilterTimer = null;
     
-    // 🚨 V2.3 新增：跨搜尋記住分潤結算勾選狀態
+    // V2.3 跨搜尋記住分潤結算勾選狀態
     window.settleCheckedIdxs = new Set();
 </script>
 
@@ -416,6 +415,28 @@
     </div>
 </div>
 
+<!-- 🚨 V2.4 新增：分潤結算已選取清單 Modal -->
+<div id="settle-selected-modal" class="custom-modal">
+    <div class="custom-modal-content" style="max-width: 600px; width: 90%;">
+        <h3 id="settle-selected-title" style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 20px;">已選取清單</h3>
+        <div style="max-height: 50vh; overflow-y: auto; padding: 0 10px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px;">
+                <thead style="background: rgba(0,0,0,0.02);">
+                    <tr>
+                        <th style="padding: 12px; border-bottom: 2px solid var(--primary); color: var(--mid); font-weight: 800; width: 20%;">編號</th>
+                        <th style="padding: 12px; border-bottom: 2px solid var(--primary); color: var(--mid); font-weight: 800; width: 55%;">案名</th>
+                        <th style="padding: 12px; border-bottom: 2px solid var(--primary); color: var(--primary); font-weight: 800; width: 25%;">分潤金額</th>
+                    </tr>
+                </thead>
+                <tbody id="settle-selected-tb"></tbody>
+            </table>
+        </div>
+        <div class="custom-modal-actions" style="margin-top: 25px;">
+            <button class="custom-modal-btn btn-confirm" onclick="document.getElementById('settle-selected-modal').classList.remove('active')">關閉確認</button>
+        </div>
+    </div>
+</div>
+
 <div class="selection-stats-bar" id="selectionStatsBar">
     <div class="stat-item"><span class="stat-label">計數</span><span class="stat-value" id="selCount">0</span></div>
     <div class="stat-item" style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 15px;"><span class="stat-label">加總</span><span class="stat-value" id="selSum">0</span></div>
@@ -442,7 +463,6 @@
             <button id="simpleBatchBtn" class="sync-btn" style="display:none; color:#00D26A; border: 1px solid rgba(0, 210, 106, 0.2);" onclick="simpleBatchResolve()">⚡ 批次結清</button>
         </div>
         
-        <!-- 🚨 V2.3 調整分潤搜尋區塊的寬度與加入案名搜尋 -->
         <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 10px;">
             <div class="status-dropdown-container">
                 <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
@@ -516,7 +536,7 @@
         <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
-                <!-- 🚨 V2.3 新增：已選取計數與清除按鈕 -->
+                <!-- 🚨 V2.4 已選取計數變成可點擊按鈕 -->
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
                     <div class="month-nav" style="align-items: center;">
                         <span style="font-size: 13px; font-weight: 800; color: var(--mid); margin: 0 10px;">排序：</span>
@@ -526,7 +546,7 @@
                         
                         <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.1); margin: 0 10px;"></div>
                         
-                        <span id="settle-selected-count" style="font-size: 13px; font-weight: 900; color: var(--primary); margin-right: 8px;">已選取: 0 件</span>
+                        <span id="settle-selected-count" onclick="showSettleSelected()" style="font-size: 13px; font-weight: 900; color: var(--primary); margin-right: 8px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: 0.2s;" onmouseover="this.style.background='rgba(0,122,255,0.1)'" onmouseout="this.style.background='transparent'">已選取: 0 件 (點擊查看)</span>
                         <button class="month-btn" onclick="clearSettleSelection()" style="color: #D32F2F; border: 1px solid rgba(211, 47, 47, 0.2); padding: 6px 12px; font-size: 11px;">🗑️ 清除</button>
                     </div>
                     <button id="exportSettlePdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px; margin-bottom: 14px;" onclick="downloadSettlePDF()">📥 一鍵匯出 PDF</button>
@@ -585,7 +605,7 @@
             </div>
         </div>
 
-        <!-- Slide 3: 🚨 請款系統 (完美還原參考圖佈局) -->
+        <!-- Slide 3: 請款系統 -->
         <div class="page-content">
             <div class="white-card" id="invoice-view">
                 
@@ -939,7 +959,6 @@ function switchSlide(idx, el) {
     document.getElementById('roleBtns').style.display = (idx === 1) ? 'flex' : 'none';
     document.getElementById('settle-bar').style.display = (idx === 1) ? 'flex' : 'none';
     
-    // 🚨 每次切換到分潤頁面，更新選取UI狀態
     if(idx === 1) {
         updateSettleSelectionUI();
     }
@@ -1342,7 +1361,6 @@ function updateClientFilterBtnText() {
     }
 }
 
-// 🚨 V2.3 修正：分潤結算的獨立全選、清除邏輯
 function clearSettleSelection() {
     window.settleCheckedIdxs.clear();
     let cbs = document.querySelectorAll('.settle-cb');
@@ -1384,7 +1402,7 @@ function updateSettleSelectionUI() {
     document.getElementById('settle-total-val').innerText = `結算總額：$ ${totalVal.toLocaleString()}`;
     
     let countSpan = document.getElementById('settle-selected-count');
-    if(countSpan) countSpan.innerText = `已選取: ${window.settleCheckedIdxs.size} 件`;
+    if(countSpan) countSpan.innerText = `已選取: ${window.settleCheckedIdxs.size} 件 (點擊查看)`;
 
     let allCbs = document.querySelectorAll('.settle-cb');
     let checkedCbs = document.querySelectorAll('.settle-cb:checked');
@@ -1392,6 +1410,35 @@ function updateSettleSelectionUI() {
     if(selectAllCb) {
         selectAllCb.checked = (allCbs.length > 0 && allCbs.length === checkedCbs.length);
     }
+}
+
+// 🚨 V2.4 新增：顯示已選取項目的 Modal 內容
+function showSettleSelected() {
+    if (window.settleCheckedIdxs.size === 0) {
+        uiAlert("目前沒有選取任何案件喔！");
+        return;
+    }
+    let tb = document.getElementById('settle-selected-tb');
+    tb.innerHTML = '';
+    let total = 0;
+    let role = window.curRole;
+    let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
+
+    window.settleCheckedIdxs.forEach(idx => {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${idx}`)) || {};
+        let amt = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0;
+        total += amt;
+        tb.innerHTML += `
+            <tr>
+                <td style="padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); color: var(--light); font-weight: 600;">${d[1]||''}</td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); font-weight: 800; color: var(--text-main);">${d[3]||''}</td>
+                <td style="padding: 12px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); font-weight: 900; color: var(--primary);">$ ${amt.toLocaleString()}</td>
+            </tr>
+        `;
+    });
+    
+    document.getElementById('settle-selected-title').innerText = `已選取清單 (${window.settleCheckedIdxs.size} 件)`;
+    document.getElementById('settle-selected-modal').classList.add('active');
 }
 
 function runSettleSearch() {
@@ -1440,7 +1487,7 @@ function runSettleSearch() {
             let isTextProjectMatch = (sp === '') || pName.includes(sp);
 
             if(hasData && matchStatus && isMonthMatch && isClientMatch && isTextClientMatch && isTextProjectMatch) {
-                d._originalIndex = i; // Save original index for cross-search mapping
+                d._originalIndex = i; 
                 matched.push(d);
             }
         }
@@ -1455,12 +1502,17 @@ function runSettleSearch() {
         matched.forEach(d => {
             let rowVal = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; 
             let isChecked = window.settleCheckedIdxs.has(d._originalIndex) ? 'checked' : '';
-            tb.innerHTML += `<tr class="settle-data-row">
+            
+            // 🚨 V2.4 判斷該項目是否已經勾選過「付夥伴」
+            let isPaid = (d[21] === true || d[21] === "true");
+            let rowClass = isPaid ? "settle-data-row is-settled" : "settle-data-row";
+            
+            tb.innerHTML += `<tr class="${rowClass}">
                 <td class="calc-cell" style="padding:10px; text-align:center;"><input type="checkbox" class="settle-cb" data-idx="${d._originalIndex}" ${isChecked} onchange="handleSettleCheckbox(this, ${d._originalIndex})"></td>
                 <td class="calc-cell" style="padding:10px;">${d[0]||''}</td>
                 <td class="calc-cell" style="padding:10px;">${d[1]||''}</td>
                 <td class="calc-cell" style="padding:10px; font-weight:800;">${d[2]||''}</td>
-                <td class="calc-cell" style="text-align:center; padding:10px;">${d[3]||''}</td>
+                <td class="calc-cell" style="text-align:center; padding:10px;">${d[3]||''} ${isPaid ? '<span style="font-size:10px; color:#BF5AF2; background:rgba(191,90,242,0.1); padding:2px 6px; border-radius:4px; margin-left:6px;">已付</span>' : ''}</td>
                 <td class="calc-cell" style="padding:10px; color:var(--primary); font-weight:800;">${d[pIdx]||0}%</td>
                 <td class="calc-cell" style="padding:10px; font-weight:900; color:var(--primary);">${rowVal.toLocaleString()}</td>
             </tr>`;
@@ -1835,7 +1887,7 @@ function renderMainVipMenu(filterStr = "") {
     if (f) keys = keys.filter(k => k.toLowerCase().includes(f));
     
     if (keys.length === 0) {
-        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手動輸入)</span></div>`;
+        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手持輸入)</span></div>`;
     } else {
         keys.sort().forEach(k => {
             let div = document.createElement('div');
@@ -2377,7 +2429,6 @@ function calc(r, c, save=true) {
     let amtPart = Math.round(net * pPart);
     let amtComp = Math.round(net * pComp);
     
-    // 🚨 修正：自動吸收四捨五入誤差 (由公司吸收)
     if (Math.abs(pComp + pBoss + pPart - 1.0) < 0.01) {
         amtComp = net - amtBoss - amtPart;
     }
