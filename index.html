@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.8</title>
+    <title>杰冉宇宙營收表 V2.9</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -66,7 +66,7 @@
         .vip-dropdown-container:hover .vip-trigger { background: #FFF; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .vip-trigger.active-filter { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
         .vip-menu { position: absolute; top: 100%; right: 0; padding-top: 10px; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; z-index: 999; }
-        .vip-dropdown-container:hover .vip-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .vip-dropdown-container:hover .vip-menu, .vip-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
         .vip-menu-content { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 20px; width: 280px; display: flex; flex-direction: column; gap: 15px; }
         .vip-bubble-list { display: flex; flex-wrap: wrap; gap: 8px; }
         .vip-bubble { padding: 8px 16px; border-radius: 50px; background: rgba(0,0,0,0.04); font-size: 12px; font-weight: 700; color: var(--mid); cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
@@ -82,7 +82,7 @@
         .status-dropdown-container:hover .status-trigger { background: #FFF; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .status-trigger.active-filter { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3); }
         .status-menu { position: absolute; top: 100%; left: 0; padding-top: 10px; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease; z-index: 999; min-width: 180px; }
-        .status-dropdown-container:hover .status-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .status-dropdown-container:hover .status-menu, .status-menu.active { opacity: 1; visibility: visible; transform: translateY(0); }
         .status-menu-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; display: flex; flex-direction: column; gap: 4px; }
         .status-option { padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--mid); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
         .status-option:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
@@ -458,7 +458,7 @@
     <div class="search-area">
         <div class="search-group" id="tableFilterGroup">
             <div class="vip-dropdown-container">
-                <div class="vip-trigger" id="vipTrigger">⭐ 常用客戶 <span style="font-size: 10px;">▼</span></div>
+                <div class="vip-trigger" id="vipTrigger" onclick="toggleVipMenu(event)">⭐ 常用客戶 <span style="font-size: 10px;">▼</span></div>
                 <div class="vip-menu">
                     <div class="vip-menu-content">
                         <div class="vip-bubble-list" id="vipBubbleList"></div>
@@ -472,7 +472,7 @@
         
         <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 10px;">
             <div class="status-dropdown-container">
-                <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
+                <div class="status-trigger" id="statusTrigger" onclick="toggleStatusMenu(event)">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
                 <div class="status-menu">
                     <div class="status-menu-content">
                         <div class="status-option active" onclick="setStatusFilter('', '💰 所有入帳狀態', this)">💰 所有入帳狀態</div>
@@ -832,6 +832,16 @@ document.addEventListener('click', function(e) {
         if(dbMenu) dbMenu.classList.remove('active');
     }
     
+    // V2.9：行動裝置支援 - 點擊外部自動收合「常用客戶」「入帳狀態」下拉選單
+    if (!e.target.closest('.vip-dropdown-container')) {
+        let vipMenu = document.querySelector('.vip-menu');
+        if(vipMenu) vipMenu.classList.remove('active');
+    }
+    if (!e.target.closest('.status-dropdown-container')) {
+        let statusMenu = document.querySelector('.status-menu');
+        if(statusMenu) statusMenu.classList.remove('active');
+    }
+    
     if(!e.target.closest('.page-title') && !e.target.closest('#yMenu')) {
         document.getElementById('yMenu').style.display='none';
     }
@@ -846,6 +856,24 @@ document.addEventListener('click', function(e) {
         if(dd) dd.style.display = 'none';
     }
 });
+
+// V2.9：行動裝置支援 - 點擊觸發下拉選單開關（手機無法用 hover）
+function toggleVipMenu(e) {
+    e.stopPropagation();
+    let menu = document.querySelector('.vip-menu');
+    let statusMenu = document.querySelector('.status-menu');
+    if (statusMenu) statusMenu.classList.remove('active');
+    menu.classList.toggle('active');
+}
+function toggleStatusMenu(e) {
+    e.stopPropagation();
+    let menu = document.querySelector('.status-menu');
+    let vipMenu = document.querySelector('.vip-menu');
+    if (vipMenu) vipMenu.classList.remove('active');
+    menu.classList.toggle('active');
+}
+window.toggleVipMenu = toggleVipMenu;
+window.toggleStatusMenu = toggleStatusMenu;
 
 const contextMenu = document.getElementById('customContextMenu');
 let rightClickedElement = null;
@@ -1232,7 +1260,7 @@ function setStatusFilter(val, text, el) {
     let trigger = document.getElementById('statusTrigger'); trigger.innerHTML = `${text} <span style="font-size: 10px;">▼</span>`;
     if (val !== '') trigger.classList.add('active-filter'); else trigger.classList.remove('active-filter');
     document.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active')); el.classList.add('active');
-    let menu = el.closest('.status-menu'); menu.style.display = 'none'; setTimeout(() => menu.style.display = '', 100);
+    let menu = el.closest('.status-menu'); menu.classList.remove('active'); // V2.9：改用點擊模式收合
     runSettleSearch();
 }
 
