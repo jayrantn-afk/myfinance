@@ -319,6 +319,33 @@
         .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
 
         #barChart { cursor: default; transition: cursor 0.2s; }
+
+        /* V2.11 登入狀態標籤 Hover 展開效果 */
+        .auth-badge-wrap {
+            position: fixed; top: 14px; right: 20px; z-index: 999999;
+            display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start;
+        }
+        .auth-badge-dot {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: #00A651; box-shadow: 0 0 0 2px #FFF, 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .auth-badge-dot.offline { background: #D32F2F; }
+        .auth-badge-content {
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(15px);
+            border-radius: 50px; padding: 8px 16px; font-size: 13px; font-weight: 800;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 10px;
+            opacity: 0; visibility: hidden; transform: translateX(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute; top: -8px; right: -8px; white-space: nowrap;
+        }
+        .auth-badge-wrap:hover .auth-badge-content {
+            opacity: 1; visibility: visible; transform: translateX(0);
+        }
+        .auth-badge-wrap:hover .auth-badge-dot {
+            opacity: 0; transform: scale(0.5); visibility: hidden;
+        }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -335,10 +362,10 @@
     window.settleCheckedIdxs = new Set();
 </script>
 
-<!-- V2.11 新增：登入狀態改為小圓點，點擊展開，避免擋到其他功能 -->
-<div id="authStatusBadge" style="position: fixed; top: 10px; right: 10px; z-index: 999999;">
-    <div id="authStatusDot" onclick="toggleAuthPopover(event)" title="點擊查看登入狀態" style="width: 14px; height: 14px; border-radius: 50%; background: #D32F2F; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 2px solid #FFF;"></div>
-    <div id="authStatusPopover" style="display:none; position: absolute; top: 22px; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(15px); border-radius: 12px; padding: 10px 14px; font-size: 12px; font-weight: 800; box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(0,0,0,0.05);">
+<!-- V2.11 新增：登入狀態標籤 (懸浮展開) -->
+<div class="auth-badge-wrap">
+    <div id="authStatusDot" class="auth-badge-dot offline"></div>
+    <div class="auth-badge-content">
         <span id="authStatusText" style="color: #D32F2F;">🔴 尚未登入</span>
         <button id="authLogoutBtn" onclick="doLogout()" style="display:none; border: none; background: rgba(211,47,47,0.1); color: #D32F2F; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 50px; cursor: pointer;">登出</button>
     </div>
@@ -851,12 +878,6 @@ document.addEventListener('click', function(e) {
         if(statusMenu) statusMenu.classList.remove('active');
     }
     
-    // V2.11：點擊外部自動收合登入狀態小圓點的展開視窗
-    if (!e.target.closest('#authStatusBadge')) {
-        let popover = document.getElementById('authStatusPopover');
-        if(popover) popover.style.display = 'none';
-    }
-    
     if(!e.target.closest('.page-title') && !e.target.closest('#yMenu')) {
         document.getElementById('yMenu').style.display='none';
     }
@@ -889,14 +910,6 @@ function toggleStatusMenu(e) {
 }
 window.toggleVipMenu = toggleVipMenu;
 window.toggleStatusMenu = toggleStatusMenu;
-
-// V2.11：點擊小圓點展開/收合登入狀態視窗
-function toggleAuthPopover(e) {
-    e.stopPropagation();
-    let popover = document.getElementById('authStatusPopover');
-    popover.style.display = (popover.style.display === 'flex') ? 'none' : 'flex';
-}
-window.toggleAuthPopover = toggleAuthPopover;
 
 const contextMenu = document.getElementById('customContextMenu');
 let rightClickedElement = null;
@@ -1968,7 +1981,7 @@ function renderMainVipMenu(filterStr = "") {
     if (f) keys = keys.filter(k => k.toLowerCase().includes(f));
     
     if (keys.length === 0) {
-        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手持輸入)</span></div>`;
+        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手動輸入)</span></div>`;
     } else {
         keys.sort().forEach(k => {
             let div = document.createElement('div');
@@ -2624,11 +2637,11 @@ window.onload = () => {
 
         // V2.8：改用 Email/Password 驗證。只有登入成功的使用者，才會被 Firestore 規則允許讀寫。
         // 同時偵測「V2.4 舊版遺留的匿名登入」殘留 session，若發現則強制登出，避免卡在無法寫入的狀態。
-        // V2.11：改用小圓點顯示登入狀態（綠色=已登入/紅色=未登入），點擊才展開詳細資訊，避免擋住其他功能。
+        // V2.11：更新為懸浮標籤
         onAuthStateChanged(auth, (user) => {
-            const dot = document.getElementById('authStatusDot');
             const statusText = document.getElementById('authStatusText');
             const logoutBtn = document.getElementById('authLogoutBtn');
+            const statusDot = document.getElementById('authStatusDot');
 
             if (user && user.isAnonymous) {
                 signOut(auth);
@@ -2636,7 +2649,7 @@ window.onload = () => {
             }
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
-                if (dot) dot.style.background = '#00A651';
+                if (statusDot) statusDot.classList.remove('offline');
                 if (statusText) {
                     statusText.innerHTML = `🟢 已登入：${user.email}`;
                     statusText.style.color = '#00A651';
@@ -2644,7 +2657,7 @@ window.onload = () => {
                 if (logoutBtn) logoutBtn.style.display = 'inline-block';
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
-                if (dot) dot.style.background = '#D32F2F';
+                if (statusDot) statusDot.classList.add('offline');
                 if (statusText) {
                     statusText.innerHTML = `🔴 尚未登入`;
                     statusText.style.color = '#D32F2F';
