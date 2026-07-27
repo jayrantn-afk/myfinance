@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 v01.889999</title>
+    <title>杰冉宇宙營收表 V2.2</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -108,7 +108,7 @@
         .table-scroll { flex: 1; overflow: auto; width: 100%; }
         table { border-collapse: collapse; width: 100%; }
         
-        #mainTable { min-width: 1430px; table-layout: fixed; }
+        #mainTable { min-width: 1200px; table-layout: fixed; }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #reportTable { min-width: 1000px; table-layout: auto; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
@@ -290,6 +290,36 @@
             background: #F4F7F9; border-radius: 30px; padding: 40px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8); border: none;
         }
         #inv-list-wrapper { flex: 1; display: flex; flex-direction: column; gap: 0; overflow-y: auto; padding: 0; }
+        
+        /* 數據中心專屬 CSS */
+        .dashboard-container { padding: 30px 40px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; background: rgba(255, 255, 255, 0.4); height: 100%; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .dashboard-title-wrap { display: flex; align-items: center; gap: 15px; }
+        .dashboard-title-line { width: 6px; height: 35px; background: #1D1D1F; border-radius: 10px; }
+        .dashboard-title { font-size: 28px; font-weight: 900; color: #1D1D1F; letter-spacing: 1px; }
+        .db-controls { display: flex; gap: 15px; align-items: center; }
+        
+        .db-custom-select-container { position: relative; user-select: none; z-index: 1000; width: auto; display: inline-block; }
+        .db-custom-trigger { background: #FFFFFF; border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; min-width: 140px; white-space: nowrap; gap: 15px; }
+        .db-custom-trigger:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-color: rgba(var(--primary-rgb), 0.5); }
+        .db-custom-menu { position: absolute; top: 110%; left: 0; background: #FFFFFF; border-radius: 8px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid var(--glass-border); width: 100%; display: none; flex-direction: column; padding: 4px; max-height: 300px; overflow-y: auto; box-sizing: border-box;}
+        .db-custom-menu.active { display: flex; }
+        .db-custom-option { padding: 10px 15px; border-radius: 6px; font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: 0.2s; text-align: center; }
+        .db-custom-option:hover { background: rgba(var(--primary-rgb), 0.05); color: var(--primary); }
+        .db-custom-option.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex-shrink: 0; }
+        .kpi-card { background: #FFFFFF; border-radius: 16px; padding: 25px 20px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: transform 0.3s; border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: center; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.08); }
+        .kpi-title { font-size: 14px; color: #6E6E73; font-weight: 800; margin-bottom: 12px; }
+        .kpi-value { font-size: 36px; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex-shrink: 0; min-height: 350px; padding-bottom: 30px; }
+        .chart-card { background: #FFFFFF; border-radius: 16px; padding: 25px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .chart-title { font-size: 15px; font-weight: 800; color: #6E6E73; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center;}
+        .chart-canvas-wrap { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; }
+
+        #barChart { cursor: default; transition: cursor 0.2s; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -427,6 +457,10 @@
             <button id="openClientModalBtn" class="sync-btn" style="display:none; color:var(--primary); padding: 8px 20px; font-size: 13px; height: 38px;" onclick="openSettleClientModal()">👥 選擇客戶 (全選)</button>
         </div>
 
+        <div class="search-group" id="quoteSearchGroup" style="display:none;">
+            <!-- 請款搜尋區塊移至中心，故此處清空 -->
+        </div>
+
         <div class="search-group" id="invoiceManageSearchGroup" style="display:none;">
             <button id="setPrefixBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px; display: none;" onclick="setInvPrefix()">🔤 設定字軌</button>
             <button class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px;" onclick="manageInvVips('add')">+ 新增常用客戶</button>
@@ -465,8 +499,9 @@
                     </div>
                 </div>
                 <div class="table-scroll" id="input-view">
+                    <!-- 🚨 隱藏 付款、尾款、未收金額 -->
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="width:70px">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="width:80px">尾款</th><th style="width:80px">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -532,7 +567,7 @@
             </div>
         </div>
 
-        <!-- Slide 2: 🚨 月度總覽 -->
+        <!-- Slide 2: 月度總覽 -->
         <div class="page-content">
             <div class="white-card" style="padding: 20px; overflow-y: auto; display: block; background: transparent; border: none; box-shadow: none;">
                 <div id="report-cards-container" class="report-card-grid"></div>
@@ -1527,7 +1562,6 @@ function runQuoteSearch() {
     let invWrapper = document.getElementById('inv-list-wrapper');
 
     if (sc !== "" || (sm !== "" && sm !== "00")) {
-        // 觸發搜尋，把搜尋框頂上去，顯示請款內容
         searchBar.style.margin = "0 0 20px 0";
         pIcon.style.display = 'none';
         pText.style.display = 'none';
@@ -1564,7 +1598,6 @@ function runQuoteSearch() {
         document.getElementById('inv-discount-input').value = "100";
         calcQuoteTotal();
     } else { 
-        // 恢復初始置中狀態
         searchBar.style.margin = "auto";
         pIcon.style.display = 'block';
         pText.style.display = 'block';
@@ -1589,7 +1622,7 @@ function calcQuoteTotal(el = null) {
         let cb = item.querySelector('.quote-cb');
         if (cb && cb.checked) {
             totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
-            totalAmt += parseFloat(item.getAttribute('data-total')) || 0;
+            totalAmt += parseFloat(item.getAttribute('data-amt')) || 0; 
         }
     });
     
@@ -1600,6 +1633,7 @@ function calcQuoteTotal(el = null) {
     
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
+    document.getElementById('inv-total-amt').innerText = `$ ${finalAmt.toLocaleString()}`;
     document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
 }
 window.calcQuoteTotal = calcQuoteTotal; 
@@ -1608,7 +1642,6 @@ function downloadPDF() {
     const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
     btn.style.display = 'none'; 
     
-    // 隱藏搜尋框避免印出
     let searchBar = document.getElementById('quote-search-bar');
     if (searchBar) searchBar.style.display = 'none';
     
@@ -1677,9 +1710,14 @@ function createRow(r) {
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+    
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
+        
+        if (c === 6 || c === 12 || c === 13) {
+            td.style.display = 'none';
+        }
         
         if (c===1) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
@@ -2192,55 +2230,6 @@ function reorderData(si, ti, type = 'main') {
     else { initTable(); filterTable(); }
 }
 
-function updateMonthlyReport() {
-    const container = document.getElementById('report-cards-container'); 
-    if(!container) return;
-    container.innerHTML = ''; 
-    let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    let hasData = false;
-    
-    for(let m=1; m<=12; m++) {
-        let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
-        for(let i=0; i<count; i++) {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-            if(d[0] === mStr) { 
-                n += parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
-                t += parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
-                r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0); 
-                re += parseFloat(String(d[13]).replace(/,/g,'')) || 0; 
-                c1 += parseFloat(String(d[17]).replace(/,/g,'')) || 0; 
-                c2 += parseFloat(String(d[18]).replace(/,/g,'')) || 0; 
-                c3 += parseFloat(String(d[19]).replace(/,/g,'')) || 0; 
-                ct++; 
-            }
-        }
-        if(ct > 0) {
-            hasData = true;
-            container.innerHTML += `
-            <div class="jelly-card" onclick="this.classList.toggle('expanded')">
-                <div class="jelly-header">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="jelly-month">${m} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
-                        <div style="font-size:12px; font-weight:800; color:var(--light); background: rgba(0,0,0,0.04); padding: 4px 10px; border-radius: 50px;">${ct} 件</div>
-                    </div>
-                    <div class="jelly-total">$ ${t.toLocaleString()}</div>
-                </div>
-                <div class="jelly-body">
-                    <div class="jelly-stat"><span class="jelly-label">未稅總收</span><span class="jelly-val">$ ${n.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">待收餘額</span><span class="jelly-val" style="color:#FF3B30;">$ ${re.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">已收金額</span><span class="jelly-val" style="color:#00D26A;">$ ${r.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">公司分潤</span><span class="jelly-val">$ ${c1.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">老闆分潤</span><span class="jelly-val">$ ${c2.toLocaleString()}</span></div>
-                    <div class="jelly-stat"><span class="jelly-label">夥伴分潤</span><span class="jelly-val" style="color:#BF5AF2;">$ ${c3.toLocaleString()}</span></div>
-                </div>
-            </div>`;
-        }
-    }
-    if(!hasData) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--light); font-weight: 800; font-size: 15px;">尚無任何月份的營收資料</div>`;
-    }
-}
-
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
@@ -2308,7 +2297,23 @@ function calc(r, c, save=true) {
     let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
     let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
     s(10, tax); s(11, total); s(13, rem); 
-    s(17, Math.round(net*(parseFloat(g(14))/100 || 0))); s(18, Math.round(net*(parseFloat(g(15))/100 || 0))); s(19, Math.round(net*(parseFloat(g(16))/100 || 0)));
+    
+    let pComp = parseFloat(g(14))/100 || 0;
+    let pBoss = parseFloat(g(15))/100 || 0;
+    let pPart = parseFloat(g(16))/100 || 0;
+    
+    let amtBoss = Math.round(net * pBoss);
+    let amtPart = Math.round(net * pPart);
+    let amtComp = Math.round(net * pComp);
+    
+    // 🚨 修正：自動吸收四捨五入誤差 (當總分潤比例接近 100% 時，由公司餘額補齊)
+    if (Math.abs(pComp + pBoss + pPart - 1.0) < 0.01) {
+        amtComp = net - amtBoss - amtPart;
+    }
+    
+    s(17, amtComp); 
+    s(18, amtBoss); 
+    s(19, amtPart);
     
     let row = document.getElementById(`r${r}`); 
     if (row) { 
