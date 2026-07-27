@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.6</title>
+    <title>杰冉宇宙營收表 V2.7</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -933,6 +933,20 @@ let invPrefixes = JSON.parse(localStorage.getItem(`vB_InvPrefixes_${curY}`)) || 
 let activeVipFilter = "";
 window.curRole = '公司';
 
+// V2.7 效能優化：主表資料記憶體快取，避免高頻迴圈（篩選/搜尋/報表）重複 JSON.parse(localStorage)
+window.dCache = {};
+function getRowData(i) {
+    if (Object.prototype.hasOwnProperty.call(window.dCache, i)) return window.dCache[i];
+    let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+    window.dCache[i] = d;
+    return d;
+}
+function setRowData(i, obj) {
+    window.dCache[i] = obj;
+    localStorage.setItem(`d_${curY}_${i}`, JSON.stringify(obj));
+}
+function clearRowCache() { window.dCache = {}; }
+
 let chartPie = null; let chartBar = null;
 
 function migrateRitaToYiminjia() {
@@ -947,6 +961,7 @@ function migrateRitaToYiminjia() {
 function changeYear(y) { 
     curY=y; localStorage.setItem('vB_Y',y); 
     invPrefixes = JSON.parse(localStorage.getItem(`vB_InvPrefixes_${curY}`)) || {};
+    clearRowCache();
     document.getElementById('yDisp').innerText=y; 
     applyTheme(y); initTable(); initInvoiceTable(); renderDashboard(); 
 }
@@ -996,7 +1011,7 @@ function showClientProjects(monthStr, clientName) {
     let total = 0;
     
     for(let i=0; i<count; i++) {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let d = getRowData(i);
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         if (!hasData) continue;
         
@@ -1038,7 +1053,7 @@ function renderDashboard() {
     let clientData = {}; 
 
     for(let i=0; i<count; i++) {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+        let d = getRowData(i);
         let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
         let gross = parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
@@ -1229,7 +1244,7 @@ function filterTable() {
         let terms = sk ? sk.split(/[\s,，]+/) : [];
         for(let r=0; r<rowCount; r++) {
             let tr = document.getElementById(`r${r}`); if(!tr) continue;
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+            let d = getRowData(r);
             
             let rawMonth = d[0] ? d[0].split('-')[1] : "";
             let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1254,13 +1269,13 @@ async function simpleBatchResolve() {
     for(let r=0; r<rc; r++) {
         let tr = document.getElementById(`r${r}`);
         if (tr && tr.style.display !== 'none') {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+            let d = getRowData(r);
             let unpaid = d[13] ? parseFloat(String(d[13]).replace(/,/g, '')) : 0;
             if (unpaid > 0 && d[3]) {
                 d[6] = "銀行匯款"; d[7] = true;
                 let totalAmount = parseFloat(String(d[11]).replace(/,/g,'')) || 0, deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0;
                 d[12] = totalAmount - deposit; d[13] = 0; 
-                localStorage.setItem(`d_${curY}_${r}`, JSON.stringify(d)); count++;
+                setRowData(r, d); count++;
             }
         }
     }
@@ -1296,7 +1311,7 @@ function checkMonthClients() {
         let monthClients = new Set();
 
         for(let i=0; i<count; i++) {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+            let d = getRowData(i);
             let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
             let rawMonth = (d[0]||"").split('-')[1] || "";
             let rowMonth = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : "";
@@ -1402,7 +1417,7 @@ function updateSettleSelectionUI() {
     let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
 
     window.settleCheckedIdxs.forEach(idx => {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${idx}`)) || {};
+        let d = getRowData(idx);
         let val = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; 
         totalVal += val;
     });
@@ -1433,7 +1448,7 @@ function showSettleSelected() {
     let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
 
     window.settleCheckedIdxs.forEach(idx => {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${idx}`)) || {};
+        let d = getRowData(idx);
         let amt = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0;
         total += amt;
         tb.innerHTML += `
@@ -1474,7 +1489,7 @@ function runSettleSearch() {
         let matched = [];
 
         for(let i=0; i<count; i++) {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+            let d = getRowData(i);
             let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
             
             let rawMonth = (d[0]||"").split('-')[1] || "";
@@ -1561,7 +1576,7 @@ function downloadSettlePDF() {
 
     let exportData = [];
     window.settleCheckedIdxs.forEach(idx => {
-        let d = JSON.parse(localStorage.getItem(`d_${curY}_${idx}`)) || {};
+        let d = getRowData(idx);
         exportData.push(d);
     });
 
@@ -1641,29 +1656,36 @@ function updateMonthlyReport() {
     container.innerHTML = ''; 
     let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     let hasData = false;
+
+    // V2.7：原本是「12個月 × 全部列」的巢狀迴圈，資料量大時等於整表被讀取12次。
+    // 改為只掃描一次全表，依月份分桶累加，效能大幅提升。
+    let monthStats = {};
+    for(let i=0; i<count; i++) {
+        let d = getRowData(i);
+        if (!d[0]) continue;
+        let m = monthStats[d[0]] || { n:0, t:0, r:0, re:0, c1:0, c2:0, c3:0, ct:0 };
+        m.n += parseFloat(String(d[9]).replace(/,/g,'')) || 0;
+        m.t += parseFloat(String(d[11]).replace(/,/g,'')) || 0;
+        m.r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0);
+        m.re += parseFloat(String(d[13]).replace(/,/g,'')) || 0;
+        m.c1 += parseFloat(String(d[17]).replace(/,/g,'')) || 0;
+        m.c2 += parseFloat(String(d[18]).replace(/,/g,'')) || 0;
+        m.c3 += parseFloat(String(d[19]).replace(/,/g,'')) || 0;
+        m.ct++;
+        monthStats[d[0]] = m;
+    }
     
-    for(let m=1; m<=12; m++) {
-        let n=0, t=0, r=0, re=0, c1=0, c2=0, c3=0, ct=0, mStr = `${curY}-${String(m).padStart(2,'0')}`;
-        for(let i=0; i<count; i++) {
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-            if(d[0] === mStr) { 
-                n += parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
-                t += parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
-                r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0); 
-                re += parseFloat(String(d[13]).replace(/,/g,'')) || 0; 
-                c1 += parseFloat(String(d[17]).replace(/,/g,'')) || 0; 
-                c2 += parseFloat(String(d[18]).replace(/,/g,'')) || 0; 
-                c3 += parseFloat(String(d[19]).replace(/,/g,'')) || 0; 
-                ct++; 
-            }
-        }
-        if(ct > 0) {
+    for(let mNum=1; mNum<=12; mNum++) {
+        let mStr = `${curY}-${String(mNum).padStart(2,'0')}`;
+        let s = monthStats[mStr];
+        if(s && s.ct > 0) {
+            let { n, t, r, re, c1, c2, c3, ct } = s;
             hasData = true;
             container.innerHTML += `
             <div class="jelly-card" onclick="this.classList.toggle('expanded')">
                 <div class="jelly-header">
                     <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="jelly-month">${m} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
+                        <div class="jelly-month">${mNum} 月 <span class="jelly-arrow" style="font-size: 14px; color: var(--light); transition: 0.3s; display: inline-block;">▼</span></div>
                         <div style="font-size:12px; font-weight:800; color:var(--light); background: rgba(0,0,0,0.04); padding: 4px 10px; border-radius: 50px;">${ct} 件</div>
                     </div>
                     <div class="jelly-total">$ ${t.toLocaleString()}</div>
@@ -1705,7 +1727,7 @@ function runQuoteSearch() {
         
         let results = [];
         for(let r=0; r<rowCount; r++){ 
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+            let d = getRowData(r);
             let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
             if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); }
         }
@@ -1825,7 +1847,7 @@ function downloadPDF() {
 function initTable() { 
     const b = document.getElementById('tb'); b.innerHTML = ''; let count = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65; 
     for(let r=0; r<count; r++) { b.appendChild(createRow(r)); calc(r, 0, false); } 
-    let ec = 0; for(let i=count-1; i>=0; i--) { let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {}; if (!d[0] && !d[1] && !d[2] && !d[3] && !d[9]) ec++; else break; }
+    let ec = 0; for(let i=count-1; i>=0; i--) { let d = getRowData(i); if (!d[0] && !d[1] && !d[2] && !d[3] && !d[9]) ec++; else break; }
     if (ec < 10) { for(let i=0; i<10; i++) { b.appendChild(createRow(count++)); } localStorage.setItem(`rowCount_${curY}`, count); }
     renderVipBubbles(); renderDashboard(); 
 }
@@ -1840,7 +1862,7 @@ function createRow(r) {
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
-    let saved = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+    let saved = getRowData(r);
     
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
@@ -2009,9 +2031,9 @@ function onFillEnd(e) {
                 nextVal = prefix + String(num).padStart(pad, '0');
             }
             document.getElementById(`r${i}c${fCol}`).value = nextVal;
-            let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
+            let d = getRowData(i);
             d[fCol] = nextVal;
-            localStorage.setItem(`d_${curY}_${i}`, JSON.stringify(d));
+            setRowData(i, d);
         }
         calc(fCur, fCol, true);
     }
@@ -2019,7 +2041,7 @@ function onFillEnd(e) {
 }
 
 async function deleteProjectRow(r) {
-    let d = JSON.parse(localStorage.getItem(`d_${curY}_${r}`)) || {};
+    let d = getRowData(r);
     let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
     if (!hasData) return;
 
@@ -2032,6 +2054,7 @@ async function deleteProjectRow(r) {
         else localStorage.setItem(`d_${curY}_${i}`, JSON.stringify({}));
     }
     localStorage.setItem(`d_${curY}_${rc-1}`, JSON.stringify({}));
+    clearRowCache(); // V2.7：整批列位移過，快取已失效，交給 initTable() 重新讀取建立
     
     initTable();
     if (document.getElementById('ssM') && document.getElementById('ssM').value.trim() !== '') checkMonthClients(); 
@@ -2358,7 +2381,7 @@ function reorderData(si, ti, type = 'main') {
     for (let i = 0; i < rc; i++) localStorage.setItem(`${prefix}${curY}_${i}`, JSON.stringify(all[i]));
     
     if (type === 'inv') { initInvoiceTable(); filterInvoiceTable(); } 
-    else { initTable(); filterTable(); }
+    else { clearRowCache(); initTable(); filterTable(); } // V2.7：主表列順序整批重排，快取需重建
 }
 
 function calc(r, c, save=true) {
@@ -2453,11 +2476,11 @@ function calc(r, c, save=true) {
     }
     
     if(save) {
-        localStorage.setItem(`d_${curY}_${r}`, JSON.stringify({0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)}));
+        setRowData(r, {0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)});
         
         if(window.calcTimer1) clearTimeout(window.calcTimer1);
         window.calcTimer1 = setTimeout(() => {
-            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = JSON.parse(localStorage.getItem(`d_${curY}_${i}`))||{}; if(!dr[0]&&!dr[1]&&!dr[2]&&!dr[3]&&!dr[9]) ec++; else break; }
+            let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = getRowData(i); if(!dr[0]&&!dr[1]&&!dr[2]&&!dr[3]&&!dr[9]) ec++; else break; }
             if (ec < 10) { for(let i=0; i<10; i++) { document.getElementById('tb').appendChild(createRow(rc++)); } localStorage.setItem(`rowCount_${curY}`, rc); }
             filterTable(); 
         }, 400);
