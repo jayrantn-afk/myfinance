@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.2</title>
+    <title>杰冉宇宙營收表 V2.3</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -331,6 +331,9 @@
     window.checkMonthTimer = null;
     window.settleTimer = null;
     window.invFilterTimer = null;
+    
+    // 🚨 V2.3 新增：跨搜尋記住分潤結算勾選狀態
+    window.settleCheckedIdxs = new Set();
 </script>
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
@@ -439,7 +442,8 @@
             <button id="simpleBatchBtn" class="sync-btn" style="display:none; color:#00D26A; border: 1px solid rgba(0, 210, 106, 0.2);" onclick="simpleBatchResolve()">⚡ 批次結清</button>
         </div>
         
-        <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 15px;">
+        <!-- 🚨 V2.3 調整分潤搜尋區塊的寬度與加入案名搜尋 -->
+        <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 10px;">
             <div class="status-dropdown-container">
                 <div class="status-trigger" id="statusTrigger">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
                 <div class="status-menu">
@@ -452,8 +456,9 @@
                 <input type="hidden" id="ssStatus" value="">
             </div>
             
-            <input type="text" id="ssC" placeholder="👤 搜尋客戶" autocomplete="off" oninput="runSettleSearch()" style="width: 130px; flex-shrink: 0; text-align: center; font-weight: 900;">
-            <input type="text" id="ssM" placeholder="📅 結算月 (ex:05)" autocomplete="off" oninput="checkMonthClients()" style="width: 130px; flex-shrink: 0; text-align: center; font-weight: 900;">
+            <input type="text" id="ssC" placeholder="👤 客戶搜尋" autocomplete="off" oninput="runSettleSearch()" style="width: 100px; flex-shrink: 0; text-align: center; font-weight: 900;">
+            <input type="text" id="ssP" placeholder="📁 案名搜尋" autocomplete="off" oninput="runSettleSearch()" style="width: 100px; flex-shrink: 0; text-align: center; font-weight: 900;">
+            <input type="text" id="ssM" placeholder="📅 結算月 (05)" autocomplete="off" oninput="checkMonthClients()" style="width: 110px; flex-shrink: 0; text-align: center; font-weight: 900;">
             <button id="openClientModalBtn" class="sync-btn" style="display:none; color:var(--primary); padding: 8px 20px; font-size: 13px; height: 38px;" onclick="openSettleClientModal()">👥 選擇客戶 (全選)</button>
         </div>
 
@@ -511,12 +516,18 @@
         <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
+                <!-- 🚨 V2.3 新增：已選取計數與清除按鈕 -->
                 <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
-                    <div class="month-nav">
-                        <span style="font-size: 13px; font-weight: 800; color: var(--mid); margin: 0 10px; align-self: center;">排序方式：</span>
+                    <div class="month-nav" style="align-items: center;">
+                        <span style="font-size: 13px; font-weight: 800; color: var(--mid); margin: 0 10px;">排序：</span>
                         <button class="month-btn active" onclick="setSettleSort('month', this)">📅 按年月</button>
                         <button class="month-btn" onclick="setSettleSort('id', this)">🔢 按編號</button>
                         <button class="month-btn" onclick="setSettleSort('client', this)">👤 按客戶</button>
+                        
+                        <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.1); margin: 0 10px;"></div>
+                        
+                        <span id="settle-selected-count" style="font-size: 13px; font-weight: 900; color: var(--primary); margin-right: 8px;">已選取: 0 件</span>
+                        <button class="month-btn" onclick="clearSettleSelection()" style="color: #D32F2F; border: 1px solid rgba(211, 47, 47, 0.2); padding: 6px 12px; font-size: 11px;">🗑️ 清除</button>
                     </div>
                     <button id="exportSettlePdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px; margin-bottom: 14px;" onclick="downloadSettlePDF()">📥 一鍵匯出 PDF</button>
                 </div>
@@ -526,7 +537,7 @@
                         <table id="settleTable">
                             <thead>
                                 <tr>
-                                    <th style="width:6%; text-align:center;"><input type="checkbox" id="settleSelectAll" checked onchange="toggleAllSettle(this)"></th>
+                                    <th style="width:6%; text-align:center;"><input type="checkbox" id="settleSelectAll" onchange="toggleAllSettle(this)"></th>
                                     <th style="width:12%">年月</th>
                                     <th style="width:10%">編號</th>
                                     <th style="width:16%">客戶</th>
@@ -550,8 +561,8 @@
                                 <th style="padding: 12px; border-bottom: 2px solid #007AFF;">編號</th>
                                 <th style="padding: 12px; border-bottom: 2px solid #007AFF;">客戶</th>
                                 <th style="padding: 12px; border-bottom: 2px solid #007AFF; text-align: center;">案名</th>
-                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; color: #007AFF;">夥伴 %</th>
-                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; color: #007AFF;">金額 $</th>
+                                <th id="pdf-th-p" style="padding: 12px; border-bottom: 2px solid #007AFF; color: #007AFF;">夥伴 %</th>
+                                <th id="pdf-th-a" style="padding: 12px; border-bottom: 2px solid #007AFF; color: #007AFF;">金額 $</th>
                             </tr>
                         </thead>
                         <tbody id="settle-export-tb"></tbody>
@@ -928,6 +939,11 @@ function switchSlide(idx, el) {
     document.getElementById('roleBtns').style.display = (idx === 1) ? 'flex' : 'none';
     document.getElementById('settle-bar').style.display = (idx === 1) ? 'flex' : 'none';
     
+    // 🚨 每次切換到分潤頁面，更新選取UI狀態
+    if(idx === 1) {
+        updateSettleSelectionUI();
+    }
+
     setTimeout(() => {
         if(idx === 0) filterTable();
         if(idx === 1) runSettleSearch();
@@ -1326,24 +1342,56 @@ function updateClientFilterBtnText() {
     }
 }
 
-function calcSettleTotal() {
-    let tot = 0;
-    document.querySelectorAll('.settle-cb:checked').forEach(cb => {
-        tot += parseFloat(cb.getAttribute('data-val')) || 0;
+// 🚨 V2.3 修正：分潤結算的獨立全選、清除邏輯
+function clearSettleSelection() {
+    window.settleCheckedIdxs.clear();
+    let cbs = document.querySelectorAll('.settle-cb');
+    cbs.forEach(cb => cb.checked = false);
+    updateSettleSelectionUI();
+}
+
+function handleSettleCheckbox(el, idx) {
+    if (el.checked) {
+        window.settleCheckedIdxs.add(idx);
+    } else {
+        window.settleCheckedIdxs.delete(idx);
+    }
+    updateSettleSelectionUI();
+}
+
+function toggleAllSettle(el) {
+    let cbs = document.querySelectorAll('.settle-cb');
+    cbs.forEach(cb => {
+        cb.checked = el.checked;
+        let idx = parseInt(cb.getAttribute('data-idx'));
+        if (el.checked) window.settleCheckedIdxs.add(idx);
+        else window.settleCheckedIdxs.delete(idx);
     });
-    document.getElementById('settle-total-val').innerText = `結算總額：$ ${tot.toLocaleString()}`;
+    updateSettleSelectionUI();
+}
+
+function updateSettleSelectionUI() {
+    let totalVal = 0;
+    let role = window.curRole;
+    let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
+
+    window.settleCheckedIdxs.forEach(idx => {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${idx}`)) || {};
+        let val = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; 
+        totalVal += val;
+    });
+
+    document.getElementById('settle-total-val').innerText = `結算總額：$ ${totalVal.toLocaleString()}`;
     
+    let countSpan = document.getElementById('settle-selected-count');
+    if(countSpan) countSpan.innerText = `已選取: ${window.settleCheckedIdxs.size} 件`;
+
     let allCbs = document.querySelectorAll('.settle-cb');
     let checkedCbs = document.querySelectorAll('.settle-cb:checked');
     let selectAllCb = document.getElementById('settleSelectAll');
     if(selectAllCb) {
         selectAllCb.checked = (allCbs.length > 0 && allCbs.length === checkedCbs.length);
     }
-}
-
-function toggleAllSettle(el) {
-    document.querySelectorAll('.settle-cb').forEach(cb => cb.checked = el.checked);
-    calcSettleTotal();
 }
 
 function runSettleSearch() {
@@ -1357,6 +1405,9 @@ function runSettleSearch() {
         
         let scRaw = document.getElementById('ssC');
         let sc = scRaw ? scRaw.value.trim().toLowerCase() : '';
+        
+        let spRaw = document.getElementById('ssP');
+        let sp = spRaw ? spRaw.value.trim().toLowerCase() : '';
         
         let pIdx = (role==='公司'?14:(role==='老闆'?15:16));
         let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
@@ -1383,10 +1434,13 @@ function runSettleSearch() {
 
             let isMonthMatch = (sm === '00' || rowMonth === sm);
             let cName = d[2] ? d[2].trim() : "";
+            let pName = d[3] ? d[3].trim().toLowerCase() : "";
             let isClientMatch = selectedSettleClients.size === 0 || selectedSettleClients.has(cName);
             let isTextClientMatch = (sc === '') || cName.toLowerCase().includes(sc);
+            let isTextProjectMatch = (sp === '') || pName.includes(sp);
 
-            if(hasData && matchStatus && isMonthMatch && isClientMatch && isTextClientMatch) {
+            if(hasData && matchStatus && isMonthMatch && isClientMatch && isTextClientMatch && isTextProjectMatch) {
+                d._originalIndex = i; // Save original index for cross-search mapping
                 matched.push(d);
             }
         }
@@ -1400,8 +1454,9 @@ function runSettleSearch() {
 
         matched.forEach(d => {
             let rowVal = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0; 
+            let isChecked = window.settleCheckedIdxs.has(d._originalIndex) ? 'checked' : '';
             tb.innerHTML += `<tr class="settle-data-row">
-                <td class="calc-cell" style="padding:10px; text-align:center;"><input type="checkbox" class="settle-cb" data-val="${rowVal}" checked onchange="calcSettleTotal()"></td>
+                <td class="calc-cell" style="padding:10px; text-align:center;"><input type="checkbox" class="settle-cb" data-idx="${d._originalIndex}" ${isChecked} onchange="handleSettleCheckbox(this, ${d._originalIndex})"></td>
                 <td class="calc-cell" style="padding:10px;">${d[0]||''}</td>
                 <td class="calc-cell" style="padding:10px;">${d[1]||''}</td>
                 <td class="calc-cell" style="padding:10px; font-weight:800;">${d[2]||''}</td>
@@ -1411,13 +1466,16 @@ function runSettleSearch() {
             </tr>`;
         });
         
-        let selectAllCb = document.getElementById('settleSelectAll');
-        if(selectAllCb) selectAllCb.checked = true;
-        calcSettleTotal();
+        updateSettleSelectionUI();
     }, 250);
 }
 
 function downloadSettlePDF() {
+    if (window.settleCheckedIdxs.size === 0) {
+        alert("請先勾選要匯出的項目！\n(您可以在不同搜尋結果中挑選勾選)");
+        return;
+    }
+
     const btn = document.getElementById('exportSettlePdfBtn');
     let originalText = btn.innerHTML;
     btn.innerHTML = "⏳ 正在處理...";
@@ -1431,39 +1489,53 @@ function downloadSettlePDF() {
     let sc = scRaw ? scRaw.value.trim() : '';
     
     let monthStr = (sm !== '00') ? `${sm}月` : '全部月份';
-    let clientStr = sc ? ` - ${sc}` : '';
-    let pdfTitle = `杰冉宇宙 ${curY}年 ${monthStr}${clientStr} - 夥伴分潤對帳單`;
+    let clientStr = sc ? ` - ${sc}` : (selectedSettleClients.size > 0 ? ` - 多位客戶` : '');
+    
+    let role = window.curRole;
+    let pdfTitle = `杰冉宇宙 ${curY}年 ${monthStr}${clientStr} - ${role}分潤對帳單`;
 
     document.getElementById('settle-export-title').innerText = pdfTitle;
     let printTb = document.getElementById('settle-export-tb');
     printTb.innerHTML = '';
     let totalSum = 0;
 
-    let checkedRows = document.querySelectorAll('.settle-data-row');
-    checkedRows.forEach(row => {
-        let cb = row.querySelector('.settle-cb');
-        if (cb && cb.checked) {
-            let cells = row.querySelectorAll('td');
-            let cMonth = cells[1].innerText;
-            let cId = cells[2].innerText;
-            let cClient = cells[3].innerText;
-            let cProject = cells[4].innerText;
-            let cPercent = cells[5].innerText;
-            let cValStr = cells[6].innerText;
-            let cValNum = parseFloat(cValStr.replace(/,/g, '')) || 0;
-            
-            totalSum += cValNum;
-            printTb.innerHTML += `
-                <tr>
-                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${cMonth}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${cId}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${cClient}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${cProject}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${cPercent}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${cValNum.toLocaleString()}</td>
-                </tr>
-            `;
-        }
+    let exportData = [];
+    window.settleCheckedIdxs.forEach(idx => {
+        let d = JSON.parse(localStorage.getItem(`d_${curY}_${idx}`)) || {};
+        exportData.push(d);
+    });
+
+    exportData.sort((a, b) => {
+        let mA = a[0] || "", mB = b[0] || "", iA = String(a[1] || ""), iB = String(b[1] || ""), cA = a[2] || "", cB = b[2] || "";
+        if (currentSettleSort === 'month') { if (mA !== mB) return mA.localeCompare(mB); if (cA !== cB) return cA.localeCompare(cB, 'zh-Hant'); return iA.localeCompare(iB); } 
+        else if (currentSettleSort === 'id') { let isUpperA = /^[A-Z]/.test(iA), isUpperB = /^[A-Z]/.test(iB); if (isUpperA && !isUpperB) return -1; if (!isUpperA && isUpperB) return 1; if (iA !== iB) return iA.localeCompare(iB); return mA.localeCompare(mB); } 
+        else { if (cA !== cB) return cA.localeCompare(cB, 'zh-Hant'); if (mA !== mB) return mA.localeCompare(mB); return iA.localeCompare(iB); }
+    });
+
+    let pIdx = (role==='公司'?14:(role==='老闆'?15:16));
+    let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
+
+    document.getElementById('pdf-th-p').innerText = `${role} %`;
+
+    exportData.forEach(d => {
+        let cMonth = d[0] || '';
+        let cId = d[1] || '';
+        let cClient = d[2] || '';
+        let cProject = d[3] || '';
+        let cPercent = (d[pIdx] || 0) + '%';
+        let cValNum = parseFloat(String(d[aIdx]).replace(/,/g, '')) || 0;
+        
+        totalSum += cValNum;
+        printTb.innerHTML += `
+            <tr>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${cMonth}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 600;">${cId}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800;">${cClient}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; text-align: center; font-weight: 600;">${cProject}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 800; color: #007AFF;">${cPercent}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #E5E5EA; font-weight: 900; color: #007AFF;">${cValNum.toLocaleString()}</td>
+            </tr>
+        `;
     });
 
     document.getElementById('settle-export-total').innerText = `結算總額：$ ${totalSum.toLocaleString()}`;
@@ -1478,7 +1550,7 @@ function downloadSettlePDF() {
 
     let opt = { 
         margin:       [0.4, 0.4, 0.4, 0.4],
-        filename:     `${curY}年_${monthStr}${clientStr ? '_' + sc : ''}_夥伴分潤對帳單.pdf`,
+        filename:     `${curY}年_${monthStr}${clientStr ? '_' + sc : ''}_${role}分潤對帳單.pdf`,
         image:        { type: 'jpeg', quality: 1 },
         html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } 
@@ -1622,7 +1694,7 @@ function calcQuoteTotal(el = null) {
         let cb = item.querySelector('.quote-cb');
         if (cb && cb.checked) {
             totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
-            totalAmt += parseFloat(item.getAttribute('data-amt')) || 0; 
+            totalAmt += parseFloat(item.getAttribute('data-total')) || 0; 
         }
     });
     
@@ -1633,7 +1705,6 @@ function calcQuoteTotal(el = null) {
     
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
-    document.getElementById('inv-total-amt').innerText = `$ ${finalAmt.toLocaleString()}`;
     document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
 }
 window.calcQuoteTotal = calcQuoteTotal; 
@@ -2306,7 +2377,7 @@ function calc(r, c, save=true) {
     let amtPart = Math.round(net * pPart);
     let amtComp = Math.round(net * pComp);
     
-    // 🚨 修正：自動吸收四捨五入誤差 (當總分潤比例接近 100% 時，由公司餘額補齊)
+    // 🚨 修正：自動吸收四捨五入誤差 (由公司吸收)
     if (Math.abs(pComp + pBoss + pPart - 1.0) < 0.01) {
         amtComp = net - amtBoss - amtPart;
     }
