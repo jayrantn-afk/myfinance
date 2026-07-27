@@ -352,24 +352,17 @@
     <div class="context-menu-item danger" onclick="execMenuAction('clear')"><span>🗑️</span> 清除內容</div>
 </div>
 
+<!-- V2.5 安全性更新：改用 Firebase Email/Password 登入，不再使用前端寫死密碼 -->
 <div id="login-screen" class="login-screen">
     <div class="login-card">
         <h2 style="margin-top:0; color: var(--text-main); font-weight: 900;">這不是你該來的地方</h2>
         <p style="color:var(--mid); font-size:13px; margin-bottom:20px; font-weight: 600;">請離開<br>(請你離開)</p>
-        <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="輸入密碼..." onkeypress="if(event.key === 'Enter') checkLogin()">
+        <input type="email" id="login-email" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="帳號 (Email)" autocomplete="username" onkeypress="if(event.key === 'Enter') document.getElementById('login-pwd').focus()">
+        <input type="password" id="login-pwd" class="custom-modal-input" style="margin-bottom: 10px;" placeholder="輸入密碼..." autocomplete="current-password" onkeypress="if(event.key === 'Enter') checkLogin()">
+        <div id="login-error" style="display:none; color:#FF3B30; font-size:12px; font-weight:700; margin-bottom:10px; text-align:left;">⚠️ 帳號或密碼錯誤，請重新輸入</div>
         <button class="custom-modal-btn btn-confirm" style="width:100%; padding: 10px;" onclick="checkLogin()">登入</button>
     </div>
 </div>
-
-<script>
-    window.APP_PWD = "8721"; 
-    if(localStorage.getItem('vB_Auth') === 'true') { document.getElementById('login-screen').style.display = 'none'; }
-    function checkLogin() {
-        let p = document.getElementById('login-pwd').value;
-        if(p === window.APP_PWD) { localStorage.setItem('vB_Auth', 'true'); document.getElementById('login-screen').style.display = 'none'; } 
-        else { alert("密碼錯誤，請重新輸入！"); document.getElementById('login-pwd').value = ""; }
-    }
-</script>
 
 <div id="ui-modal" class="custom-modal">
     <div class="custom-modal-content">
@@ -2522,7 +2515,7 @@ window.onload = () => {
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDllqltvIctsNWUuLW75kLUtcRnTjXdvBs",
@@ -2539,13 +2532,48 @@ window.onload = () => {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
-        
-        signInAnonymously(auth).catch(e => console.error("Firebase 連線準備中..."));
+
+        // V2.5：改用 Email/Password 驗證。只有登入成功的使用者，才會被 Firestore 規則允許讀寫。
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('login-screen').style.display = 'none';
+            } else {
+                document.getElementById('login-screen').style.display = 'flex';
+            }
+        });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
+
+    // 供登入畫面呼叫的全域函式
+    window.checkLogin = async function() {
+        let email = document.getElementById('login-email').value.trim();
+        let pwd = document.getElementById('login-pwd').value;
+        let errEl = document.getElementById('login-error');
+        errEl.style.display = 'none';
+
+        if (!email || !pwd) {
+            errEl.innerText = "⚠️ 請輸入帳號與密碼";
+            errEl.style.display = 'block';
+            return;
+        }
+        if (!auth) {
+            errEl.innerText = "⚠️ Firebase 尚未就緒，請稍後再試";
+            errEl.style.display = 'block';
+            return;
+        }
+        try {
+            await signInWithEmailAndPassword(auth, email, pwd);
+            // 成功後 onAuthStateChanged 會自動關閉登入畫面
+        } catch (err) {
+            console.error(err);
+            errEl.innerText = "⚠️ 帳號或密碼錯誤，請重新輸入";
+            errEl.style.display = 'block';
+            document.getElementById('login-pwd').value = "";
+        }
+    };
 
     window.cloudSync = async function(mode) {
         if (!app || !db) { await uiAlert("⚠️ Firebase 發生錯誤，無法啟動同步。請檢查網路連線。"); return; }
-        if (localStorage.getItem('vB_Auth') !== 'true') { await uiAlert("⚠️ 系統尚未登入，請重整網頁輸入密碼進入系統！"); return; }
+        if (!auth || !auth.currentUser) { await uiAlert("⚠️ 系統尚未登入，請重整網頁並用您的帳號密碼登入！"); return; }
 
         const btn = document.getElementById('cloudSaveBtn');
         const docRef = doc(db, 'system_data', 'default_backup');
@@ -2561,8 +2589,8 @@ window.onload = () => {
                 if (!(await uiConfirm(`⚠️【極度危險警告】⚠️\n\n系統偵測到您目前的本機端「幾乎沒有資料」！\n如果您現在點擊確認，雲端上的【幾百筆舊資料將會被全數清空】！\n\n如果您只是剛換電腦想看資料，請按「取消」並點擊右側的【從雲端載入】。\n\n您確定要用現在的空白資料覆蓋並清空雲端嗎？`, "⚠️ 防呆警告"))) return;
             }
 
-            let pwd = await uiPrompt("請輸入管理員密碼以允許覆蓋雲端資料：", "", "安全驗證", "password");
-            if (pwd !== window.APP_PWD) { await uiAlert("密碼錯誤，上傳已取消。", "驗證失敗"); return; }
+            // V2.5：改為單純確認（身份已由 Firebase 帳密登入驗證，不再需要第二層密碼比對）
+            if (!(await uiConfirm("確定要將目前的資料上傳並覆蓋雲端備份嗎？", "上傳確認"))) return;
             
             let oldText = btn.innerText;
             btn.innerText = "⏳ 正在上傳雲端...";
@@ -2595,7 +2623,7 @@ window.onload = () => {
                 await uiAlert("🔥 搬家成功！\n資料已完美備份！");
             } catch(e) { 
                 console.error("上傳錯誤:", e); 
-                await uiAlert("❌ 上傳失敗！請確認網路連線。"); 
+                await uiAlert("❌ 上傳失敗！請確認網路連線或登入狀態。"); 
             }
             btn.innerText = oldText;
             
