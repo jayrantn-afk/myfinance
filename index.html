@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.13</title>
+    <title>杰冉宇宙營收表 V2.4</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -109,6 +109,46 @@
         table { border-collapse: collapse; width: 100%; }
         
         #mainTable { min-width: 1200px; table-layout: fixed; }
+
+        /* V2.22 案件明細表格優化 */
+        /* 凍結左側「年月、編號、客戶」三欄（含拖曳把手欄），橫向捲動時仍看得到是誰的案子 */
+        #mainTable th:nth-child(1), #mainTable td:nth-child(1) { position: sticky; left: 0; z-index: 6; }
+        #mainTable th:nth-child(2), #mainTable td:nth-child(2) { position: sticky; left: 25px; z-index: 6; }
+        #mainTable th:nth-child(3), #mainTable td:nth-child(3) { position: sticky; left: 95px; z-index: 6; }
+        #mainTable th:nth-child(4), #mainTable td:nth-child(4) { position: sticky; left: 140px; z-index: 6; }
+        #mainTable th:nth-child(-n+4) { z-index: 11; }
+        #mainTable tbody tr:nth-child(odd) td:nth-child(-n+4) { background: #FFFFFF; }
+        #mainTable tbody tr:nth-child(even) td:nth-child(-n+4) { background: #F7F9FC; }
+
+        /* 斑馬紋，欄位多時眼睛比較不會跑掉行 */
+        #mainTable tbody tr:nth-child(even) td { background: #F7F9FC; }
+
+        /* 金額類欄位靠右對齊（訂金/未稅額/稅金/含稅總額/公司金額/老闆金額/夥伴金額），符合會計慣例好比大小 */
+        #mainTable td:nth-child(10) input, #mainTable td:nth-child(11) input,
+        #mainTable td:nth-child(12) input, #mainTable td:nth-child(13) input,
+        #mainTable td:nth-child(19) input, #mainTable td:nth-child(20) input,
+        #mainTable td:nth-child(21) input {
+            text-align: right; padding-right: 12px; box-sizing: border-box;
+        }
+
+        /* 類型欄改為實心圓角按鈕樣式，無陰影，跟參考圖一致 */
+        select.type-chip {
+            appearance: none; -webkit-appearance: none; -moz-appearance: none;
+            width: auto; min-width: 56px; max-width: 90%;
+            height: 26px; margin: 0 auto; display: block;
+            padding: 0 10px; border: none !important; box-shadow: none !important;
+            border-radius: 50px; font-size: 12px; font-weight: 800; text-align: center;
+            cursor: pointer;
+        }
+
+        /* 已結清標籤（並排顯示在案名旁邊，不疊加在文字上避免看不見） */
+        .proj-name-cell { display: flex; align-items: center; gap: 4px; width: 100%; height: 100%; padding: 0 6px; box-sizing: border-box; }
+        .proj-name-cell input { flex: 1; min-width: 0; width: auto !important; padding: 0 !important; }
+        .settled-badge {
+            display: none; flex-shrink: 0;
+            font-size: 9px; font-weight: 800; color: #00A651; background: rgba(0,166,81,0.14);
+            padding: 2px 6px; border-radius: 50px; white-space: nowrap;
+        }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
@@ -332,6 +372,181 @@
         .settle-pill-btn.danger:hover { background: rgba(211,47,47,0.08); }
         .settle-pill-btn.primary { background: var(--primary); color: #FFF; box-shadow: 0 4px 12px rgba(var(--primary-rgb),0.3); }
         .settle-pill-btn.primary:hover { filter: brightness(1.08); }
+
+        /* V2.14 UI 優化：頂部搜尋列排版整理 - 統一高度/字級/邊框，改扁平風格取代重疊的毛玻璃陰影 */
+        .header-section { border-bottom: 1px solid rgba(0,0,0,0.06); }
+        .search-group { gap: 10px; }
+        .search-group input[type="text"] {
+            height: 40px; padding: 0 18px; box-sizing: border-box;
+            box-shadow: none; border: 1px solid rgba(0,0,0,0.09); background: #FFF;
+            backdrop-filter: none; font-weight: 700;
+        }
+        .search-group input[type="text"]:focus { box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12); border-color: rgba(var(--primary-rgb), 0.4); }
+        .vip-trigger, .status-trigger {
+            height: 40px; box-sizing: border-box; box-shadow: none;
+            border: 1px solid rgba(0,0,0,0.09); background: #FFF; backdrop-filter: none;
+        }
+        .vip-dropdown-container:hover .vip-trigger { box-shadow: none; border-color: rgba(0,0,0,0.16); }
+        .status-dropdown-container:hover .status-trigger { box-shadow: none; border-color: rgba(0,0,0,0.16); }
+        .vip-trigger.active-filter, .status-trigger.active-filter { border-color: var(--primary); }
+        #simpleBatchBtn, #openClientModalBtn { height: 40px; box-sizing: border-box; box-shadow: none; border: 1px solid rgba(0,210,106,0.3); backdrop-filter: none; }
+
+        /* V2.15 UI 優化：分潤結算的篩選條件與排序方式收進下拉選單，減少常駐按鈕數量 */
+        .filter-dropdown-container, .sort-dropdown-container { position: relative; }
+        .filter-trigger, .sort-trigger {
+            height: 40px; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.09); background: #FFF;
+            border-radius: 50px; padding: 0 20px; font-size: 13px; font-weight: 700; color: var(--text-main);
+            display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+        }
+        .filter-trigger:hover, .sort-trigger:hover { border-color: rgba(0,0,0,0.16); }
+        .filter-trigger.active-filter { border-color: var(--primary); color: var(--primary); }
+        .filter-badge { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); margin-left: 2px; }
+        .filter-panel {
+            position: absolute; top: 100%; right: 0; margin-top: 10px; width: 320px;
+            background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+            border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 16px;
+            display: none; flex-direction: column; gap: 14px; z-index: 999;
+        }
+        .filter-dropdown-container.open .filter-panel { display: flex; }
+        .filter-panel-label { font-size: 11px; font-weight: 800; color: var(--light); text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-panel-row { display: flex; flex-direction: column; gap: 8px; }
+        .status-option-inline-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .status-option-inline { padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 700; color: var(--mid); background: rgba(0,0,0,0.04); cursor: pointer; transition: 0.2s; }
+        .status-option-inline:hover { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+        .status-option-inline.active { background: var(--primary); color: #FFF; }
+        .filter-panel input[type="text"] { width: 100%; height: 38px; box-sizing: border-box; }
+        .sort-menu {
+            position: absolute; top: 100%; left: 0; padding-top: 10px; display: none; z-index: 999; min-width: 180px;
+        }
+        .sort-dropdown-container.open .sort-menu { display: block; }
+
+        /* ============ V2.16 UI 大改：柔和卡片化風格（Stripe 風） ============ */
+        /* 設計原則：白底卡片 + 柔和雙層陰影 + 細邊框，取代原本厚重的毛玻璃模糊與生硬黑線。
+           年度色彩主題（線/藍/紅/紫的背景色與主色）完全保留不動。 */
+        :root {
+            --card-bg: #FFFFFF;
+            --card-border: rgba(15, 23, 42, 0.07);
+            --card-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 8px 24px rgba(15,23,42,0.05);
+            --card-shadow-hover: 0 2px 4px rgba(15,23,42,0.05), 0 14px 34px rgba(15,23,42,0.08);
+        }
+
+        /* 拿掉頂部那條刺眼黑線，改為跟背景融合，不特別加分隔線 */
+        .header-section { border-bottom: none !important; }
+
+        /* 主要內容卡片：改為柔和陰影卡片，不再用半透明毛玻璃 */
+        .white-card {
+            background: var(--card-bg) !important;
+            backdrop-filter: none !important;
+            border: 1px solid var(--card-border) !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .month-nav-wrapper {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border-bottom: 1px solid var(--card-border) !important;
+        }
+        .dashboard-container { background: transparent !important; }
+        .kpi-card, .jelly-card, .chart-card {
+            border: 1px solid var(--card-border) !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .kpi-card:hover, .jelly-card:hover, .chart-card:hover { box-shadow: var(--card-shadow-hover) !important; }
+
+        /* 底部工具列與按鈕：白底柔和陰影，不再毛玻璃 */
+        .tab-bar-container {
+            background: var(--card-bg) !important;
+            backdrop-filter: none !important;
+            border: 1px solid var(--card-border) !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .sync-btn {
+            background: var(--card-bg) !important;
+            backdrop-filter: none !important;
+            border: 1px solid var(--card-border) !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .sync-btn:hover { box-shadow: var(--card-shadow-hover) !important; background: var(--card-bg) !important; }
+
+        /* 所有浮動面板／下拉選單／彈窗：統一白底柔和陰影卡片 */
+        .filter-panel, .vip-menu-content, .status-menu-content, .db-custom-menu,
+        .custom-modal-content, .year-dropdown, #invVipDropdown, #mainVipDropdown {
+            background: var(--card-bg) !important;
+            backdrop-filter: none !important;
+            box-shadow: var(--card-shadow-hover) !important;
+            border: 1px solid var(--card-border) !important;
+        }
+
+        th { background: var(--card-bg) !important; backdrop-filter: none !important; }
+
+        .selection-stats-bar, .settle-selection-pill {
+            background: var(--card-bg) !important;
+            backdrop-filter: none !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+
+        .filter-trigger, .sort-trigger, .vip-trigger, .status-trigger,
+        .search-group input[type="text"] {
+            background: var(--card-bg) !important;
+            box-shadow: none !important;
+            border: 1px solid var(--card-border) !important;
+        }
+
+        .settle-pill-btn { box-shadow: none !important; border: 1px solid var(--card-border); }
+        .settle-pill-btn.primary { border: none; box-shadow: var(--card-shadow) !important; }
+
+        /* ============ V2.17 UI 改版：左側導覽側邊欄（仿參考圖版型） ============ */
+        body {
+            background:
+                radial-gradient(1200px 600px at 15% -10%, rgba(var(--primary-rgb), 0.10), transparent 60%),
+                radial-gradient(1000px 500px at 100% 0%, rgba(var(--primary-rgb), 0.06), transparent 55%),
+                var(--bg);
+        }
+        .app-shell { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+        .app-sidebar {
+            width: 240px; flex-shrink: 0; height: 100%; display: flex; flex-direction: column;
+            background: var(--card-bg); border-right: 1px solid var(--card-border);
+            padding: 24px 16px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden;
+            /* V2.21：拿掉側邊欄寬度的漸變動畫，改為瞬間收合，徹底解決卡頓（分頁滑動動畫不受影響） */
+            transition: none;
+            will-change: auto;
+        }
+        .app-sidebar.collapsed { width: 68px; padding: 24px 12px; }
+        .app-sidebar-topbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 4px 20px 4px; }
+        .app-sidebar.collapsed .app-sidebar-topbar { justify-content: center; }
+        .app-sidebar-toggle {
+            width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--mid); font-size: 15px; transition: background 0.2s;
+        }
+        .app-sidebar-toggle:hover { background: rgba(0,0,0,0.05); }
+        .app-sidebar.collapsed .app-sidebar-brand { display: none; }
+        .app-sidebar.collapsed .nav-label, .app-sidebar.collapsed .app-sidebar-btn .nav-label { display: none; }
+        .app-sidebar.collapsed .app-nav-item, .app-sidebar.collapsed .app-sidebar-btn { justify-content: center; padding: 11px 0; }
+        .nav-icon { font-size: 15px; flex-shrink: 0; }
+        .app-sidebar-brand { padding: 0 8px 20px 8px; cursor: pointer; user-select: none; position: relative; }
+        .app-sidebar-brand-title { font-size: 17px; font-weight: 900; color: var(--text-main); letter-spacing: -0.3px; }
+        .app-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .app-nav-item {
+            display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px;
+            font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: all 0.2s;
+        }
+        .app-nav-item:hover { background: rgba(var(--primary-rgb), 0.06); color: var(--text-main); }
+        .app-nav-item.active { background: var(--primary); color: #FFF; box-shadow: var(--card-shadow); }
+        .app-sidebar-footer { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--card-border); margin-top: 12px; }
+        .app-sidebar-btn {
+            display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px;
+            font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid var(--card-border); background: var(--card-bg);
+            color: var(--mid); transition: all 0.2s;
+        }
+        .app-sidebar-btn:hover { background: rgba(0,0,0,0.03); }
+        .app-sidebar-btn.firebase { color: #FF9500; }
+        .app-sidebar-btn.backup { color: #5856D6; }
+        .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* viewport/slider 改為百分比制，搭配側邊欄版型（原本用 vw 會被側邊欄擋住／算錯寬度） */
+        .viewport { width: 100% !important; }
+        .slider-container { width: 600% !important; }
+        .page-content { width: calc(100% / 6) !important; content-visibility: auto; contain-intrinsic-size: 1000px 800px; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -474,12 +689,33 @@
     <div class="stat-item" style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 15px;"><span class="stat-label">加總</span><span class="stat-value" id="selSum">0</span></div>
 </div>
 
+<div class="app-shell">
+    <aside class="app-sidebar" id="appSidebar">
+        <div class="app-sidebar-topbar">
+            <div class="app-sidebar-brand" onclick="event.stopPropagation(); document.getElementById('yMenu').style.display='block'">
+                <div class="app-sidebar-brand-title"><span id="yDisp">2026</span> 營收表</div>
+                <div id="yMenu" class="year-dropdown" style="top: 100%; left: 8px;"><div id="yList"></div><div class="year-item" style="color:var(--primary); border-top:1px solid rgba(0,0,0,0.05)" onclick="addNewYear()">+ 新增年度</div></div>
+            </div>
+            <div class="app-sidebar-toggle" onclick="toggleSidebar()" title="收合／展開側邊欄">☰</div>
+        </div>
+        <nav class="app-nav">
+            <div class="app-nav-item active" onclick="switchSlide(0, this)" title="案件明細"><span class="nav-icon">📋</span><span class="nav-label">案件明細</span></div>
+            <div class="app-nav-item" onclick="switchSlide(1, this)" title="分潤結算"><span class="nav-icon">💰</span><span class="nav-label">分潤結算</span></div>
+            <div class="app-nav-item" onclick="switchSlide(2, this)" title="月度總覽"><span class="nav-icon">📊</span><span class="nav-label">月度總覽</span></div>
+            <div class="app-nav-item" onclick="switchSlide(3, this)" title="請款系統"><span class="nav-icon">🧾</span><span class="nav-label">請款系統</span></div>
+            <div class="app-nav-item" onclick="switchSlide(4, this)" title="發票紀錄"><span class="nav-icon">📄</span><span class="nav-label">發票紀錄</span></div>
+            <div class="app-nav-item" onclick="switchSlide(5, this)" title="數據中心"><span class="nav-icon">📈</span><span class="nav-label">數據中心</span></div>
+        </nav>
+        <div class="app-sidebar-footer">
+            <div class="app-sidebar-btn firebase" id="cloudSaveBtn" onclick="cloudSync('SAVE')" title="搬家至 Firebase"><span class="nav-icon">🔥</span><span class="nav-label">搬家至 Firebase</span></div>
+            <div class="app-sidebar-btn" style="color:var(--primary)" onclick="cloudSync('LOAD')" title="從雲端載入"><span class="nav-icon">🔄</span><span class="nav-label">從雲端載入</span></div>
+            <div class="app-sidebar-btn backup" onclick="openBackupModal()" title="版本備份"><span class="nav-icon">📜</span><span class="nav-label">版本備份</span></div>
+            <div class="app-sidebar-btn" onclick="exportData()" title="匯出電腦備份"><span class="nav-icon">📤</span><span class="nav-label">匯出電腦備份</span></div>
+        </div>
+    </aside>
+
+    <div class="app-main">
 <div class="header-section">
-    <div style="position:relative">
-        <div class="page-title" onclick="event.stopPropagation(); document.getElementById('yMenu').style.display='block'"><span id="yDisp">2026</span> 營收表</div>
-        <div id="yMenu" class="year-dropdown"><div id="yList"></div><div class="year-item" style="color:var(--primary); border-top:1px solid rgba(0,0,0,0.05)" onclick="addNewYear()">+ 新增年度</div></div>
-    </div>
-    
     <div class="search-area">
         <div class="search-group" id="tableFilterGroup">
             <div class="vip-dropdown-container">
@@ -496,22 +732,30 @@
         </div>
         
         <div class="search-group" id="settleSearchGroup" style="display:none; width:100%; justify-content: flex-end; align-items: center; gap: 10px;">
-            <div class="status-dropdown-container">
-                <div class="status-trigger" id="statusTrigger" onclick="toggleStatusMenu(event)">💰 所有入帳狀態 <span style="font-size: 10px;">▼</span></div>
-                <div class="status-menu">
-                    <div class="status-menu-content">
-                        <div class="status-option active" onclick="setStatusFilter('', '💰 所有入帳狀態', this)">💰 所有入帳狀態</div>
-                        <div class="status-option" onclick="setStatusFilter('paid', '✅ 已收齊 (可發放)', this)">✅ 已收齊 (可發放)</div>
-                        <div class="status-option" onclick="setStatusFilter('unpaid', '⏳ 有未收尾款', this)">⏳ 有未收尾款</div>
-                    </div>
+            <div class="filter-dropdown-container" id="settleFilterContainer">
+                <div class="filter-trigger" id="settleFilterTrigger" onclick="toggleSettleFilterPanel(event)">
+                    🔍 篩選<span id="settleFilterBadge" class="filter-badge" style="display:none;"></span>
+                    <span style="font-size: 10px;">▼</span>
                 </div>
-                <input type="hidden" id="ssStatus" value="">
+                <div class="filter-panel" id="settleFilterPanel">
+                    <div class="filter-panel-row">
+                        <span class="filter-panel-label">入帳狀態</span>
+                        <div class="status-option-inline-group">
+                            <div class="status-option-inline active" onclick="setStatusFilter('', '💰 所有入帳狀態', this)">全部</div>
+                            <div class="status-option-inline" onclick="setStatusFilter('paid', '✅ 已收齊 (可發放)', this)">✅ 已收齊</div>
+                            <div class="status-option-inline" onclick="setStatusFilter('unpaid', '⏳ 有未收尾款', this)">⏳ 未收齊</div>
+                        </div>
+                        <input type="hidden" id="ssStatus" value="">
+                    </div>
+                    <div class="filter-panel-row">
+                        <span class="filter-panel-label">搜尋條件</span>
+                        <input type="text" id="ssC" placeholder="👤 客戶搜尋" autocomplete="off" oninput="runSettleSearch()">
+                        <input type="text" id="ssP" placeholder="📁 案名搜尋" autocomplete="off" oninput="runSettleSearch()">
+                        <input type="text" id="ssM" placeholder="📅 結算月 (05)" autocomplete="off" oninput="checkMonthClients()">
+                    </div>
+                    <button id="openClientModalBtn" class="sync-btn" style="display:none; color:var(--primary); justify-content: center;" onclick="openSettleClientModal()">👥 選擇客戶 (全選)</button>
+                </div>
             </div>
-            
-            <input type="text" id="ssC" placeholder="👤 客戶搜尋" autocomplete="off" oninput="runSettleSearch()" style="width: 100px; flex-shrink: 0; text-align: center; font-weight: 900;">
-            <input type="text" id="ssP" placeholder="📁 案名搜尋" autocomplete="off" oninput="runSettleSearch()" style="width: 100px; flex-shrink: 0; text-align: center; font-weight: 900;">
-            <input type="text" id="ssM" placeholder="📅 結算月 (05)" autocomplete="off" oninput="checkMonthClients()" style="width: 110px; flex-shrink: 0; text-align: center; font-weight: 900;">
-            <button id="openClientModalBtn" class="sync-btn" style="display:none; color:var(--primary); padding: 8px 20px; font-size: 13px; height: 38px;" onclick="openSettleClientModal()">👥 選擇客戶 (全選)</button>
         </div>
 
         <div class="search-group" id="quoteSearchGroup" style="display:none;">
@@ -572,10 +816,16 @@
                 <div class="month-nav-wrapper" id="settle-controls" style="padding-right: 25px;">
                     <div class="settle-toolbar">
                         <div class="settle-sort-group">
-                            <span class="settle-sort-label">排序</span>
-                            <button class="month-btn active" onclick="setSettleSort('month', this)">📅 年月</button>
-                            <button class="month-btn" onclick="setSettleSort('id', this)">🔢 編號</button>
-                            <button class="month-btn" onclick="setSettleSort('client', this)">👤 客戶</button>
+                            <div class="sort-dropdown-container" id="settleSortContainer">
+                                <div class="sort-trigger" id="sortTrigger" onclick="toggleSortMenu(event)">📅 依年月排序 <span style="font-size: 10px;">▼</span></div>
+                                <div class="sort-menu">
+                                    <div class="status-menu-content">
+                                        <div class="status-option active" onclick="setSettleSort('month', this, '📅 依年月排序')">📅 依年月排序</div>
+                                        <div class="status-option" onclick="setSettleSort('id', this, '🔢 依編號排序')">🔢 依編號排序</div>
+                                        <div class="status-option" onclick="setSettleSort('client', this, '👤 依客戶排序')">👤 依客戶排序</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="settle-selection-pill">
                             <span id="settle-selected-count" class="settle-selection-count" onclick="showSettleSelected()">已選取 0 件</span>
@@ -787,21 +1037,7 @@
     </div>
 </div>
 
-<div class="bottom-ui-wrap">
-    <div class="btn-group-left" style="width: 380px;">
-        <button class="sync-btn btn-firebase" id="cloudSaveBtn" onclick="cloudSync('SAVE')">🔥 搬家至 Firebase</button>
-        <button class="sync-btn" style="color:var(--primary)" onclick="cloudSync('LOAD')">🔄 從雲端載入</button>
-        <button class="sync-btn" style="color:#5856D6; border: 1px solid rgba(88, 86, 214, 0.25);" onclick="openBackupModal()">📜 版本備份</button>
     </div>
-    <div class="tab-bar-container">
-        <div class="tab-item active" onclick="switchSlide(0, this)">案件明細</div>
-        <div class="tab-item" onclick="switchSlide(1, this)">分潤結算</div>
-        <div class="tab-item" onclick="switchSlide(2, this)">月度總覽</div>
-        <div class="tab-item" onclick="switchSlide(3, this)">請款系統</div>
-        <div class="tab-item" onclick="switchSlide(4, this)">發票紀錄</div>
-        <div class="tab-item" onclick="switchSlide(5, this)">數據中心</div>
-    </div>
-    <div class="btn-group-right"><button class="sync-btn" style="color:var(--text-main)" onclick="exportData()">📤 匯出電腦備份</button></div>
 </div>
 
 <script>
@@ -874,7 +1110,17 @@ document.addEventListener('click', function(e) {
         if(popover) popover.style.display = 'none';
     }
     
-    if(!e.target.closest('.page-title') && !e.target.closest('#yMenu')) {
+    // V2.15：點擊外部自動收合分潤結算的篩選/排序下拉面板
+    if (!e.target.closest('#settleFilterContainer')) {
+        let fc = document.getElementById('settleFilterContainer');
+        if (fc) fc.classList.remove('open');
+    }
+    if (!e.target.closest('#settleSortContainer')) {
+        let sc = document.getElementById('settleSortContainer');
+        if (sc) sc.classList.remove('open');
+    }
+    
+    if(!e.target.closest('.app-sidebar-brand') && !e.target.closest('#yMenu')) {
         document.getElementById('yMenu').style.display='none';
     }
     
@@ -906,6 +1152,14 @@ function toggleStatusMenu(e) {
 }
 window.toggleVipMenu = toggleVipMenu;
 window.toggleStatusMenu = toggleStatusMenu;
+
+// V2.18：側邊欄收合/展開，並記住使用者上次的選擇
+function toggleSidebar() {
+    let sb = document.getElementById('appSidebar');
+    sb.classList.toggle('collapsed');
+    localStorage.setItem('vB_SidebarCollapsed', sb.classList.contains('collapsed') ? '1' : '0');
+}
+window.toggleSidebar = toggleSidebar;
 
 // V2.11：點擊小圓點展開/收合登入狀態視窗
 function toggleAuthPopover(e) {
@@ -1039,8 +1293,8 @@ async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
 
 function switchSlide(idx, el) {
-    document.getElementById('mainSlider').style.transform = `translateX(-${idx * 100}vw)`;
-    document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active')); 
+    document.getElementById('mainSlider').style.transform = `translateX(-${idx * (100/6)}%)`;
+    document.querySelectorAll('.app-nav-item').forEach(t=>t.classList.remove('active')); 
     if(el) el.classList.add('active');
     
     document.getElementById('tableFilterGroup').style.display = (idx === 0) ? 'flex' : 'none';
@@ -1165,7 +1419,7 @@ function renderDashboard() {
     chartPie = new Chart(ctxPie, {
         type: 'doughnut',
         data: { labels: Object.keys(typeData), datasets: [{ data: Object.values(typeData), backgroundColor: colors, borderWidth: 0, hoverOffset: 15 }] },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', weight: 'bold' } } }, tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } } }
+        options: { responsive: true, maintainAspectRatio: false, resizeDelay: 200, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', weight: 'bold' } } }, tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } } }
     });
     
     let barLabels = [], barValues = [];
@@ -1177,6 +1431,7 @@ function renderDashboard() {
     let barOptions = { 
         responsive: true, 
         maintainAspectRatio: false, 
+        resizeDelay: 200,
         plugins: { 
             legend: { display: false }, 
             tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(); } } } 
@@ -1297,12 +1552,42 @@ function setMonthFilter(m, el) { currentMonthFilter = m; document.querySelectorA
 
 function setStatusFilter(val, text, el) {
     document.getElementById('ssStatus').value = val;
-    let trigger = document.getElementById('statusTrigger'); trigger.innerHTML = `${text} <span style="font-size: 10px;">▼</span>`;
-    if (val !== '') trigger.classList.add('active-filter'); else trigger.classList.remove('active-filter');
-    document.querySelectorAll('.status-option').forEach(opt => opt.classList.remove('active')); el.classList.add('active');
-    let menu = el.closest('.status-menu'); menu.classList.remove('active'); // V2.9：改用點擊模式收合
+    document.querySelectorAll('.status-option-inline').forEach(opt => opt.classList.remove('active'));
+    el.classList.add('active');
+    updateSettleFilterBadge();
     runSettleSearch();
 }
+
+// V2.15：更新篩選按鈕上的小圓點提示，只要有任何篩選條件套用就顯示
+function updateSettleFilterBadge() {
+    let hasFilter = (document.getElementById('ssStatus').value !== '')
+        || (document.getElementById('ssC').value.trim() !== '')
+        || (document.getElementById('ssP').value.trim() !== '')
+        || (document.getElementById('ssM').value.trim() !== '');
+    let trigger = document.getElementById('settleFilterTrigger');
+    let badge = document.getElementById('settleFilterBadge');
+    if (!trigger || !badge) return;
+    if (hasFilter) { trigger.classList.add('active-filter'); badge.style.display = 'inline-block'; }
+    else { trigger.classList.remove('active-filter'); badge.style.display = 'none'; }
+}
+
+// V2.15：篩選/排序下拉的開關與外部點擊自動收合
+function toggleSettleFilterPanel(e) {
+    e.stopPropagation();
+    let c = document.getElementById('settleFilterContainer');
+    let sortC = document.getElementById('settleSortContainer');
+    if (sortC) sortC.classList.remove('open');
+    c.classList.toggle('open');
+}
+function toggleSortMenu(e) {
+    e.stopPropagation();
+    let c = document.getElementById('settleSortContainer');
+    let filterC = document.getElementById('settleFilterContainer');
+    if (filterC) filterC.classList.remove('open');
+    c.classList.toggle('open');
+}
+window.toggleSettleFilterPanel = toggleSettleFilterPanel;
+window.toggleSortMenu = toggleSortMenu;
 
 function filterTable() {
     clearTimeout(window.filterTimer1);
@@ -1351,10 +1636,13 @@ async function simpleBatchResolve() {
 }
 
 let currentSettleSort = 'month';
-function setSettleSort(type, el) {
+function setSettleSort(type, el, label) {
     currentSettleSort = type;
-    let navs = el.parentElement.querySelectorAll('.month-btn');
-    navs.forEach(b => b.classList.remove('active')); el.classList.add('active');
+    document.querySelectorAll('#settleSortContainer .status-option').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    let trigger = document.getElementById('sortTrigger');
+    if (trigger && label) trigger.innerHTML = `${label} <span style="font-size: 10px;">▼</span>`;
+    document.getElementById('settleSortContainer').classList.remove('open');
     runSettleSearch();
 }
 
@@ -1371,6 +1659,7 @@ function checkMonthClients() {
         if (sm === '00') {
             btn.style.display = 'none';
             selectedSettleClients.clear();
+            updateSettleFilterBadge();
             runSettleSearch();
             return;
         }
@@ -1402,6 +1691,7 @@ function checkMonthClients() {
             if(monthClients.has(c)) validSelected.add(c);
         });
         selectedSettleClients = validSelected;
+        updateSettleFilterBadge();
         runSettleSearch();
     }, 250);
 }
@@ -1535,6 +1825,7 @@ function showSettleSelected() {
 function runSettleSearch() {
     clearTimeout(window.settleTimer);
     window.settleTimer = setTimeout(() => {
+        updateSettleFilterBadge();
         let role = window.curRole, tb = document.getElementById('settle-tb'); tb.innerHTML = '';
         let statusF = document.getElementById('ssStatus').value;
         
@@ -1949,7 +2240,11 @@ function createRow(r) {
         else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
         else if (c===4 || c===6) {
             let ops = (opts[c]||[]).map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
-            td.innerHTML = `<select id="r${r}c${c}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${ops}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
+            td.innerHTML = `<select id="r${r}c${c}" class="${c===4?'type-chip':''}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${ops}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
+            // V2.22：類型欄位（c===4）用自動配色標籤取代純文字，一眼分辨影片/圖片/動畫等類型
+            if (c === 4) colorizeTypeSelect(td.querySelector('select'));
+        } else if (c===3) {
+            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><span class="settled-badge" id="r${r}c${c}badge" style="display:none;">已結清</span></div>`;
         } else {
             let ro = [0,10,11,13,17,18,19].includes(c);
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" class="${ro?'readonly':''}" ${ro?'readonly tabindex="-1"':''} oninput="calc(${r},${c})">`;
@@ -2537,11 +2832,17 @@ function calc(r, c, save=true) {
     s(19, amtPart);
     
     let row = document.getElementById(`r${r}`); 
+    let isSettled = false;
     if (row) { 
         let isFree = (String(g(9)).trim() === '0'); 
-        if ((net > 0 && rem <= 0) || isFree) row.classList.add('is-settled'); 
+        isSettled = (net > 0 && rem <= 0) || isFree;
+        if (isSettled) row.classList.add('is-settled'); 
         else row.classList.remove('is-settled'); 
     }
+
+    // V2.22：已結清標籤，取代單純靠透明度判斷
+    let badge = document.getElementById(`r${r}c3badge`);
+    if (badge) badge.style.display = isSettled ? 'inline-block' : 'none';
     
     if(save) {
         setRowData(r, {0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)});
@@ -2559,8 +2860,41 @@ async function handleOptChange(r, c) {
     let sel = document.getElementById(`r${r}c${c}`);
     if (sel.value === "__ADD__") { let n = await uiPrompt("新增:"); if (n && n.trim() !== "") { opts[c].push(n.trim()); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
     else if (sel.value === "__DEL__") { let target = await uiPrompt("刪除名稱:"); if (target && opts[c].includes(target)) { opts[c] = opts[c].filter(i => i !== target); localStorage.setItem('vB_Opts', JSON.stringify(opts)); initTable(); } else sel.value = ""; } 
-    else calc(r, c);
+    else { calc(r, c); if (c === 4) colorizeTypeSelect(sel); }
 }
+
+// V2.22：類型欄位自動配色 - 同樣文字永遠對應同一個顏色（用字串雜湊選色盤）
+const TYPE_COLOR_PALETTE = [
+    { bg: 'rgba(0,122,255,0.12)',  fg: '#007AFF' },
+    { bg: 'rgba(255,149,0,0.14)',  fg: '#C96500' },
+    { bg: 'rgba(52,199,89,0.14)',  fg: '#1F8A3B' },
+    { bg: 'rgba(191,90,242,0.14)', fg: '#8E24C9' },
+    { bg: 'rgba(255,59,48,0.12)',  fg: '#D32F2F' },
+    { bg: 'rgba(90,200,250,0.16)', fg: '#0B7A99' },
+    { bg: 'rgba(255,45,85,0.12)',  fg: '#C2185B' },
+    { bg: 'rgba(142,142,147,0.16)',fg: '#5E5E63' }
+];
+// V2.24：影片/圖片/動畫固定配色（淺藍/淺綠/淺灰），其他自訂類型才用自動配色
+const TYPE_COLOR_FIXED = {
+    '影片': { bg: 'rgba(10,132,255,0.14)', fg: '#0A72E0' },
+    '圖片': { bg: 'rgba(52,199,89,0.16)',  fg: '#1F8A3B' },
+    '動畫': { bg: 'rgba(142,142,147,0.16)', fg: '#5E5E63' }
+};
+function colorizeTypeSelect(sel) {
+    if (!sel) return;
+    let v = (sel.value || '').trim();
+    if (!v) { sel.style.background = ''; sel.style.color = ''; sel.style.fontWeight = ''; return; }
+    let c = TYPE_COLOR_FIXED[v];
+    if (!c) {
+        let hash = 0;
+        for (let i = 0; i < v.length; i++) hash = (hash * 31 + v.charCodeAt(i)) >>> 0;
+        c = TYPE_COLOR_PALETTE[hash % TYPE_COLOR_PALETTE.length];
+    }
+    sel.style.background = c.bg;
+    sel.style.color = c.fg;
+    sel.style.fontWeight = '800';
+}
+window.colorizeTypeSelect = colorizeTypeSelect;
 
 function exportData() { let b = new Blob([JSON.stringify(localStorage)], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `backup_${curY}.json`; a.click(); }
 
@@ -2610,10 +2944,13 @@ window.onload = () => {
     migrateRitaToYiminjia(); 
     applyTheme(curY); 
     document.getElementById('yDisp').innerText = curY; 
+    if (localStorage.getItem('vB_SidebarCollapsed') === '1') {
+        document.getElementById('appSidebar').classList.add('collapsed');
+    }
     initTable(); 
     initInvoiceTable();
     renderYearList(); 
-    let activeTab = document.querySelector('.tab-item.active');
+    let activeTab = document.querySelector('.app-nav-item.active');
     if (activeTab && activeTab.innerText.includes('數據中心')) renderDashboard();
 };
 </script>
