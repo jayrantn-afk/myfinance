@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.11</title>
+    <title>杰冉宇宙營收表 V2.13</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -320,32 +320,18 @@
 
         #barChart { cursor: default; transition: cursor 0.2s; }
 
-        /* V2.11 登入狀態標籤 Hover 展開效果 */
-        .auth-badge-wrap {
-            position: fixed; top: 14px; right: 20px; z-index: 999999;
-            display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-start;
-        }
-        .auth-badge-dot {
-            width: 16px; height: 16px; border-radius: 50%;
-            background: #00A651; box-shadow: 0 0 0 2px #FFF, 0 2px 5px rgba(0,0,0,0.2);
-            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .auth-badge-dot.offline { background: #D32F2F; }
-        .auth-badge-content {
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(15px);
-            border-radius: 50px; padding: 8px 16px; font-size: 13px; font-weight: 800;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.05);
-            display: flex; align-items: center; gap: 10px;
-            opacity: 0; visibility: hidden; transform: translateX(20px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: absolute; top: -8px; right: -8px; white-space: nowrap;
-        }
-        .auth-badge-wrap:hover .auth-badge-content {
-            opacity: 1; visibility: visible; transform: translateX(0);
-        }
-        .auth-badge-wrap:hover .auth-badge-dot {
-            opacity: 0; transform: scale(0.5); visibility: hidden;
-        }
+        /* V2.13 UI 優化：分潤結算工具列 - 排序群組與選取操作群組視覺分離、風格統一 */
+        .settle-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 4px 4px 18px 4px; }
+        .settle-sort-group { display: flex; align-items: center; gap: 8px; }
+        .settle-sort-label { font-size: 11px; font-weight: 800; color: var(--light); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 2px; white-space: nowrap; }
+        .settle-selection-pill { display: flex; align-items: center; gap: 4px; background: rgba(var(--primary-rgb), 0.07); border: 1px solid rgba(var(--primary-rgb), 0.18); border-radius: 50px; padding: 5px 6px 5px 16px; }
+        .settle-selection-count { font-size: 13px; font-weight: 800; color: var(--primary); white-space: nowrap; cursor: pointer; }
+        .settle-pill-btn { border: none; background: #FFF; color: var(--mid); font-size: 12px; font-weight: 800; padding: 7px 16px; border-radius: 50px; cursor: pointer; transition: all 0.2s; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .settle-pill-btn:hover { background: #F4F7F6; transform: translateY(-1px); }
+        .settle-pill-btn.danger { color: #D32F2F; }
+        .settle-pill-btn.danger:hover { background: rgba(211,47,47,0.08); }
+        .settle-pill-btn.primary { background: var(--primary); color: #FFF; box-shadow: 0 4px 12px rgba(var(--primary-rgb),0.3); }
+        .settle-pill-btn.primary:hover { filter: brightness(1.08); }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -362,14 +348,17 @@
     window.settleCheckedIdxs = new Set();
 </script>
 
-<!-- V2.11 新增：登入狀態標籤 (懸浮展開) -->
-<div class="auth-badge-wrap">
-    <div id="authStatusDot" class="auth-badge-dot offline"></div>
-    <div class="auth-badge-content">
+<!-- V2.12：登入狀態改為滑鼠移過才顯示，平常完全隱形，不常駐佔畫面 -->
+<div id="authStatusBadge" style="position: fixed; top: 0; right: 0; width: 50px; height: 40px; z-index: 999999;">
+    <div id="authStatusDot" onclick="toggleAuthPopover(event)" title="點擊/滑過查看登入狀態" style="position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 50%; background: #D32F2F; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); border: 2px solid #FFF; opacity: 0; transition: opacity 0.3s;"></div>
+    <div id="authStatusPopover" style="display:none; position: absolute; top: 22px; right: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(15px); border-radius: 12px; padding: 10px 14px; font-size: 12px; font-weight: 800; box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(0,0,0,0.05);">
         <span id="authStatusText" style="color: #D32F2F;">🔴 尚未登入</span>
         <button id="authLogoutBtn" onclick="doLogout()" style="display:none; border: none; background: rgba(211,47,47,0.1); color: #D32F2F; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 50px; cursor: pointer;">登出</button>
     </div>
 </div>
+<style>
+    #authStatusBadge:hover #authStatusDot { opacity: 1; }
+</style>
 
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
@@ -579,20 +568,21 @@
         <!-- Slide 1: 分潤結算 -->
         <div class="page-content">
             <div class="white-card">
-                <!-- 🚨 V2.4 已選取計數變成可點擊按鈕 -->
-                <div class="month-nav-wrapper" id="settle-controls" style="display: flex; justify-content: space-between; align-items: center; padding-right: 25px;">
-                    <div class="month-nav" style="align-items: center;">
-                        <span style="font-size: 13px; font-weight: 800; color: var(--mid); margin: 0 10px;">排序：</span>
-                        <button class="month-btn active" onclick="setSettleSort('month', this)">📅 按年月</button>
-                        <button class="month-btn" onclick="setSettleSort('id', this)">🔢 按編號</button>
-                        <button class="month-btn" onclick="setSettleSort('client', this)">👤 按客戶</button>
-                        
-                        <div style="width: 1px; height: 18px; background: rgba(0,0,0,0.1); margin: 0 10px;"></div>
-                        
-                        <span id="settle-selected-count" onclick="showSettleSelected()" style="font-size: 13px; font-weight: 900; color: var(--primary); margin-right: 8px; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: 0.2s;" onmouseover="this.style.background='rgba(0,122,255,0.1)'" onmouseout="this.style.background='transparent'">已選取: 0 件 (點擊查看)</span>
-                        <button class="month-btn" onclick="clearSettleSelection()" style="color: #D32F2F; border: 1px solid rgba(211, 47, 47, 0.2); padding: 6px 12px; font-size: 11px;">🗑️ 清除</button>
+                <!-- V2.13 UI 優化：排序按鈕與選取操作分兩個視覺群組，不再擠成一排雜亂按鈕 -->
+                <div class="month-nav-wrapper" id="settle-controls" style="padding-right: 25px;">
+                    <div class="settle-toolbar">
+                        <div class="settle-sort-group">
+                            <span class="settle-sort-label">排序</span>
+                            <button class="month-btn active" onclick="setSettleSort('month', this)">📅 年月</button>
+                            <button class="month-btn" onclick="setSettleSort('id', this)">🔢 編號</button>
+                            <button class="month-btn" onclick="setSettleSort('client', this)">👤 客戶</button>
+                        </div>
+                        <div class="settle-selection-pill">
+                            <span id="settle-selected-count" class="settle-selection-count" onclick="showSettleSelected()">已選取 0 件</span>
+                            <button class="settle-pill-btn danger" onclick="clearSettleSelection()">清除</button>
+                            <button id="exportSettlePdfBtn" class="settle-pill-btn primary" onclick="downloadSettlePDF()">📥 匯出 PDF</button>
+                        </div>
                     </div>
-                    <button id="exportSettlePdfBtn" class="sync-btn" style="color:var(--primary); padding: 8px 16px; font-size: 12px; height: 36px; margin-bottom: 14px;" onclick="downloadSettlePDF()">📥 一鍵匯出 PDF</button>
                 </div>
                 
                 <div id="settle-view-area" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; background: white;">
@@ -878,6 +868,12 @@ document.addEventListener('click', function(e) {
         if(statusMenu) statusMenu.classList.remove('active');
     }
     
+    // V2.11：點擊外部自動收合登入狀態小圓點的展開視窗
+    if (!e.target.closest('#authStatusBadge')) {
+        let popover = document.getElementById('authStatusPopover');
+        if(popover) popover.style.display = 'none';
+    }
+    
     if(!e.target.closest('.page-title') && !e.target.closest('#yMenu')) {
         document.getElementById('yMenu').style.display='none';
     }
@@ -910,6 +906,14 @@ function toggleStatusMenu(e) {
 }
 window.toggleVipMenu = toggleVipMenu;
 window.toggleStatusMenu = toggleStatusMenu;
+
+// V2.11：點擊小圓點展開/收合登入狀態視窗
+function toggleAuthPopover(e) {
+    e.stopPropagation();
+    let popover = document.getElementById('authStatusPopover');
+    popover.style.display = (popover.style.display === 'flex') ? 'none' : 'flex';
+}
+window.toggleAuthPopover = toggleAuthPopover;
 
 const contextMenu = document.getElementById('customContextMenu');
 let rightClickedElement = null;
@@ -1489,7 +1493,7 @@ function updateSettleSelectionUI() {
     document.getElementById('settle-total-val').innerText = `結算總額：$ ${totalVal.toLocaleString()}`;
     
     let countSpan = document.getElementById('settle-selected-count');
-    if(countSpan) countSpan.innerText = `已選取: ${window.settleCheckedIdxs.size} 件 (點擊查看)`;
+    if(countSpan) countSpan.innerText = `已選取 ${window.settleCheckedIdxs.size} 件`;
 
     let allCbs = document.querySelectorAll('.settle-cb');
     let checkedCbs = document.querySelectorAll('.settle-cb:checked');
@@ -1981,7 +1985,7 @@ function renderMainVipMenu(filterStr = "") {
     if (f) keys = keys.filter(k => k.toLowerCase().includes(f));
     
     if (keys.length === 0) {
-        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手動輸入)</span></div>`;
+        dd.innerHTML = `<div style="padding: 10px; font-size: 12px; color: var(--light); text-align: center;">無相符常用客戶<br><span style="font-size:10px;">(可直接手持輸入)</span></div>`;
     } else {
         keys.sort().forEach(k => {
             let div = document.createElement('div');
@@ -2637,11 +2641,11 @@ window.onload = () => {
 
         // V2.8：改用 Email/Password 驗證。只有登入成功的使用者，才會被 Firestore 規則允許讀寫。
         // 同時偵測「V2.4 舊版遺留的匿名登入」殘留 session，若發現則強制登出，避免卡在無法寫入的狀態。
-        // V2.11：更新為懸浮標籤
+        // V2.11：改用小圓點顯示登入狀態（綠色=已登入/紅色=未登入），點擊才展開詳細資訊，避免擋住其他功能。
         onAuthStateChanged(auth, (user) => {
+            const dot = document.getElementById('authStatusDot');
             const statusText = document.getElementById('authStatusText');
             const logoutBtn = document.getElementById('authLogoutBtn');
-            const statusDot = document.getElementById('authStatusDot');
 
             if (user && user.isAnonymous) {
                 signOut(auth);
@@ -2649,7 +2653,7 @@ window.onload = () => {
             }
             if (user) {
                 document.getElementById('login-screen').style.display = 'none';
-                if (statusDot) statusDot.classList.remove('offline');
+                if (dot) dot.style.background = '#00A651';
                 if (statusText) {
                     statusText.innerHTML = `🟢 已登入：${user.email}`;
                     statusText.style.color = '#00A651';
@@ -2657,7 +2661,7 @@ window.onload = () => {
                 if (logoutBtn) logoutBtn.style.display = 'inline-block';
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
-                if (statusDot) statusDot.classList.add('offline');
+                if (dot) dot.style.background = '#D32F2F';
                 if (statusText) {
                     statusText.innerHTML = `🔴 尚未登入`;
                     statusText.style.color = '#D32F2F';
