@@ -503,14 +503,14 @@
         }
         .app-shell { display: flex; flex: 1; overflow: hidden; min-height: 0; }
         .app-sidebar {
-            width: 240px; flex-shrink: 0; height: 100%; display: flex; flex-direction: column;
+            width: fit-content; min-width: 180px; max-width: 260px; flex-shrink: 0; height: 100%; display: flex; flex-direction: column;
             background: var(--card-bg); border-right: 1px solid var(--card-border);
             padding: 24px 16px; box-sizing: border-box; overflow-y: auto; overflow-x: hidden;
             /* V2.21：拿掉側邊欄寬度的漸變動畫，改為瞬間收合，徹底解決卡頓（分頁滑動動畫不受影響） */
             transition: none;
             will-change: auto;
         }
-        .app-sidebar.collapsed { width: 68px; padding: 24px 12px; }
+        .app-sidebar.collapsed { width: 68px; min-width: 68px; max-width: 68px; padding: 24px 12px; }
         .app-sidebar-topbar { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 4px 20px 4px; }
         .app-sidebar.collapsed .app-sidebar-topbar { justify-content: center; }
         .app-sidebar-toggle {
@@ -521,18 +521,19 @@
         .app-sidebar-toggle:hover { background: rgba(0,0,0,0.05); }
         .app-sidebar.collapsed .app-sidebar-brand { display: none; }
         .app-sidebar.collapsed .nav-label, .app-sidebar.collapsed .app-sidebar-btn .nav-label { display: none; }
-        .app-sidebar.collapsed .app-nav-item, .app-sidebar.collapsed .app-sidebar-btn { justify-content: center; padding: 11px 0; }
+        .app-sidebar.collapsed .app-nav-item, .app-sidebar.collapsed .app-sidebar-btn { justify-content: center; padding: 11px 0; width: 100%; }
+        .app-sidebar.collapsed .app-nav, .app-sidebar.collapsed .app-sidebar-footer { align-items: stretch; }
         .nav-icon { font-size: 15px; flex-shrink: 0; }
         .app-sidebar-brand { padding: 0 8px 20px 8px; cursor: pointer; user-select: none; position: relative; }
         .app-sidebar-brand-title { font-size: 17px; font-weight: 900; color: var(--text-main); letter-spacing: -0.3px; }
-        .app-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .app-nav { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
         .app-nav-item {
             display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px;
             font-size: 14px; font-weight: 700; color: var(--mid); cursor: pointer; transition: all 0.2s;
         }
         .app-nav-item:hover { background: rgba(var(--primary-rgb), 0.06); color: var(--text-main); }
         .app-nav-item.active { background: var(--primary); color: #FFF; box-shadow: var(--card-shadow); }
-        .app-sidebar-footer { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--card-border); margin-top: 12px; }
+        .app-sidebar-footer { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--card-border); margin-top: 12px; align-items: flex-start; }
         .app-sidebar-btn {
             display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px;
             font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid var(--card-border); background: var(--card-bg);
