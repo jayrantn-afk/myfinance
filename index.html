@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.4</title>
+    <title>杰冉宇宙營收表 V2.34</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -144,11 +144,15 @@
         /* 已結清標籤（並排顯示在案名旁邊，不疊加在文字上避免看不見） */
         .proj-name-cell { display: flex; align-items: center; gap: 4px; width: 100%; height: 100%; padding: 0 6px; box-sizing: border-box; }
         .proj-name-cell input { flex: 1; min-width: 0; width: auto !important; padding: 0 !important; }
-        .settled-badge {
-            display: none; flex-shrink: 0;
-            font-size: 9px; font-weight: 800; color: #00A651; background: rgba(0,166,81,0.14);
-            padding: 2px 6px; border-radius: 50px; white-space: nowrap;
+        /* V2.33：結清／付夥伴改成永遠可見、可直接點擊切換的雙狀態小標籤，不用再看整行變灰或往右找打勾框 */
+        .settled-badge, .partner-badge {
+            flex-shrink: 0; cursor: pointer; user-select: none;
+            font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 50px; white-space: nowrap;
+            color: var(--light); background: rgba(0,0,0,0.06); transition: all 0.15s;
         }
+        .settled-badge:hover, .partner-badge:hover { filter: brightness(0.95); }
+        .settled-badge.active { color: #00A651; background: rgba(0,166,81,0.16); }
+        .partner-badge.active { color: #8E24C9; background: rgba(191,90,242,0.18); }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
@@ -814,7 +818,7 @@
                 <div class="table-scroll" id="input-view">
                     <!-- 🚨 隱藏 付款、尾款、未收金額 -->
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:120px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:70px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:120px">備註</th><th style="width:65px; color:#BF5AF2;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -2290,7 +2294,7 @@ function createRow(r) {
         let td = document.createElement('td'), val = saved[c] || '';
         td.className = 'calc-cell'; 
         
-        if (c === 6 || c === 12 || c === 13) {
+        if (c === 6 || c === 12 || c === 13 || c === 21) {
             td.style.display = 'none';
         }
         
@@ -2307,7 +2311,10 @@ function createRow(r) {
             // V2.22：類型欄位（c===4）用自動配色標籤取代純文字，一眼分辨影片/圖片/動畫等類型
             if (c === 4) colorizeTypeSelect(td.querySelector('select'));
         } else if (c===3) {
-            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><span class="settled-badge" id="r${r}c${c}badge" style="display:none;">已結清</span></div>`;
+            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="點擊切換結清狀態">結清</span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="點擊切換是否已付夥伴">夥伴</span></div>`;
+        } else if (c===20) {
+            // V2.34：備註欄縮窄，改用滑鼠懸浮顯示完整內容，不用整欄撐寬佔空間
+            td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" title="${val.replace(/"/g,'&quot;')}" oninput="this.title=this.value; calc(${r},${c})">`;
         } else {
             let ro = [0,10,11,13,17,18,19].includes(c);
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" class="${ro?'readonly':''}" ${ro?'readonly tabindex="-1"':''} oninput="calc(${r},${c})">`;
@@ -2810,6 +2817,29 @@ function reorderData(si, ti, type = 'main') {
     else { clearRowCache(); initTable(); filterTable(); } // V2.7：主表列順序整批重排，快取需重建
 }
 
+// V2.33：一鍵切換「結清」— 自動幫你補齊尾款讓案子歸零，不用再手動改訂金湊數字
+function toggleSettled(r) {
+    let d = getRowData(r);
+    let currentlySettled = document.getElementById(`r${r}`).classList.contains('is-settled');
+    if (currentlySettled) {
+        // 取消結清：清空尾款，回到未結清狀態
+        document.getElementById(`r${r}c12`).value = '';
+    } else {
+        let total = parseFloat(String(d[11]).replace(/,/g,'')) || 0;
+        let deposit = parseFloat(String(d[8]).replace(/,/g,'')) || 0;
+        document.getElementById(`r${r}c12`).value = total - deposit;
+    }
+    calc(r, 12, true);
+}
+window.toggleSettled = toggleSettled;
+
+// V2.33：一鍵切換「付夥伴」狀態
+function togglePartnerPaid(r) {
+    let cb = document.getElementById(`r${r}c21`);
+    if (cb) { cb.checked = !cb.checked; calc(r, 21, true); }
+}
+window.togglePartnerPaid = togglePartnerPaid;
+
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
@@ -2903,9 +2933,11 @@ function calc(r, c, save=true) {
         else row.classList.remove('is-settled'); 
     }
 
-    // V2.22：已結清標籤，取代單純靠透明度判斷
+    // V2.33：結清、付夥伴兩個標籤都永遠可見，用 active 樣式切換灰/彩色，不再用顯示/隱藏
     let badge = document.getElementById(`r${r}c3badge`);
-    if (badge) badge.style.display = isSettled ? 'inline-block' : 'none';
+    if (badge) badge.classList.toggle('active', isSettled);
+    let partnerBadge = document.getElementById(`r${r}c21badge`);
+    if (partnerBadge) partnerBadge.classList.toggle('active', g(21) === true);
     
     if(save) {
         setRowData(r, {0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)});
