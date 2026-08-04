@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.38</title>
+    <title>杰冉宇宙營收表 V2.39</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -163,8 +163,9 @@
         td input[type="checkbox"] { width: 16px !important; height: 16px !important; cursor: pointer; accent-color: var(--primary); margin: auto; display: block; }
         td input:not([type="checkbox"]), td select { border: none; width: 100%; height: 100%; text-align: center; font-size: 13px; background: transparent; outline: none; font-weight: 600; color: var(--text-main); cursor: pointer; font-family: inherit; transition: color 0.3s; box-sizing: border-box; }
         
-        tr.is-settled { opacity: 0.35; filter: grayscale(1); transition: 0.4s ease; }
-        tr.is-settled:hover { opacity: 0.6; }
+        /* V2.39：拿掉整行灰階+半透明的效果，避免蓋掉夥伴/結清標籤的顏色讓人以為沒反應。現在狀態已經有清楚的標籤，不需要整行變灰來提示 */
+        tr.is-settled td { background: rgba(0,0,0,0.02); }
+        tr.is-settled input:not(.settled-badge):not(.partner-badge):not([type="checkbox"]), tr.is-settled select { color: var(--light); }
         
         input:focus::selection { background: rgba(var(--primary-rgb), 0.2); }
         td input[type="text"]:focus, td select:focus { cursor: text; color: var(--primary); font-weight: 800; }
