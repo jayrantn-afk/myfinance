@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.37</title>
+    <title>杰冉宇宙營收表 V2.38</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1065,9 +1065,9 @@
                     <h2 style="margin: 0; font-weight: 900; color: var(--text-main);">📝 夥伴結算單</h2>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div class="role-btn-group" style="display: flex; border-left: none; padding-left: 0; margin-left: 0;">
-                            <button class="role-btn statement-role-btn active" onclick="setStatementRole('公司', this)">公司</button>
+                            <button class="role-btn statement-role-btn" onclick="setStatementRole('公司', this)">公司</button>
                             <button class="role-btn statement-role-btn" onclick="setStatementRole('老闆', this)">老闆</button>
-                            <button class="role-btn statement-role-btn" onclick="setStatementRole('夥伴', this)">夥伴</button>
+                            <button class="role-btn statement-role-btn active" onclick="setStatementRole('夥伴', this)">夥伴</button>
                         </div>
                         <button class="settle-pill-btn primary" onclick="downloadStatementPDF()">📥 匯出結算單 PDF</button>
                     </div>
@@ -2100,7 +2100,7 @@ function downloadSettlePDF() {
 }
 
 // V2.35：結算單分頁 - 額外項目管理與統計渲染
-window.statementRole = '公司';
+window.statementRole = '夥伴';
 let pendingExtraItemImage = null;
 
 // V2.36：把選取的照片壓縮成小圖再轉成 base64，避免佔用太多儲存空間
