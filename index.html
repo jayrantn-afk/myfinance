@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.34</title>
+    <title>杰冉宇宙營收表 V2.4</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -550,8 +550,8 @@
 
         /* viewport/slider 改為百分比制，搭配側邊欄版型（原本用 vw 會被側邊欄擋住／算錯寬度） */
         .viewport { width: 100% !important; }
-        .slider-container { width: 600% !important; }
-        .page-content { width: calc(100% / 6) !important; content-visibility: auto; contain-intrinsic-size: 1000px 800px; }
+        .slider-container { width: 700% !important; }
+        .page-content { width: calc(100% / 7) !important; content-visibility: auto; contain-intrinsic-size: 1000px 800px; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -721,6 +721,7 @@
             <div class="app-nav-item" onclick="switchSlide(3, this)" title="請款系統"><span class="nav-icon">🧾</span><span class="nav-label">請款系統</span></div>
             <div class="app-nav-item" onclick="switchSlide(4, this)" title="發票紀錄"><span class="nav-icon">📄</span><span class="nav-label">發票紀錄</span></div>
             <div class="app-nav-item" onclick="switchSlide(5, this)" title="數據中心"><span class="nav-icon">📈</span><span class="nav-label">數據中心</span></div>
+            <div class="app-nav-item" onclick="switchSlide(6, this)" title="結算單"><span class="nav-icon">📝</span><span class="nav-label">結算單</span></div>
         </nav>
         <div class="app-sidebar-footer">
             <div class="app-sidebar-btn firebase" id="cloudSaveBtn" onclick="cloudSync('SAVE')" title="搬家至 Firebase"><span class="nav-icon">🔥</span><span class="nav-label">搬家至 Firebase</span></div>
@@ -1052,6 +1053,54 @@
             </div>
         </div>
 
+        <!-- Slide 6: 📝 結算單（V2.35 新增：分潤結算已選項目 + 自訂額外項目，合併匯出給夥伴看） -->
+        <div class="page-content">
+            <div class="white-card" style="padding: 30px; overflow-y: auto; display: block;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 12px;">
+                    <h2 style="margin: 0; font-weight: 900; color: var(--text-main);">📝 夥伴結算單</h2>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="role-btn-group" style="display: flex; border-left: none; padding-left: 0; margin-left: 0;">
+                            <button class="role-btn statement-role-btn active" onclick="setStatementRole('公司', this)">公司</button>
+                            <button class="role-btn statement-role-btn" onclick="setStatementRole('老闆', this)">老闆</button>
+                            <button class="role-btn statement-role-btn" onclick="setStatementRole('夥伴', this)">夥伴</button>
+                        </div>
+                        <button class="settle-pill-btn primary" onclick="downloadStatementPDF()">📥 匯出結算單 PDF</button>
+                    </div>
+                </div>
+                <p style="color: var(--mid); font-size: 13px; margin: 0 0 24px 0;">會自動帶入「分潤結算」頁目前勾選的項目，再加上你自己填的額外項目（交通費、雜支...等），合併成一張結算單。</p>
+
+                <h3 style="font-size: 14px; color: var(--mid); margin-bottom: 10px;">✅ 已選取的分潤項目（來自「分潤結算」頁）</h3>
+                <div id="statement-settle-summary" style="background: #FFF; border: 1px solid var(--card-border); border-radius: 12px; padding: 4px 16px; margin-bottom: 28px;"></div>
+
+                <h3 style="font-size: 14px; color: var(--mid); margin-bottom: 10px;">➕ 額外項目（交通費、雜支...等）</h3>
+                <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                    <input type="text" id="extraItemDesc" placeholder="項目說明（例如：交通費）" style="flex: 2; height: 40px; border-radius: 10px; border: 1px solid var(--card-border); padding: 0 14px; font-size: 13px; font-weight: 700; outline: none; box-sizing: border-box;">
+                    <input type="number" id="extraItemAmount" placeholder="金額" style="flex: 1; height: 40px; border-radius: 10px; border: 1px solid var(--card-border); padding: 0 14px; font-size: 13px; font-weight: 700; outline: none; box-sizing: border-box;">
+                    <button class="settle-pill-btn primary" onclick="addExtraItem()" style="flex-shrink: 0;">+ 新增</button>
+                </div>
+                <div id="extra-items-list" style="background: #FFF; border: 1px solid var(--card-border); border-radius: 12px; padding: 4px 16px; margin-bottom: 24px;"></div>
+
+                <div style="text-align: right; font-size: 24px; font-weight: 900; color: var(--primary); border-top: 1px solid var(--card-border); padding-top: 20px;">
+                    結算總額：$ <span id="statement-grand-total">0</span>
+                </div>
+
+                <!-- 匯出用隱藏版面 -->
+                <div id="statement-export-content" style="display: none; background: white; padding: 40px; color: #1D1D1F; font-family: 'Inter', sans-serif;">
+                    <h2 id="statement-export-title" style="text-align: center; font-weight: 900; font-size: 26px; margin-bottom: 24px;">夥伴結算單</h2>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <thead style="background: #F4F7F6;">
+                            <tr>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; text-align: left;">項目</th>
+                                <th style="padding: 12px; border-bottom: 2px solid #007AFF; text-align: right;">金額</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statement-export-tb"></tbody>
+                    </table>
+                    <div style="text-align: right; margin-top: 24px; font-size: 22px; font-weight: 900; color: #007AFF;">結算總額：<span id="statement-export-total">$ 0</span></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -1303,6 +1352,7 @@ function changeYear(y) {
     invPrefixes = JSON.parse(localStorage.getItem(`vB_InvPrefixes_${curY}`)) || {};
     clearRowCache();
     document.getElementById('yDisp').innerText=y; 
+    extraItems = JSON.parse(localStorage.getItem(`vB_ExtraItems_${curY}`)) || [];
     applyTheme(y); initTable(); initInvoiceTable(); renderDashboard(); 
 }
 
@@ -1311,7 +1361,7 @@ async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
 
 function switchSlide(idx, el) {
-    document.getElementById('mainSlider').style.transform = `translateX(-${idx * (100/6)}%)`;
+    document.getElementById('mainSlider').style.transform = `translateX(-${idx * (100/7)}%)`;
     document.querySelectorAll('.app-nav-item').forEach(t=>t.classList.remove('active')); 
     if(el) el.classList.add('active');
     
@@ -1332,6 +1382,7 @@ function switchSlide(idx, el) {
         if(idx === 2) updateMonthlyReport();
         if(idx === 4) filterInvoiceTable();
         if(idx === 5) renderDashboard(); 
+        if(idx === 6) renderStatement();
     }, 100);
 }
 
@@ -2026,6 +2077,145 @@ function downloadSettlePDF() {
         alert("匯出 PDF 時發生錯誤。");
     });
 }
+
+// V2.35：結算單分頁 - 額外項目管理與統計渲染
+window.statementRole = '公司';
+let extraItems = JSON.parse(localStorage.getItem(`vB_ExtraItems_${curY}`)) || [];
+
+function saveExtraItems() {
+    localStorage.setItem(`vB_ExtraItems_${curY}`, JSON.stringify(extraItems));
+}
+
+function setStatementRole(role, el) {
+    window.statementRole = role;
+    document.querySelectorAll('.statement-role-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderStatement();
+}
+window.setStatementRole = setStatementRole;
+
+async function addExtraItem() {
+    let descEl = document.getElementById('extraItemDesc');
+    let amtEl = document.getElementById('extraItemAmount');
+    let desc = descEl.value.trim();
+    let amt = parseFloat(amtEl.value);
+    if (!desc || isNaN(amt)) { await uiAlert("請輸入項目說明與金額喔！"); return; }
+    extraItems.push({ desc, amount: amt });
+    saveExtraItems();
+    descEl.value = ''; amtEl.value = '';
+    renderStatement();
+    descEl.focus();
+}
+window.addExtraItem = addExtraItem;
+
+function deleteExtraItem(idx) {
+    extraItems.splice(idx, 1);
+    saveExtraItems();
+    renderStatement();
+}
+window.deleteExtraItem = deleteExtraItem;
+
+function renderStatement() {
+    let summaryEl = document.getElementById('statement-settle-summary');
+    let listEl = document.getElementById('extra-items-list');
+    let totalEl = document.getElementById('statement-grand-total');
+    if (!summaryEl || !listEl || !totalEl) return;
+
+    let role = window.statementRole || '公司';
+    let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
+    let settleTotal = 0;
+
+    if (window.settleCheckedIdxs.size === 0) {
+        summaryEl.innerHTML = `<div style="color:var(--light); padding:16px; text-align:center; font-size:13px;">尚未選取任何項目，請先到「分潤結算」頁勾選。</div>`;
+    } else {
+        let rows = '';
+        window.settleCheckedIdxs.forEach(idx => {
+            let d = getRowData(idx);
+            let amt = parseFloat(String(d[aIdx]).replace(/,/g,'')) || 0;
+            settleTotal += amt;
+            rows += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.05); font-size:13px;">
+                <span style="font-weight:700; color:var(--text-main);">${d[3]||''}</span>
+                <span style="font-weight:900; color:var(--primary);">$ ${amt.toLocaleString()}</span>
+            </div>`;
+        });
+        summaryEl.innerHTML = rows;
+    }
+
+    let extraTotal = 0;
+    if (extraItems.length === 0) {
+        listEl.innerHTML = `<div style="color:var(--light); padding:16px; text-align:center; font-size:13px;">目前沒有額外項目。</div>`;
+    } else {
+        listEl.innerHTML = extraItems.map((item, i) => {
+            extraTotal += item.amount;
+            return `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.05); font-size:13px;">
+                <span style="font-weight:700; color:var(--text-main);">${item.desc}</span>
+                <span style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-weight:900; color:var(--primary);">$ ${item.amount.toLocaleString()}</span>
+                    <span onclick="deleteExtraItem(${i})" title="刪除" style="cursor:pointer; color:#D32F2F; font-weight:900;">✕</span>
+                </span>
+            </div>`;
+        }).join('');
+    }
+
+    totalEl.innerText = (settleTotal + extraTotal).toLocaleString();
+}
+window.renderStatement = renderStatement;
+
+async function downloadStatementPDF() {
+    if (window.settleCheckedIdxs.size === 0 && extraItems.length === 0) {
+        await uiAlert("目前沒有任何項目可以匯出，請先到「分潤結算」頁勾選項目，或在這頁新增額外項目。");
+        return;
+    }
+    let role = window.statementRole || '公司';
+    let aIdx = (role==='公司'?17:(role==='老闆'?18:19));
+    let tb = document.getElementById('statement-export-tb');
+    tb.innerHTML = '';
+    let total = 0;
+
+    window.settleCheckedIdxs.forEach(idx => {
+        let d = getRowData(idx);
+        let amt = parseFloat(String(d[aIdx]).replace(/,/g,'')) || 0;
+        total += amt;
+        tb.innerHTML += `<tr>
+            <td style="padding:12px; border-bottom:1px solid #E5E5EA;">${d[3]||''}</td>
+            <td style="padding:12px; border-bottom:1px solid #E5E5EA; text-align:right; font-weight:800;">$ ${amt.toLocaleString()}</td>
+        </tr>`;
+    });
+    extraItems.forEach(item => {
+        total += item.amount;
+        tb.innerHTML += `<tr>
+            <td style="padding:12px; border-bottom:1px solid #E5E5EA;">${item.desc}</td>
+            <td style="padding:12px; border-bottom:1px solid #E5E5EA; text-align:right; font-weight:800;">$ ${item.amount.toLocaleString()}</td>
+        </tr>`;
+    });
+
+    document.getElementById('statement-export-total').innerText = `$ ${total.toLocaleString()}`;
+    document.getElementById('statement-export-title').innerText = `${curY}年 夥伴結算單（${role}）`;
+
+    const btn = event ? event.target : null;
+    let originalText = btn ? btn.innerHTML : null;
+    if (btn) { btn.innerHTML = "⏳ 正在處理..."; btn.style.pointerEvents = 'none'; btn.style.opacity = '0.7'; }
+
+    const el = document.getElementById('statement-export-content');
+    el.style.display = 'block';
+    let opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `${curY}年_夥伴結算單.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(el).save().then(() => {
+        el.style.display = 'none';
+        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+    }).catch(err => {
+        console.error(err);
+        el.style.display = 'none';
+        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+        alert("匯出 PDF 時發生錯誤。");
+    });
+}
+window.downloadStatementPDF = downloadStatementPDF;
 
 function updateMonthlyReport() {
     const container = document.getElementById('report-cards-container'); 
