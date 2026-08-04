@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.4</title>
+    <title>杰冉宇宙營收表 V2.36</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -610,6 +610,11 @@
 </div>
 
 <!-- V2.28 新增：夥伴專屬分潤檢視畫面。非管理員帳號登入時，只會看到這個畫面，不會看到完整營收表 -->
+<!-- V2.36 新增：結算單額外項目附圖，點縮圖放大檢視 -->
+<div id="image-lightbox" onclick="closeImageLightbox()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:99999; align-items:center; justify-content:center; cursor:zoom-out; padding:30px; box-sizing:border-box;">
+    <img id="image-lightbox-img" style="max-width:90vw; max-height:90vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+</div>
+
 <div id="partner-view-screen" style="display:none; position:fixed; inset:0; background:var(--bg); z-index:9000; overflow-y:auto; padding:40px; box-sizing:border-box;">
     <div style="max-width:900px; margin:0 auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
@@ -1073,10 +1078,18 @@
                 <div id="statement-settle-summary" style="background: #FFF; border: 1px solid var(--card-border); border-radius: 12px; padding: 4px 16px; margin-bottom: 28px;"></div>
 
                 <h3 style="font-size: 14px; color: var(--mid); margin-bottom: 10px;">➕ 額外項目（交通費、雜支...等）</h3>
-                <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
                     <input type="text" id="extraItemDesc" placeholder="項目說明（例如：交通費）" style="flex: 2; height: 40px; border-radius: 10px; border: 1px solid var(--card-border); padding: 0 14px; font-size: 13px; font-weight: 700; outline: none; box-sizing: border-box;">
                     <input type="number" id="extraItemAmount" placeholder="金額" style="flex: 1; height: 40px; border-radius: 10px; border: 1px solid var(--card-border); padding: 0 14px; font-size: 13px; font-weight: 700; outline: none; box-sizing: border-box;">
+                    <label class="settle-pill-btn" style="cursor:pointer; flex-shrink:0; display:flex; align-items:center; gap:4px;" title="附上收據/憑證照片">
+                        📷 附圖
+                        <input type="file" id="extraItemImage" accept="image/*" style="display:none;" onchange="previewExtraItemImage()">
+                    </label>
                     <button class="settle-pill-btn primary" onclick="addExtraItem()" style="flex-shrink: 0;">+ 新增</button>
+                </div>
+                <div id="extraItemImagePreviewWrap" style="display:none; align-items:center; gap:10px; margin-bottom: 14px;">
+                    <img id="extraItemImagePreview" style="height:44px; border-radius:8px; border:1px solid var(--card-border); object-fit:cover;">
+                    <span onclick="clearExtraItemImage()" style="cursor:pointer; color:#D32F2F; font-size:12px; font-weight:700;">✕ 移除圖片</span>
                 </div>
                 <div id="extra-items-list" style="background: #FFF; border: 1px solid var(--card-border); border-radius: 12px; padding: 4px 16px; margin-bottom: 24px;"></div>
 
@@ -2080,10 +2093,67 @@ function downloadSettlePDF() {
 
 // V2.35：結算單分頁 - 額外項目管理與統計渲染
 window.statementRole = '公司';
+let pendingExtraItemImage = null;
+
+// V2.36：把選取的照片壓縮成小圖再轉成 base64，避免佔用太多儲存空間
+function compressImage(file, maxWidth, quality, callback) {
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        let img = new Image();
+        img.onload = function() {
+            let scale = Math.min(1, maxWidth / img.width);
+            let canvas = document.createElement('canvas');
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            callback(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function previewExtraItemImage() {
+    let fileInput = document.getElementById('extraItemImage');
+    let file = fileInput.files[0];
+    if (!file) return;
+    compressImage(file, 500, 0.7, (dataUrl) => {
+        pendingExtraItemImage = dataUrl;
+        document.getElementById('extraItemImagePreview').src = dataUrl;
+        document.getElementById('extraItemImagePreviewWrap').style.display = 'flex';
+    });
+}
+window.previewExtraItemImage = previewExtraItemImage;
+
+function clearExtraItemImage() {
+    pendingExtraItemImage = null;
+    document.getElementById('extraItemImage').value = '';
+    document.getElementById('extraItemImagePreviewWrap').style.display = 'none';
+}
+window.clearExtraItemImage = clearExtraItemImage;
+
+function viewExtraItemImage(i) {
+    let item = extraItems[i];
+    if (!item || !item.image) return;
+    document.getElementById('image-lightbox-img').src = item.image;
+    document.getElementById('image-lightbox').style.display = 'flex';
+}
+window.viewExtraItemImage = viewExtraItemImage;
+
+function closeImageLightbox() {
+    document.getElementById('image-lightbox').style.display = 'none';
+}
+window.closeImageLightbox = closeImageLightbox;
 let extraItems = JSON.parse(localStorage.getItem(`vB_ExtraItems_${curY}`)) || [];
 
 function saveExtraItems() {
-    localStorage.setItem(`vB_ExtraItems_${curY}`, JSON.stringify(extraItems));
+    try {
+        localStorage.setItem(`vB_ExtraItems_${curY}`, JSON.stringify(extraItems));
+    } catch (e) {
+        console.error(e);
+        uiAlert("⚠️ 儲存失敗，可能是附的圖片太多、瀏覽器空間不夠了。建議刪除幾張舊圖片後再試一次。");
+    }
 }
 
 function setStatementRole(role, el) {
@@ -2100,9 +2170,10 @@ async function addExtraItem() {
     let desc = descEl.value.trim();
     let amt = parseFloat(amtEl.value);
     if (!desc || isNaN(amt)) { await uiAlert("請輸入項目說明與金額喔！"); return; }
-    extraItems.push({ desc, amount: amt });
+    extraItems.push({ desc, amount: amt, image: pendingExtraItemImage || null });
     saveExtraItems();
     descEl.value = ''; amtEl.value = '';
+    clearExtraItemImage();
     renderStatement();
     descEl.focus();
 }
@@ -2147,9 +2218,15 @@ function renderStatement() {
     } else {
         listEl.innerHTML = extraItems.map((item, i) => {
             extraTotal += item.amount;
+            let thumb = item.image
+                ? `<img src="${item.image}" onclick="viewExtraItemImage(${i})" title="點擊查看大圖" style="width:26px; height:26px; border-radius:6px; object-fit:cover; cursor:pointer; border:1px solid var(--card-border); flex-shrink:0;">`
+                : '';
             return `<div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid rgba(0,0,0,0.05); font-size:13px;">
-                <span style="font-weight:700; color:var(--text-main);">${item.desc}</span>
-                <span style="display:flex; align-items:center; gap:12px;">
+                <span style="display:flex; align-items:center; gap:10px; min-width:0;">
+                    ${thumb}
+                    <span style="font-weight:700; color:var(--text-main);">${item.desc}</span>
+                </span>
+                <span style="display:flex; align-items:center; gap:12px; flex-shrink:0;">
                     <span style="font-weight:900; color:var(--primary);">$ ${item.amount.toLocaleString()}</span>
                     <span onclick="deleteExtraItem(${i})" title="刪除" style="cursor:pointer; color:#D32F2F; font-weight:900;">✕</span>
                 </span>
@@ -2183,9 +2260,10 @@ async function downloadStatementPDF() {
     });
     extraItems.forEach(item => {
         total += item.amount;
+        let imgHtml = item.image ? `<br><img src="${item.image}" style="max-width:140px; max-height:100px; margin-top:6px; border-radius:6px; border:1px solid #E5E5EA; display:block;">` : '';
         tb.innerHTML += `<tr>
-            <td style="padding:12px; border-bottom:1px solid #E5E5EA;">${item.desc}</td>
-            <td style="padding:12px; border-bottom:1px solid #E5E5EA; text-align:right; font-weight:800;">$ ${item.amount.toLocaleString()}</td>
+            <td style="padding:12px; border-bottom:1px solid #E5E5EA; vertical-align:top;">${item.desc}${imgHtml}</td>
+            <td style="padding:12px; border-bottom:1px solid #E5E5EA; text-align:right; font-weight:800; vertical-align:top;">$ ${item.amount.toLocaleString()}</td>
         </tr>`;
     });
 
