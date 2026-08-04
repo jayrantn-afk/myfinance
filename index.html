@@ -926,18 +926,20 @@
                             <h1 style="margin: 0 0 10px 0; font-size: 24px; color: #101828;">請款 / 對帳明細單</h1>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <span id="inv-cust-info" style="font-weight:700; font-size:14px; color:#475467; background: #F2F4F7; padding: 4px 12px; border-radius: 50px;"></span>
-                                <button id="exportPdfBtn" class="sync-btn" style="background: var(--primary); color: white; padding: 6px 16px; font-size: 12px; box-shadow: none; border-radius: 50px;" onclick="downloadPDF()">📥 匯出 PDF</button>
+                                <button id="exportPdfBtn" class="sync-btn" style="background: var(--primary) !important; color: #FFF !important; border: none !important; padding: 6px 16px; font-size: 12px; box-shadow: var(--card-shadow) !important; border-radius: 50px;" onclick="downloadPDF()">📥 匯出 PDF</button>
                             </div>
                         </div>
                         <div style="text-align: right;">
-                            <div style="color: #667085; font-size: 13px; font-weight: 700; margin-bottom: 4px;">折扣後應付總計 (含稅)</div>
+                            <div id="inv-total-label" style="color: #667085; font-size: 13px; font-weight: 700; margin-bottom: 4px;">應付總計 (含稅)</div>
                             <div style="display: flex; align-items: baseline; gap: 8px; justify-content: flex-end;">
                                 <span style="font-size: 16px; color: var(--primary); font-weight: 800;">TWD</span>
                                 <span id="inv-top-total" style="font-size: 36px; font-weight: 900; color: #101828; line-height: 1;">0</span>
                             </div>
-                            <div id="inv-discount-panel" style="margin-top: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 13px; color: #667085; font-weight: 600;">
-                                套用折扣: 
-                                <input type="number" step="1" id="inv-discount-input" value="100" oninput="calcQuoteTotal()" style="width: 50px; text-align: center; font-size: 14px; font-weight: 800; color: var(--primary); border: 1px solid #D0D5DD; border-radius: 6px; padding: 2px 4px; outline: none;"> %
+                            <div id="inv-discount-toggle" onclick="toggleDiscountPanel()" style="margin-top: 6px; font-size: 12px; color: var(--primary); font-weight: 700; cursor: pointer;">＋ 套用折扣</div>
+                            <div id="inv-discount-panel" style="display: none; margin-top: 8px; align-items: center; justify-content: flex-end; gap: 6px; font-size: 13px; color: #667085; font-weight: 600;">
+                                套用 
+                                <input type="number" step="1" min="0" max="100" id="inv-discount-input" value="10" oninput="calcQuoteTotal()" style="width: 50px; text-align: center; font-size: 14px; font-weight: 800; color: var(--primary); border: 1px solid #D0D5DD; border-radius: 6px; padding: 2px 4px; outline: none;"> 折
+                                <span onclick="toggleDiscountPanel()" title="取消折扣" style="cursor:pointer; color:#999; margin-left:4px; font-weight:900;">✕</span>
                             </div>
                         </div>
                     </div>
@@ -960,7 +962,7 @@
                         <!-- 結算總計 -->
                         <div id="quote-footer-box" style="background: #F9FAFB; border-top: 1px solid #E4E7EC; padding: 16px 20px; display: flex; justify-content: flex-end; gap: 24px; font-size: 14px; font-weight: 600; color: #475467;">
                             <div>未稅總計: <span id="inv-total-pre" style="font-weight: 800; color: #101828; margin-left: 8px;">$ 0</span></div>
-                            <div>含稅總計 (原價): <span id="inv-total-orig" style="font-weight: 800; color: var(--light); text-decoration: line-through; margin-left: 8px;">$ 0</span></div>
+                            <div id="inv-total-orig-line">含稅總計 (原價): <span id="inv-total-orig" style="font-weight: 800; color: var(--light); text-decoration: line-through; margin-left: 8px;">$ 0</span></div>
                         </div>
                     </div>
 
@@ -2120,7 +2122,11 @@ function runQuoteSearch() {
             </div>`;
         });
         
-        document.getElementById('inv-discount-input').value = "100";
+        document.getElementById('inv-discount-input').value = "10";
+        let discPanel = document.getElementById('inv-discount-panel');
+        let discToggle = document.getElementById('inv-discount-toggle');
+        if (discPanel) discPanel.style.display = 'none';
+        if (discToggle) discToggle.style.display = 'block';
         calcQuoteTotal();
     } else { 
         searchBar.style.margin = "auto";
@@ -2128,6 +2134,32 @@ function runQuoteSearch() {
         pText.style.display = 'block';
         content.style.display = 'none'; 
     }
+}
+
+// V2.32：折扣欄預設收起，點「+套用折扣」才展開，沒折扣的客戶不會看到多餘欄位
+function toggleDiscountPanel() {
+    let panel = document.getElementById('inv-discount-panel');
+    let toggle = document.getElementById('inv-discount-toggle');
+    let isOpening = panel.style.display === 'none' || !panel.style.display;
+    if (isOpening) {
+        panel.style.display = 'flex';
+        toggle.style.display = 'none';
+        document.getElementById('inv-discount-input').focus();
+    } else {
+        panel.style.display = 'none';
+        toggle.style.display = 'block';
+        document.getElementById('inv-discount-input').value = '10';
+        calcQuoteTotal();
+    }
+}
+window.toggleDiscountPanel = toggleDiscountPanel;
+
+// V2.31：折扣解讀 - 打「9」就是9折(90%)，打「95」就是95折(95%)，符合台灣口語習慣，不用死板換算
+function resolveDiscountPercent(inputVal) {
+    let v = parseFloat(inputVal);
+    if (isNaN(v) || v < 0) return 100;
+    if (v <= 10) return v * 10;
+    return v;
 }
 
 function calcQuoteTotal(el = null) {
@@ -2151,10 +2183,14 @@ function calcQuoteTotal(el = null) {
         }
     });
     
-    let discountVal = parseFloat(document.getElementById('inv-discount-input').value);
-    let discount = (isNaN(discountVal) || discountVal < 0) ? 1 : (discountVal / 100);
+    let discountVal = document.getElementById('inv-discount-input').value;
+    let resolvedPercent = resolveDiscountPercent(discountVal);
+    let discount = resolvedPercent / 100;
     
     let finalAmt = Math.round(totalAmt * discount);
+    
+    let totalLabel = document.getElementById('inv-total-label');
+    if (totalLabel) totalLabel.innerText = (resolvedPercent !== 100) ? '折扣後應付總計 (含稅)' : '應付總計 (含稅)';
     
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
@@ -2184,6 +2220,11 @@ function downloadPDF() {
     let thCb = document.getElementById('quote-th-cb');
     if(thCb) thCb.firstElementChild.style.color = "transparent";
     
+    // V2.32：「+ 套用折扣」文字連結只給操作者自己看，PDF 裡一律不顯示
+    let discountToggle = document.getElementById('inv-discount-toggle');
+    let origToggleDisplay = discountToggle ? discountToggle.style.display : "";
+    if (discountToggle) discountToggle.style.display = "none";
+    
     let discountInput = document.getElementById('inv-discount-input');
     let origBorder = discountInput.style.border;
     discountInput.style.border = 'none';
@@ -2191,6 +2232,14 @@ function downloadPDF() {
     let discountPanel = document.getElementById('inv-discount-panel');
     let origPanelBorder = discountPanel ? discountPanel.style.border : "";
     if (discountPanel) discountPanel.style.border = "none";
+
+    // V2.31：判斷是否有實際套用折扣，統一用 resolveDiscountPercent 判讀（跟計算邏輯一致）
+    let hasRealDiscount = resolveDiscountPercent(discountInput.value) !== 100;
+    let origPanelDisplay = discountPanel ? discountPanel.style.display : "";
+    if (discountPanel && !hasRealDiscount) discountPanel.style.display = "none";
+    let origLine = document.getElementById('inv-total-orig-line');
+    let origLineDisplay = origLine ? origLine.style.display : "";
+    if (origLine && !hasRealDiscount) origLine.style.display = "none";
     
     let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
     let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
@@ -2211,7 +2260,9 @@ function downloadPDF() {
         hiddenItems.forEach(item => item.style.display = 'flex');
         if(thCb) thCb.firstElementChild.style.color = "#667085";
         discountInput.style.border = origBorder;
-        if (discountPanel) discountPanel.style.border = origPanelBorder;
+        if (discountPanel) { discountPanel.style.border = origPanelBorder; discountPanel.style.display = origPanelDisplay; }
+        if (origLine) origLine.style.display = origLineDisplay;
+        if (discountToggle) discountToggle.style.display = origToggleDisplay;
     });
 }
 
