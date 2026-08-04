@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.39</title>
+    <title>杰冉宇宙營收表 V2.4</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2604,7 +2604,7 @@ function createRow(r) {
         else if (c===2) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
         }
-        else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${val===true?'checked':''} onchange="calc(${r},${c})">`;
+        else if (c===7 || c===21) td.innerHTML=`<input type="checkbox" id="r${r}c${c}" ${(val===true||val==='true')?'checked':''} onchange="calc(${r},${c})">`;
         else if (c===4 || c===6) {
             let ops = (opts[c]||[]).map(o => `<option value="${o}" ${val===o?'selected':''}>${o}</option>`).join('');
             td.innerHTML = `<select id="r${r}c${c}" class="${c===4?'type-chip':''}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${ops}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
