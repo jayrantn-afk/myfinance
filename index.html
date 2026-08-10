@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.59</title>
+    <title>杰冉宇宙營收表 V2.60</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2140,8 +2140,8 @@ function downloadSettlePDF() {
     let opt = { 
         margin:       [0.4, 0.4, 0.4, 0.4],
         filename:     `${curY}年_${monthStr}${clientStr ? '_' + sc : ''}_${role}分潤對帳單.pdf`,
-        image:        { type: 'jpeg', quality: 1 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        image:        { type: 'png' },
+        html2canvas:  { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' } 
     };
     
@@ -2373,8 +2373,8 @@ async function downloadStatementPDF() {
     let opt = {
         margin: [0.5, 0.5, 0.5, 0.5],
         filename: `${curY}年_夥伴結算單.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        image: { type: 'png' },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         // V2.37：避免分頁時把同一列（尤其是附圖的列）從中間切斷
         pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img'] }
@@ -2664,8 +2664,8 @@ function downloadPDF() {
     let opt = {
         margin: [0.3, 0.35, 0.3, 0.35],
         filename: `${(sc.replace(/\s+/g,'_') || sm+'月')}_請款單.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        image: { type: 'png' },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
