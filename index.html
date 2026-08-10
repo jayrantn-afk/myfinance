@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.4</title>
+    <title>杰冉宇宙營收表 V2.5</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -581,6 +581,7 @@
     #authStatusBadge:hover #authStatusDot { opacity: 1; }
 </style>
 
+<!-- V2.42 修正：專業請款單匯出版面移到頂層，不受任何容器的 overflow:hidden 影響，避免右側被裁切或多生空白頁 -->
 <div id="invVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 250px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
 
 <!-- 主表客戶專用下拉選單 -->
@@ -913,23 +914,26 @@
 
         <!-- Slide 3: 請款系統 -->
         <div class="page-content">
-            <div class="white-card" id="invoice-view">
-                
-                <!-- 預設置中搜尋區域 -->
-                <div id="quote-search-bar" style="margin: auto; display: flex; flex-direction: column; align-items: center; gap: 20px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: 100%;">
-                    <div id="quote-placeholder-icon" style="font-size: 72px; opacity: 0.9; filter: drop-shadow(0 15px 25px rgba(var(--primary-rgb), 0.2)); animation: floatIcon 3s ease-in-out infinite; transition: 0.3s;">🧾</div>
-                    <div id="quote-placeholder-text" style="text-align: center; transition: 0.3s;">
-                        <div style="font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px; letter-spacing: 1px;">請款系統</div>
-                        <div style="font-size: 14px; font-weight: 600; color: var(--mid);">輸入下方條件即可生成精美請款單</div>
+            <div class="white-card" id="invoice-view" style="padding: 0;">
+
+                <!-- V2.49：搜尋列常駐置頂，不再是「打字才跳轉」的大畫面 -->
+                <div style="padding: 20px 30px; border-bottom: 1px solid var(--card-border); flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <input type="text" id="qC" placeholder="👤 搜尋客戶名稱..." oninput="runQuoteSearch()" style="border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 14px; font-weight: 800; color: var(--text-main); outline: none; width: 200px;">
+                        <input type="text" id="qM" placeholder="📅 搜尋月份 (ex:05)" oninput="runQuoteSearch()" style="border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 14px; font-weight: 800; color: var(--text-main); outline: none; width: 160px;">
                     </div>
-                    <div style="display: flex; gap: 12px; background: #FFF; padding: 12px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid var(--glass-border);">
-                        <input type="text" id="qC" placeholder="👤 搜尋客戶名稱..." oninput="runQuoteSearch()" style="border: none; padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 15px; font-weight: 800; color: var(--text-main); outline: none; width: 220px; text-align: center; transition: 0.3s;">
-                        <input type="text" id="qM" placeholder="📅 搜尋月份 (ex:05)" oninput="runQuoteSearch()" style="border: none; padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 15px; font-weight: 800; color: var(--text-main); outline: none; width: 180px; text-align: center; transition: 0.3s;">
-                    </div>
+                    <div id="quote-vip-chips" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
                 </div>
 
-                <!-- 搜尋結果區塊 -->
-                <div id="quote-content" style="display: none; flex: 1; flex-direction: column; overflow: hidden; animation: fadeIn 0.5s;">
+                <!-- 結果區：永遠是同一個容器，只切換「空狀態」跟「結果內容」，不再整頁切換 -->
+                <div id="quote-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0 30px; box-sizing: border-box;">
+
+                    <div id="quote-empty-state" style="margin: auto; text-align: center; color: var(--light);">
+                        <div style="font-size: 48px; opacity: 0.4; margin-bottom: 10px;">🧾</div>
+                        <div style="font-size: 14px; font-weight: 700;">搜尋或點選上方常用客戶，即可產生請款單</div>
+                    </div>
+
+                    <div id="quote-result-body" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
                     
                     <!-- 上方區塊：標題與最終大金額 -->
                     <div style="background: #FFF; border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; border: 1px solid #E4E7EC;">
@@ -937,6 +941,8 @@
                             <h1 style="margin: 0 0 10px 0; font-size: 24px; color: #101828;">請款 / 對帳明細單</h1>
                             <div style="display: flex; gap: 10px; align-items: center;">
                                 <span id="inv-cust-info" style="font-weight:700; font-size:14px; color:#475467; background: #F2F4F7; padding: 4px 12px; border-radius: 50px;"></span>
+                                <input type="text" id="inv-official-name" placeholder="正式名稱（自動帶入，可手動修改）" style="border: 1px solid #D0D5DD; border-radius: 50px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #475467; outline: none; width: 200px;">
+                                <input type="text" id="inv-payment-terms" placeholder="付款期限（選填，例如：收到後7日內）" style="border: 1px solid #D0D5DD; border-radius: 50px; padding: 6px 14px; font-size: 12px; font-weight: 600; color: #475467; outline: none; width: 200px;">
                                 <button id="exportPdfBtn" class="sync-btn" style="background: var(--primary) !important; color: #FFF !important; border: none !important; padding: 6px 16px; font-size: 12px; box-shadow: var(--card-shadow) !important; border-radius: 50px;" onclick="downloadPDF()">📥 匯出 PDF</button>
                             </div>
                         </div>
@@ -974,6 +980,56 @@
                         <div id="quote-footer-box" style="background: #F9FAFB; border-top: 1px solid #E4E7EC; padding: 16px 20px; display: flex; justify-content: flex-end; gap: 24px; font-size: 14px; font-weight: 600; color: #475467;">
                             <div>未稅總計: <span id="inv-total-pre" style="font-weight: 800; color: #101828; margin-left: 8px;">$ 0</span></div>
                             <div id="inv-total-orig-line">含稅總計 (原價): <span id="inv-total-orig" style="font-weight: 800; color: var(--light); text-decoration: line-through; margin-left: 8px;">$ 0</span></div>
+                        </div>
+                    </div>
+
+                    </div>
+
+                    <!-- V2.47：匯出版面搬回巢狀在此分頁內，比照已驗證可行的分潤結算/結算單匯出放置方式，不再用固定寬度 -->
+                    <div id="quote-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; padding: 40px; box-sizing: border-box;">
+                        <div style="background: #1D1D1F; color: #FFF; padding: 24px 30px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; margin: -40px -40px 0 -40px;">
+                            <div style="font-size: 20px; font-weight: 900; letter-spacing: 1px; white-space: nowrap;">JAYRAN 杰冉影像工作室</div>
+                            <div style="font-size: 15px; font-weight: 700; letter-spacing: 3px; white-space: nowrap;">INVOICE</div>
+                        </div>
+                        <div style="padding-top: 30px; box-sizing: border-box;">
+                            <h1 style="font-size: 20px; margin: 0 0 24px 0; font-weight: 900;">請款明細單</h1>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px 40px; margin-bottom: 26px; font-size: 13px;">
+                                <div><span style="color: #8E8E93;">請款單號</span><br><span id="quote-export-no" style="font-weight: 700;"></span></div>
+                                <div><span style="color: #8E8E93;">開立日期</span><br><span id="quote-export-date" style="font-weight: 700;"></span></div>
+                                <div><span style="color: #8E8E93;">客戶名稱</span><br><span id="quote-export-client" style="font-weight: 700;"></span></div>
+                                <div id="quote-export-terms-cell" style="display: none;"><span style="color: #8E8E93;">付款期限</span><br><span id="quote-export-terms" style="font-weight: 700;"></span></div>
+                            </div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed;">
+                                <colgroup><col style="width: 40px;"><col><col style="width: 90px;"><col style="width: 80px;"><col style="width: 100px;"></colgroup>
+                                <thead>
+                                    <tr style="background: #F0C64B;">
+                                        <th style="padding: 10px; text-align: center; font-weight: 800;">項次</th>
+                                        <th style="padding: 10px; text-align: left; font-weight: 800;">服務項目</th>
+                                        <th style="padding: 10px; text-align: right; font-weight: 800;">未稅額</th>
+                                        <th style="padding: 10px; text-align: right; font-weight: 800;">稅金</th>
+                                        <th style="padding: 10px; text-align: right; font-weight: 800;">含稅總額</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quote-export-tb"></tbody>
+                            </table>
+                            <div style="margin-top: 20px; text-align: right; font-size: 13px; color: #667085;">
+                                <div>未稅總計：<span id="quote-export-pre" style="font-weight: 700; color: #1D1D1F;"></span></div>
+                                <div id="quote-export-discount-line" style="display: none; margin-top: 4px;">套用 <span id="quote-export-discount-val"></span> 折</div>
+                                <div id="quote-export-orig-line" style="display: none; margin-top: 4px; text-decoration: line-through;">原價（含稅）：<span id="quote-export-orig"></span></div>
+                                <div style="font-size: 20px; font-weight: 900; color: #1D1D1F; margin-top: 10px;">應付總額（含稅）：<span id="quote-export-total"></span></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 60px; font-size: 13px; page-break-inside: avoid;">
+                                <div>
+                                    <div style="font-weight: 700; margin-bottom: 24px;">客戶確認</div>
+                                    <div>簽章：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+                                    <div style="margin-top: 14px;">日期：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 700; margin-bottom: 24px;">請款單位</div>
+                                    <div>杰冉影像工作室</div>
+                                    <div style="margin-top: 14px;">簽章：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1402,6 +1458,7 @@ function switchSlide(idx, el) {
         if(idx === 0) filterTable();
         if(idx === 1) runSettleSearch();
         if(idx === 2) updateMonthlyReport();
+        if(idx === 3) renderQuoteVipChips();
         if(idx === 4) filterInvoiceTable();
         if(idx === 5) renderDashboard(); 
         if(idx === 6) renderStatement();
@@ -1586,6 +1643,7 @@ function renderVipBubbles() {
         html += `<div class="vip-bubble ${isActive}" onclick="toggleVipFilter('${c}')">${c}</div>`;
     });
     container.innerHTML = html;
+    renderQuoteVipChips();
 }
 
 function toggleVipFilter(clientName) {
@@ -2313,7 +2371,7 @@ async function downloadStatementPDF() {
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         // V2.37：避免分頁時把同一列（尤其是附圖的列）從中間切斷
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['tr', 'img'] }
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'img'] }
     };
     html2pdf().set(opt).from(el).save().then(() => {
         el.style.display = 'none';
@@ -2386,21 +2444,19 @@ function updateMonthlyReport() {
 function runQuoteSearch() { 
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     
-    let searchBar = document.getElementById('quote-search-bar');
-    let pIcon = document.getElementById('quote-placeholder-icon');
-    let pText = document.getElementById('quote-placeholder-text');
-    let content = document.getElementById('quote-content');
+    // V2.49：搜尋列常駐置頂，這裡只切換「空狀態」跟「結果內容」，不再整頁跳轉
+    let emptyState = document.getElementById('quote-empty-state');
+    let resultBody = document.getElementById('quote-result-body');
     let invWrapper = document.getElementById('inv-list-wrapper');
 
     if (sc !== "" || (sm !== "" && sm !== "00")) {
-        searchBar.style.margin = "0 0 20px 0";
-        pIcon.style.display = 'none';
-        pText.style.display = 'none';
-        content.style.display = 'flex';
+        emptyState.style.display = 'none';
+        resultBody.style.display = 'flex';
         invWrapper.innerHTML = '';
         
         let terms = sc ? sc.split(/[\s,，]+/) : []; 
         document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
+        document.getElementById('inv-official-name').value = sc ? resolveOfficialClientName(sc) : '';
         
         let results = [];
         for(let r=0; r<rowCount; r++){ 
@@ -2433,12 +2489,22 @@ function runQuoteSearch() {
         if (discToggle) discToggle.style.display = 'block';
         calcQuoteTotal();
     } else { 
-        searchBar.style.margin = "auto";
-        pIcon.style.display = 'block';
-        pText.style.display = 'block';
-        content.style.display = 'none'; 
+        emptyState.style.display = 'block';
+        resultBody.style.display = 'none'; 
     }
 }
+window.runQuoteSearch = runQuoteSearch;
+
+// V2.49：常用客戶快選，點一下直接帶入搜尋，不用打字
+function renderQuoteVipChips() {
+    let container = document.getElementById('quote-vip-chips');
+    if (!container) return;
+    if (!vipClients || vipClients.length === 0) { container.innerHTML = ''; return; }
+    container.innerHTML = vipClients.map(c =>
+        `<div class="client-chip" style="padding: 6px 14px; font-size: 12px; margin: 0;" onclick="document.getElementById('qC').value='${c}'; runQuoteSearch();">${c}</div>`
+    ).join('');
+}
+window.renderQuoteVipChips = renderQuoteVipChips;
 
 // V2.32：折扣欄預設收起，點「+套用折扣」才展開，沒折扣的客戶不會看到多餘欄位
 function toggleDiscountPanel() {
@@ -2502,71 +2568,113 @@ function calcQuoteTotal(el = null) {
 }
 window.calcQuoteTotal = calcQuoteTotal; 
 
+// V2.49：請款單客戶名稱改查「發票紀錄」頁已存的簡稱→正式名稱對照表，不用重存一次，也不會把簡稱印到正式單子上
+function resolveOfficialClientName(shortName) {
+    if (!shortName) return '';
+    if (invoiceVips[shortName]) return invoiceVips[shortName].full;
+    let key = Object.keys(invoiceVips).find(k => k.toLowerCase() === shortName.toLowerCase());
+    return key ? invoiceVips[key].full : shortName;
+}
+window.resolveOfficialClientName = resolveOfficialClientName;
+
 function downloadPDF() {
-    const element = document.getElementById('quote-content'), btn = document.getElementById('exportPdfBtn'), wrapper = document.getElementById('inv-list-wrapper');
-    btn.style.display = 'none'; 
-    
-    let searchBar = document.getElementById('quote-search-bar');
-    if (searchBar) searchBar.style.display = 'none';
-    
-    let hiddenItems = [];
+    // V2.41：改用專業請款單版面匯出（黑底工作室名稱、金色表頭、簽收欄），不再直接擷取編輯畫面
+    const btn = document.getElementById('exportPdfBtn');
+    let originalText = btn.innerHTML;
+
+    // 收集目前畫面上顯示、且勾選的項目
+    let items = [];
     document.querySelectorAll('.inv-item').forEach(item => {
         let cb = item.querySelector('.quote-cb');
-        if (cb) {
-            cb.style.display = 'none'; 
-            if (!cb.checked) {
-                item.style.display = 'none'; 
-                hiddenItems.push(item);
-            }
-        }
+        if (!cb || !cb.checked) return;
+        let idEl = item.querySelector('.inv-col-id');
+        let nameEl = item.querySelector('.inv-col-info');
+        let pre = parseFloat(item.getAttribute('data-pre')) || 0;
+        let total = parseFloat(item.getAttribute('data-total')) || 0;
+        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', pre, tax: total - pre, total });
     });
-    
-    let thCb = document.getElementById('quote-th-cb');
-    if(thCb) thCb.firstElementChild.style.color = "transparent";
-    
-    // V2.32：「+ 套用折扣」文字連結只給操作者自己看，PDF 裡一律不顯示
-    let discountToggle = document.getElementById('inv-discount-toggle');
-    let origToggleDisplay = discountToggle ? discountToggle.style.display : "";
-    if (discountToggle) discountToggle.style.display = "none";
-    
-    let discountInput = document.getElementById('inv-discount-input');
-    let origBorder = discountInput.style.border;
-    discountInput.style.border = 'none';
-    
-    let discountPanel = document.getElementById('inv-discount-panel');
-    let origPanelBorder = discountPanel ? discountPanel.style.border : "";
-    if (discountPanel) discountPanel.style.border = "none";
+    if (items.length === 0) { uiAlert("目前沒有勾選任何項目可以匯出。"); return; }
 
-    // V2.31：判斷是否有實際套用折扣，統一用 resolveDiscountPercent 判讀（跟計算邏輯一致）
-    let hasRealDiscount = resolveDiscountPercent(discountInput.value) !== 100;
-    let origPanelDisplay = discountPanel ? discountPanel.style.display : "";
-    if (discountPanel && !hasRealDiscount) discountPanel.style.display = "none";
-    let origLine = document.getElementById('inv-total-orig-line');
-    let origLineDisplay = origLine ? origLine.style.display : "";
-    if (origLine && !hasRealDiscount) origLine.style.display = "none";
-    
-    let sc = document.getElementById('qC').value.trim().toUpperCase(), sm = document.getElementById('qM').value.trim();
-    let opt = { margin:[0.4, 0.5, 0.4, 0.4], filename:`${(sc.replace(/\s+/g,'_')||sm+'月')}_請款單.pdf`, image:{type:'jpeg',quality:1}, html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'}, jsPDF:{unit:'in',format:'a4',orientation:'portrait'} };
-    
-    let oh = element.style.height, ow = wrapper.style.overflow; element.style.height = 'auto'; wrapper.style.overflow = 'visible';
-    
-    html2pdf().set(opt).from(element).save().then(() => { 
-        btn.style.display = 'flex'; 
-        element.style.height = oh; 
-        wrapper.style.overflow = ow; 
-        
-        if (searchBar) searchBar.style.display = 'flex';
-        
-        document.querySelectorAll('.inv-item').forEach(item => {
-            let cb = item.querySelector('.quote-cb');
-            if (cb) cb.style.display = 'block';
-        });
-        hiddenItems.forEach(item => item.style.display = 'flex');
-        if(thCb) thCb.firstElementChild.style.color = "#667085";
-        discountInput.style.border = origBorder;
-        if (discountPanel) { discountPanel.style.border = origPanelBorder; discountPanel.style.display = origPanelDisplay; }
-        if (origLine) origLine.style.display = origLineDisplay;
-        if (discountToggle) discountToggle.style.display = origToggleDisplay;
+    let discountVal = document.getElementById('inv-discount-input').value;
+    let resolvedPercent = resolveDiscountPercent(discountVal);
+    let hasRealDiscount = resolvedPercent !== 100;
+    let discount = resolvedPercent / 100;
+
+    let totalPre = 0, totalOrig = 0;
+    let tb = document.getElementById('quote-export-tb');
+    tb.innerHTML = '';
+    items.forEach((it, i) => {
+        totalPre += it.pre;
+        totalOrig += it.total;
+        tb.innerHTML += `<tr style="page-break-inside: avoid;">
+            <td style="padding: 10px; text-align: center; border-bottom: 1px solid #E5E5EA;">${i + 1}</td>
+            <td style="padding: 10px; text-align: left; border-bottom: 1px solid #E5E5EA; font-weight: 700;">${it.name}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #E5E5EA;">$ ${it.pre.toLocaleString()}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #E5E5EA;">$ ${Math.round(it.tax).toLocaleString()}</td>
+            <td style="padding: 10px; text-align: right; border-bottom: 1px solid #E5E5EA; font-weight: 800;">$ ${it.total.toLocaleString()}</td>
+        </tr>`;
+    });
+    let finalTotal = Math.round(totalOrig * discount);
+
+    let sc = document.getElementById('qC').value.trim(), sm = document.getElementById('qM').value.trim();
+    let today = new Date();
+    let dateStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+    let docNo = `JAYRAN-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}-01`;
+
+    document.getElementById('quote-export-no').innerText = docNo;
+    document.getElementById('quote-export-date').innerText = dateStr;
+    document.getElementById('quote-export-client').innerText = document.getElementById('inv-official-name').value.trim() || resolveOfficialClientName(sc) || (sm ? sm + '月份' : '');
+
+    // V2.48：付款期限由使用者自己填，沒填就不顯示，不會有我自作主張寫死的預設值
+    let paymentTerms = document.getElementById('inv-payment-terms').value.trim();
+    let termsCell = document.getElementById('quote-export-terms-cell');
+    if (paymentTerms) {
+        termsCell.style.display = 'block';
+        document.getElementById('quote-export-terms').innerText = paymentTerms;
+    } else {
+        termsCell.style.display = 'none';
+    }
+    document.getElementById('quote-export-pre').innerText = `$ ${totalPre.toLocaleString()}`;
+
+    let discountLine = document.getElementById('quote-export-discount-line');
+    let origLine = document.getElementById('quote-export-orig-line');
+    if (hasRealDiscount) {
+        discountLine.style.display = 'block';
+        origLine.style.display = 'block';
+        document.getElementById('quote-export-discount-val').innerText = discountVal;
+        document.getElementById('quote-export-orig').innerText = `$ ${totalOrig.toLocaleString()}`;
+    } else {
+        discountLine.style.display = 'none';
+        origLine.style.display = 'none';
+    }
+    document.getElementById('quote-export-total').innerText = `$ ${finalTotal.toLocaleString()}`;
+
+    btn.innerHTML = "⏳ 正在處理...";
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.7';
+
+    let el = document.getElementById('quote-export-content');
+    el.style.display = 'block';
+    let opt = {
+        margin: [0.4, 0.4, 0.4, 0.4],
+        filename: `${(sc.replace(/\s+/g,'_') || sm+'月')}_請款單.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+    };
+    html2pdf().set(opt).from(el).save().then(() => {
+        el.style.display = 'none';
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+    }).catch(err => {
+        console.error(err);
+        el.style.display = 'none';
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+        alert("匯出 PDF 時發生錯誤。");
     });
 }
 
