@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.68</title>
+    <title>杰冉宇宙營收表 V2.70</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -995,13 +995,13 @@
                     </div>
 
                     <!-- V2.47：匯出版面搬回巢狀在此分頁內，比照已驗證可行的分潤結算/結算單匯出放置方式，不再用固定寬度 -->
-                    <!-- V2.67 修正：拿掉負邊距技巧（被父層圓角裁切成弧形角），改成標題列本身就在最外層頂端，不用出血 -->
-                    <div id="quote-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; box-sizing: border-box;">
-                        <div style="background: #1D1D1F; color: #FFF; padding: 18px 30px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px;">
+                    <!-- V2.69 修正：黑色標題列不再額外撐寬出血，跟下面內容共用同一層 30px 內距，結構上保證左邊對齊 -->
+                    <div id="quote-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; padding: 30px; box-sizing: border-box;">
+                        <div style="background: #1D1D1F; color: #FFF; padding: 16px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; margin-bottom: 20px;">
                             <div style="font-size: 20px; font-weight: 900; letter-spacing: 1px; white-space: nowrap;">JAYRAN 杰冉影像工作室</div>
                             <div style="font-size: 15px; font-weight: 700; letter-spacing: 3px; white-space: nowrap;">INVOICE</div>
                         </div>
-                        <div style="padding: 20px 30px 30px 30px; box-sizing: border-box;">
+                        <div>
                             <h1 style="font-size: 18px; margin: 0 0 14px 0; font-weight: 900;">請款明細單</h1>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 40px; margin-bottom: 16px; font-size: 12px;">
                                 <div><span style="color: #8E8E93;">請款單號</span><br><span id="quote-export-no" style="font-weight: 700;"></span></div>
@@ -1237,13 +1237,13 @@
                 </div>
 
                 <!-- 匯出用隱藏版面 -->
-                <!-- V2.67 修正：拿掉負邊距技巧（被父層圓角裁切成弧形角），改成標題列本身就在最外層頂端，不用出血 -->
-                <div id="qt-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; box-sizing: border-box;">
-                    <div style="background: #1D1D1F; color: #FFF; padding: 18px 30px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px;">
+                <!-- V2.69 修正：黑色標題列不再額外撐寬出血，跟下面內容共用同一層 30px 內距，結構上保證左邊對齊 -->
+                <div id="qt-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; padding: 30px; box-sizing: border-box;">
+                    <div style="background: #1D1D1F; color: #FFF; padding: 16px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; margin-bottom: 20px;">
                         <div style="font-size: 20px; font-weight: 900; letter-spacing: 1px; white-space: nowrap;">JAYRAN 杰冉影像工作室</div>
                         <div style="font-size: 15px; font-weight: 700; letter-spacing: 3px; white-space: nowrap;">QUOTATION</div>
                     </div>
-                    <div style="padding: 22px 30px 30px 30px; box-sizing: border-box;">
+                    <div>
                         <h1 id="qt-export-title" style="font-size: 19px; margin: 0 0 4px 0; font-weight: 900;"></h1>
                         <div id="qt-export-subtitle" style="font-size: 12px; color: #8E8E93; margin-bottom: 16px;"></div>
 
@@ -2646,7 +2646,7 @@ async function downloadQuotationPDF() {
         margin: [0.3, 0.35, 0.3, 0.35],
         filename: `${title.replace(/\s+/g,'_')}_報價單.pdf`,
         image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
@@ -2936,7 +2936,7 @@ function downloadPDF() {
         margin: [0.3, 0.35, 0.3, 0.35],
         filename: `${(sc.replace(/\s+/g,'_') || sm+'月')}_請款單.pdf`,
         image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
