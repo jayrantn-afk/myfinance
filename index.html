@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.61</title>
+    <title>杰冉宇宙營收表 V2.63</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -378,6 +378,12 @@
         .settle-pill-btn.primary { background: var(--primary); color: #FFF; box-shadow: 0 4px 12px rgba(var(--primary-rgb),0.3); }
         .settle-pill-btn.primary:hover { filter: brightness(1.08); }
 
+        /* V2.63 報價單黑金配色 */
+        .qt-input { width: 100%; height: 38px; border-radius: 8px; border: 1px solid var(--card-border); padding: 0 12px; font-size: 13px; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
+        .qt-input:focus { border-color: #1D1D1F; box-shadow: 0 0 0 3px rgba(240, 198, 75, 0.35); }
+        .qt-item-card { border: 1px solid var(--card-border); border-left: 3px solid #1D1D1F; border-radius: 8px; padding: 10px 12px; }
+        .qt-item-num { background: #1D1D1F; color: #F0C64B; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; flex-shrink: 0; }
+
         /* V2.14 UI 優化：頂部搜尋列排版整理 - 統一高度/字級/邊框，改扁平風格取代重疊的毛玻璃陰影 */
         .header-section { border-bottom: 1px solid rgba(0,0,0,0.06); }
         .search-group { gap: 10px; }
@@ -551,8 +557,8 @@
 
         /* viewport/slider 改為百分比制，搭配側邊欄版型（原本用 vw 會被側邊欄擋住／算錯寬度） */
         .viewport { width: 100% !important; }
-        .slider-container { width: 700% !important; }
-        .page-content { width: calc(100% / 7) !important; content-visibility: auto; contain-intrinsic-size: 1000px 800px; }
+        .slider-container { width: 800% !important; }
+        .page-content { width: calc(100% / 8) !important; content-visibility: auto; contain-intrinsic-size: 1000px 800px; }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -729,6 +735,7 @@
             <div class="app-nav-item" onclick="switchSlide(4, this)" title="發票紀錄"><span class="nav-icon">📄</span><span class="nav-label">發票紀錄</span></div>
             <div class="app-nav-item" onclick="switchSlide(5, this)" title="數據中心"><span class="nav-icon">📈</span><span class="nav-label">數據中心</span></div>
             <div class="app-nav-item" onclick="switchSlide(6, this)" title="結算單"><span class="nav-icon">📝</span><span class="nav-label">結算單</span></div>
+            <div class="app-nav-item" onclick="switchSlide(7, this)" title="報價單"><span class="nav-icon">📃</span><span class="nav-label">報價單</span></div>
         </nav>
         <div class="app-sidebar-footer">
             <div class="app-sidebar-btn firebase" id="cloudSaveBtn" onclick="cloudSync('SAVE')" title="搬家至 Firebase"><span class="nav-icon">🔥</span><span class="nav-label">搬家至 Firebase</span></div>
@@ -1185,6 +1192,99 @@
             </div>
         </div>
 
+        <!-- Slide 7: 📃 報價單（V2.63：黑金配色比照PDF、精簡提示文字、更緊湊版面） -->
+        <div class="page-content">
+            <div class="white-card" style="padding: 0; overflow-y: auto; display: block;">
+                <div style="background: #1D1D1F; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <h2 style="margin: 0; font-weight: 900; color: #FFF; display: flex; align-items: center; gap: 10px;">📃 報價單</h2>
+                    <button onclick="downloadQuotationPDF()" style="background: #F0C64B; color: #1D1D1F; border: none; padding: 10px 22px; border-radius: 50px; font-weight: 900; font-size: 13px; cursor: pointer;">📥 匯出報價單 PDF</button>
+                </div>
+
+                <div style="padding: 24px 30px;">
+                    <input type="text" id="qt-title" placeholder="案件標題" class="qt-input" style="width: 100%; height: 44px; font-size: 15px; font-weight: 800; margin-bottom: 10px;">
+                    <input type="text" id="qt-subtitle" placeholder="副標（選填）" class="qt-input" style="width: 100%; height: 38px; margin-bottom: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px;">
+                        <input type="text" id="qt-client" placeholder="客戶名稱" class="qt-input">
+                        <input type="text" id="qt-validity" placeholder="報價效期" class="qt-input">
+                        <input type="text" id="qt-window" placeholder="案件窗口" class="qt-input">
+                        <input type="text" id="qt-days" placeholder="製作天數" class="qt-input">
+                    </div>
+
+                    <h3 style="font-size: 13px; color: #1D1D1F; margin-bottom: 10px; font-weight: 900; display: flex; align-items: center; gap: 6px;"><span style="width: 4px; height: 14px; background: #F0C64B; display: inline-block;"></span>服務項目</h3>
+                    <div id="qt-items-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+                    <button onclick="addQuotationItem()" style="background: #FFF; border: 2px solid #1D1D1F; color: #1D1D1F; padding: 7px 18px; border-radius: 50px; font-weight: 800; font-size: 12px; cursor: pointer;">+ 新增項目</button>
+
+                    <div style="text-align: right; margin-top: 20px; font-size: 13px; color: var(--mid); border-top: 1px solid var(--card-border); padding-top: 14px;">
+                        <div>未稅小計：$ <span id="qt-subtotal">0</span></div>
+                        <div style="margin-top: 4px;">營業稅 5%：$ <span id="qt-tax">0</span></div>
+                        <div style="font-size: 20px; font-weight: 900; color: #1D1D1F; margin-top: 6px;">總價（含稅）：$ <span id="qt-total" style="color: #C89B2C;">0</span></div>
+                    </div>
+
+                    <h3 style="font-size: 13px; color: #1D1D1F; margin: 22px 0 10px 0; font-weight: 900; display: flex; align-items: center; gap: 6px;"><span style="width: 4px; height: 14px; background: #F0C64B; display: inline-block;"></span>合作與交付說明（選填，有填才會印出來）</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <input type="text" id="qt-term-basis" placeholder="製作基準" class="qt-input">
+                        <input type="text" id="qt-term-revision" placeholder="修改次數" class="qt-input">
+                        <input type="text" id="qt-term-addon" placeholder="追加項目" class="qt-input">
+                        <input type="text" id="qt-term-payment" placeholder="付款方式" class="qt-input">
+                        <input type="text" id="qt-term-exclude" placeholder="不含項目" class="qt-input" style="grid-column: 1 / -1;">
+                    </div>
+                </div>
+
+                <!-- 匯出用隱藏版面 -->
+                <div id="qt-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; padding: 32px; box-sizing: border-box;">
+                    <div style="background: #1D1D1F; color: #FFF; padding: 18px 30px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; margin: -32px -32px 0 -32px;">
+                        <div style="font-size: 20px; font-weight: 900; letter-spacing: 1px; white-space: nowrap;">JAYRAN 杰冉影像工作室</div>
+                        <div style="font-size: 15px; font-weight: 700; letter-spacing: 3px; white-space: nowrap;">QUOTATION</div>
+                    </div>
+                    <div style="padding-top: 22px; box-sizing: border-box;">
+                        <h1 id="qt-export-title" style="font-size: 19px; margin: 0 0 4px 0; font-weight: 900;"></h1>
+                        <div id="qt-export-subtitle" style="font-size: 12px; color: #8E8E93; margin-bottom: 16px;"></div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 40px; margin-bottom: 16px; font-size: 12px;">
+                            <div><span style="color: #8E8E93;">報價單號</span><br><span id="qt-export-no" style="font-weight: 700;"></span></div>
+                            <div><span style="color: #8E8E93;">報價日期</span><br><span id="qt-export-date" style="font-weight: 700;"></span></div>
+                            <div><span style="color: #8E8E93;">客戶名稱</span><br><span id="qt-export-client" style="font-weight: 700;"></span></div>
+                            <div><span style="color: #8E8E93;">報價效期</span><br><span id="qt-export-validity" style="font-weight: 700;"></span></div>
+                            <div id="qt-export-window-cell" style="display: none;"><span style="color: #8E8E93;">案件窗口</span><br><span id="qt-export-window" style="font-weight: 700;"></span></div>
+                            <div id="qt-export-days-cell" style="display: none;"><span style="color: #8E8E93;">製作天數</span><br><span id="qt-export-days" style="font-weight: 700;"></span></div>
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;">
+                            <colgroup><col style="width: 34px;"><col style="width: 22%;"><col><col style="width: 60px;"><col style="width: 80px;"></colgroup>
+                            <thead>
+                                <tr style="background: #F0C64B;">
+                                    <th style="padding: 6px; text-align: center; font-weight: 800;">項次</th>
+                                    <th style="padding: 6px; text-align: left; font-weight: 800;">服務項目</th>
+                                    <th style="padding: 6px; text-align: left; font-weight: 800;">製作內容</th>
+                                    <th style="padding: 6px; text-align: center; font-weight: 800;">規格／數量</th>
+                                    <th style="padding: 6px; text-align: right; font-weight: 800;">金額（NTD）</th>
+                                </tr>
+                            </thead>
+                            <tbody id="qt-export-tb"></tbody>
+                            <tfoot id="qt-export-totals"></tfoot>
+                        </table>
+
+                        <div id="qt-export-terms-section" style="display: none; margin-top: 20px;">
+                            <div style="background: #1D1D1F; color: #FFF; font-weight: 800; padding: 8px 14px; font-size: 13px;">合作與交付說明</div>
+                            <table id="qt-export-terms-table" style="width: 100%; border-collapse: collapse; font-size: 12px;"></table>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; font-size: 12px; page-break-inside: avoid;">
+                            <div>
+                                <div style="font-weight: 700; margin-bottom: 14px;">客戶確認</div>
+                                <div>簽章：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+                                <div style="margin-top: 10px;">日期：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="font-weight: 700;">報價單位</div>
+                                <img src="data:image/png;base64,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" style="height: 36px; width: auto;" alt="JAYRAN 杰冉影像工作室">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -1445,7 +1545,7 @@ async function addNewYear() { let y=await uiPrompt("請輸入要新增的年份:
 function renderYearList() { const l=document.getElementById('yList'); l.innerHTML=''; yArr.forEach(y=>l.innerHTML+=`<div class="year-item" onclick="changeYear('${y}')">${y}</div>`); }
 
 function switchSlide(idx, el) {
-    document.getElementById('mainSlider').style.transform = `translateX(-${idx * (100/7)}%)`;
+    document.getElementById('mainSlider').style.transform = `translateX(-${idx * (100/8)}%)`;
     document.querySelectorAll('.app-nav-item').forEach(t=>t.classList.remove('active')); 
     if(el) el.classList.add('active');
     
@@ -1468,6 +1568,7 @@ function switchSlide(idx, el) {
         if(idx === 4) filterInvoiceTable();
         if(idx === 5) renderDashboard(); 
         if(idx === 6) renderStatement();
+        if(idx === 7) renderQtItems();
     }, 100);
 }
 
@@ -2390,6 +2491,163 @@ async function downloadStatementPDF() {
     });
 }
 window.downloadStatementPDF = downloadStatementPDF;
+
+// V2.62：報價單 - 自訂項目數量不限，含合作與交付說明
+let qtItems = [
+    { name: '', desc: '', spec: '', amount: '' },
+    { name: '', desc: '', spec: '', amount: '' },
+    { name: '', desc: '', spec: '', amount: '' }
+];
+
+function renderQtItems() {
+    let container = document.getElementById('qt-items-list');
+    if (!container) return;
+    container.innerHTML = qtItems.map((item, i) => `
+        <div class="qt-item-card">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div class="qt-item-num">${i + 1}</div>
+                <input type="text" value="${item.name}" placeholder="服務項目" oninput="updateQtItem(${i}, 'name', this.value)" class="qt-input" style="flex: 2; height: 34px;">
+                <input type="text" value="${item.spec}" placeholder="規格/數量" oninput="updateQtItem(${i}, 'spec', this.value)" class="qt-input" style="flex: 1; height: 34px;">
+                <input type="number" value="${item.amount}" placeholder="金額" oninput="updateQtItem(${i}, 'amount', this.value)" class="qt-input" style="width: 100px; height: 34px; font-weight: 800; color: #C89B2C; flex-shrink: 0;">
+                <span onclick="deleteQtItem(${i})" title="刪除" style="cursor: pointer; color: #D32F2F; font-weight: 900; flex-shrink: 0; padding: 0 4px;">✕</span>
+            </div>
+            <textarea placeholder="製作內容說明" oninput="updateQtItem(${i}, 'desc', this.value)" class="qt-input" style="width: 100%; height: 34px; margin-top: 6px; padding: 8px 12px; resize: vertical; line-height: 1.4;">${item.desc}</textarea>
+        </div>
+    `).join('');
+    calcQuotationTotal();
+}
+window.renderQtItems = renderQtItems;
+
+function addQuotationItem() {
+    qtItems.push({ name: '', desc: '', spec: '', amount: '' });
+    renderQtItems();
+}
+window.addQuotationItem = addQuotationItem;
+
+function deleteQtItem(i) {
+    qtItems.splice(i, 1);
+    renderQtItems();
+}
+window.deleteQtItem = deleteQtItem;
+
+function updateQtItem(i, field, value) {
+    qtItems[i][field] = value;
+    if (field === 'amount') calcQuotationTotal();
+}
+window.updateQtItem = updateQtItem;
+
+function calcQuotationTotal() {
+    let subtotal = qtItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    let tax = Math.round(subtotal * 0.05);
+    let total = subtotal + tax;
+    let subtotalEl = document.getElementById('qt-subtotal');
+    let taxEl = document.getElementById('qt-tax');
+    let totalEl = document.getElementById('qt-total');
+    if (subtotalEl) subtotalEl.innerText = subtotal.toLocaleString();
+    if (taxEl) taxEl.innerText = tax.toLocaleString();
+    if (totalEl) totalEl.innerText = total.toLocaleString();
+    return { subtotal, tax, total };
+}
+window.calcQuotationTotal = calcQuotationTotal;
+
+async function downloadQuotationPDF() {
+    let title = document.getElementById('qt-title').value.trim();
+    if (!title) { await uiAlert("請先填「案件標題」再匯出喔！"); return; }
+    let validItems = qtItems.filter(it => it.name.trim() !== '' || parseFloat(it.amount) > 0);
+    if (validItems.length === 0) { await uiAlert("請至少填一項服務項目再匯出。"); return; }
+
+    let { subtotal, tax, total } = calcQuotationTotal();
+
+    let today = new Date();
+    let dateStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+    let docNo = `JAYRAN-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}-01`;
+
+    document.getElementById('qt-export-title').innerText = title;
+    document.getElementById('qt-export-subtitle').innerText = document.getElementById('qt-subtitle').value.trim();
+    document.getElementById('qt-export-no').innerText = docNo;
+    document.getElementById('qt-export-date').innerText = dateStr;
+    document.getElementById('qt-export-client').innerText = document.getElementById('qt-client').value.trim() || '－';
+    document.getElementById('qt-export-validity').innerText = document.getElementById('qt-validity').value.trim() || '－';
+
+    let win = document.getElementById('qt-window').value.trim();
+    let windowCell = document.getElementById('qt-export-window-cell');
+    if (win) { windowCell.style.display = 'block'; document.getElementById('qt-export-window').innerText = win; }
+    else windowCell.style.display = 'none';
+
+    let days = document.getElementById('qt-days').value.trim();
+    let daysCell = document.getElementById('qt-export-days-cell');
+    if (days) { daysCell.style.display = 'block'; document.getElementById('qt-export-days').innerText = days; }
+    else daysCell.style.display = 'none';
+
+    // 服務項目表格
+    let tb = document.getElementById('qt-export-tb');
+    tb.innerHTML = '';
+    validItems.forEach((it, i) => {
+        let amt = parseFloat(it.amount) || 0;
+        tb.innerHTML += `<tr style="page-break-inside: avoid;">
+            <td style="padding: 8px 6px; text-align: center; border-bottom: 1px solid #E5E5EA; vertical-align: top;">${i + 1}</td>
+            <td style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #E5E5EA; font-weight: 700; vertical-align: top;">${it.name}</td>
+            <td style="padding: 8px 6px; text-align: left; border-bottom: 1px solid #E5E5EA; color: #475467; vertical-align: top;">${(it.desc || '').replace(/\n/g, '<br>')}</td>
+            <td style="padding: 8px 6px; text-align: center; border-bottom: 1px solid #E5E5EA; vertical-align: top;">${it.spec || ''}</td>
+            <td style="padding: 8px 6px; text-align: right; border-bottom: 1px solid #E5E5EA; font-weight: 800; vertical-align: top; white-space: nowrap;">${amt.toLocaleString()}</td>
+        </tr>`;
+    });
+
+    // 小計／稅金／總價
+    document.getElementById('qt-export-totals').innerHTML = `
+        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 8px 6px; text-align: right; color: #667085;">未稅小計</td><td style="padding: 8px 6px; text-align: right; font-weight: 700;">${subtotal.toLocaleString()}</td></tr>
+        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085;">營業稅 5%</td><td style="padding: 4px 6px; text-align: right; font-weight: 700;">${tax.toLocaleString()}</td></tr>
+        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px;">總價（含稅）</td><td style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px;">${total.toLocaleString()}</td></tr>
+    `;
+
+    // 合作與交付說明（只放有填的項目）
+    let termsMap = [
+        ['製作基準', document.getElementById('qt-term-basis').value.trim()],
+        ['修改次數', document.getElementById('qt-term-revision').value.trim()],
+        ['追加項目', document.getElementById('qt-term-addon').value.trim()],
+        ['付款方式', document.getElementById('qt-term-payment').value.trim()],
+        ['不含項目', document.getElementById('qt-term-exclude').value.trim()]
+    ].filter(([label, val]) => val !== '');
+
+    let termsSection = document.getElementById('qt-export-terms-section');
+    let termsTable = document.getElementById('qt-export-terms-table');
+    if (termsMap.length > 0) {
+        termsSection.style.display = 'block';
+        termsTable.innerHTML = termsMap.map(([label, val]) => `
+            <tr style="page-break-inside: avoid;">
+                <td style="background: #F0C64B; font-weight: 800; padding: 8px 12px; width: 90px; border-bottom: 1px solid #FFF; vertical-align: top;">${label}</td>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #E5E5EA; color: #475467;">${val}</td>
+            </tr>
+        `).join('');
+    } else {
+        termsSection.style.display = 'none';
+    }
+
+    const btn = event ? event.target : null;
+    let originalText = btn ? btn.innerHTML : null;
+    if (btn) { btn.innerHTML = "⏳ 正在處理..."; btn.style.pointerEvents = 'none'; btn.style.opacity = '0.7'; }
+
+    let el = document.getElementById('qt-export-content');
+    el.style.display = 'block';
+    let opt = {
+        margin: [0.3, 0.35, 0.3, 0.35],
+        filename: `${title.replace(/\s+/g,'_')}_報價單.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+    };
+    html2pdf().set(opt).from(el).save().then(() => {
+        el.style.display = 'none';
+        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+    }).catch(err => {
+        console.error(err);
+        el.style.display = 'none';
+        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+        alert("匯出 PDF 時發生錯誤。");
+    });
+}
+window.downloadQuotationPDF = downloadQuotationPDF;
 
 function updateMonthlyReport() {
     const container = document.getElementById('report-cards-container'); 
