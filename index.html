@@ -3525,108 +3525,22 @@ function togglePartnerPaid(r) {
 }
 window.togglePartnerPaid = togglePartnerPaid;
 
-function calc(r, c, save=true) {
-    const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
-    const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
-    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    
-    if(c === 1) {
-        let v = g(1).trim().toUpperCase();
-        let firstChar = v.charAt(0); 
-
-        if (firstChar >= 'A' && firstChar <= 'Y') {
-            
-            let clientName = {
-                'A': '小花宇宙', 'B': '醫敏家', 'C': '欣榮鑫', 'D': '海沃',
-                'E': '博通科技', 'F': '易裝修', 'G': '永騰', 'H': '保羅醫師',
-                'I': '有朗蘊', 'J': '徐仙梅', 'K': '游秉諭', 'L': '瑞迪健康',
-                'M': '中信', 'N': '日幸', 'O': '董鎮綱'
-            }[firstChar];
-
-            for(let i = rc - 1; i >= 0; i--) { 
-                let d = JSON.parse(localStorage.getItem(`d_${curY}_${i}`)) || {};
-                let existingId = (d[1] || "").trim().toUpperCase();
-                let existingClient = (d[2] || "").trim();
-                
-                if (existingId.startsWith(firstChar) && existingClient !== "") {
-                    clientName = existingClient;
-                    break;
-                }
-            }
-
-            if (clientName) {
-                s(2, clientName);
-                let dd = document.getElementById('mainVipDropdown');
-                if (dd) dd.style.display = 'none'; 
-            }
-        }
-    }
-
-    if(c === 2) {
-        let v = g(2).trim();
-        let shortcuts = {
-            'a': '小花',
-            'A': '小花'
-        };
-        
-        if (shortcuts[v]) {
-            s(2, shortcuts[v]); 
-            let dd = document.getElementById('mainVipDropdown');
-            if (dd) dd.style.display = 'none';
-        }
-    }
-
-    if(c === 5) {
-        let v = g(5).trim();
-        if (v === "") {
-            s(0, "");
-        } else {
-            let separator = v.includes('/') ? '/' : (v.includes('-') ? '-' : null);
-            if (separator) {
-                let m = v.split(separator)[0].replace(/\D/g, '');
-                if (m) s(0, `${curY}-${m.padStart(2,'0')}`);
-            }
-        }
-    }
-    
-    let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
-    let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
-    s(10, tax); s(11, total); s(13, rem); 
-    
-    let pComp = parseFloat(g(14))/100 || 0;
-    let pBoss = parseFloat(g(15))/100 || 0;
-    let pPart = parseFloat(g(16))/100 || 0;
-    
-    let amtBoss = Math.round(net * pBoss);
-    let amtPart = Math.round(net * pPart);
-    let amtComp = Math.round(net * pComp);
-    
-    if (Math.abs(pComp + pBoss + pPart - 1.0) < 0.01) {
-        amtComp = net - amtBoss - amtPart;
-    }
-    
-    s(17, amtComp); 
-    s(18, amtBoss); 
-    s(19, amtPart);
-    
-    let row = document.getElementById(`r${r}`); 
-    let isSettled = false;
-    if (row) { 
-        let isFree = (String(g(9)).trim() === '0'); 
-        isSettled = (net > 0 && rem <= 0) || isFree;
-        if (isSettled) row.classList.add('is-settled'); 
-        else row.classList.remove('is-settled'); 
-    }
-
-    // V2.33：結清、付夥伴兩個標籤都永遠可見，用 active 樣式切換灰/彩色，不再用顯示/隱藏
-    let badge = document.getElementById(`r${r}c3badge`);
-    if (badge) badge.classList.toggle('active', isSettled);
-    let partnerBadge = document.getElementById(`r${r}c21badge`);
-    if (partnerBadge) partnerBadge.classList.toggle('active', g(21) === true);
-    
-    if(save) {
+if(save) {
         setRowData(r, {0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)});
         
+        // 🔥 呼叫跨系統同步 (停止打字 1 秒後才送出，避免狂發請求)
+        let idRaw = g(1).trim().toUpperCase();
+        let client = g(2).trim();
+        let name = g(3).trim();
+        let type = g(4).trim();
+        
+        if (idRaw && client && name) {
+            clearTimeout(window[`pmSyncTimer_${r}`]);
+            window[`pmSyncTimer_${r}`] = setTimeout(() => {
+                if(window.syncToPM) window.syncToPM(idRaw, client, name, type);
+            }, 1000);
+        }
+
         if(window.calcTimer1) clearTimeout(window.calcTimer1);
         window.calcTimer1 = setTimeout(() => {
             let ec = 0; for(let i=rc-1; i>=0; i--){ let dr = getRowData(i); if(!dr[0]&&!dr[1]&&!dr[2]&&!dr[3]&&!dr[9]) ec++; else break; }
@@ -3634,7 +3548,6 @@ function calc(r, c, save=true) {
             filterTable(); 
         }, 400);
     }
-}
 
 async function handleOptChange(r, c) {
     let sel = document.getElementById(`r${r}c${c}`);
@@ -3740,6 +3653,7 @@ window.onload = () => {
     import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+    // 原本營收表的 Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDllqltvIctsNWUuLW75kLUtcRnTjXdvBs",
       authDomain: "jaran-money.firebaseapp.com",
@@ -3750,16 +3664,71 @@ window.onload = () => {
     };
 
     let app, db, auth;
+    let pmApp, pmDb; // 🔥 宣告管理表專用的雙重連線
 
     try {
         app = initializeApp(firebaseConfig);
         db = getFirestore(app);
         auth = getAuth(app);
 
-        // V2.8：改用 Email/Password 驗證。只有登入成功的使用者，才會被 Firestore 規則允許讀寫。
-        // 同時偵測「V2.4 舊版遺留的匿名登入」殘留 session，若發現則強制登出，避免卡在無法寫入的狀態。
-        // V2.11：改用小圓點顯示登入狀態（綠色=已登入/紅色=未登入），點擊才展開詳細資訊，避免擋住其他功能。
-        // V2.28：只有這個 email 是管理員本人，能看到完整營收表；其他任何能登入的帳號（例如夥伴）只會看到分潤總覽畫面
+        // 🔥 啟動對管理表的第二次連線 (跨系統橋樑)
+        const pmConfig = {
+            apiKey: "AIzaSyC3iyQNiYHWjA9yPbMni27C7KENfIUHZu4",
+            authDomain: "jayran-pm.firebaseapp.com",
+            projectId: "jayran-pm"
+        };
+        pmApp = initializeApp(pmConfig, "pmApp");
+        pmDb = getFirestore(pmApp);
+        
+        // 🔥 跨系統同步引擎
+        window.syncToPM = async function(idRaw, client, name, type) {
+            if (!idRaw || !client || !name) return;
+            
+            // 自動拆解字首組合 Zone
+            let prefixMatch = idRaw.match(/^[A-Z]+/);
+            let prefix = prefixMatch ? prefixMatch[0] : 'Z';
+            let zone = `${prefix}_${client}`;
+            let cat = (type && type.includes('圖')) ? 'image' : 'video';
+            
+            const docId = `${cat}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+            const pmDocRef = doc(pmDb, 'projects', docId);
+            
+            try {
+                const snap = await getDoc(pmDocRef);
+                if (!snap.exists()) {
+                    // 1. 如果管理表沒有，建立全新資料並送進【待指派專案區】
+                    await setDoc(pmDocRef, {
+                        category: cat,
+                        zone: zone,
+                        id: idRaw,
+                        client: client,
+                        name: name,
+                        type: type || "",
+                        producer: '尚未暫定',   // 🔥 自動去待指派區
+                        status: '尚未進行',     // 🔥 預設狀態
+                        start: '',            // 🔥 日期留白不連動
+                        end: '',              // 🔥 日期留白不連動
+                        hours: 0,
+                        note: '',
+                        tag: '',
+                        link: ''
+                    });
+                } else {
+                    // 2. 如果已存在，只更新 名稱/客戶/類型，絕不覆蓋舊有的排程與製作人
+                    await setDoc(pmDocRef, {
+                        client: client,
+                        name: name,
+                        type: type || ""
+                    }, { merge: true });
+                }
+            } catch(e) {
+                console.error("同步至管理表失敗", e);
+            }
+        }
+
+        // ▼ 下面保留你原本的 onAuthStateChanged 邏輯不動 ▼
+        const OWNER_EMAIL = 'jayran.tn@gmail.com';
+        onAuthStateChanged(auth, (user) => {
         const OWNER_EMAIL = 'jayran.tn@gmail.com';
 
         onAuthStateChanged(auth, (user) => {
