@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.91</title>
+    <title>杰冉宇宙營收表 V2.92</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4200,6 +4200,50 @@ window.onload = () => {
         // 把這次第一次連上的文件位置永久記下來，下次同步不用再重新用猜的比對這一列
         entries.filter(e => e.needsLinkSave).forEach(e => saveLinkedDocId(e.year, e.row, e.docId));
 
+        // V2.92 修正：重新加回「編號+客戶」直接比對的保險機制(上一版簡化時誤刪了)。
+        // 如果這一列算出來的文件位置(docId)跟管理表實際存放的位置對不上，主要那段的「更新」就會誤判成
+        // 「這是全新專案」，新建一份正確狀態的文件，但原本錯誤的「已完成」舊文件會變成孤兒、沒人去改它，
+        // 畫面上看起來就像完全沒生效。這裡改用「編號+客戶」直接比對管理表現有資料，不管位置準不準，
+        // 找到了就依照結案燈號校正狀態，並把這個真正的位置永久記住，下次不用再用猜的。
+        let idClientMap = new Map();
+        existingMap.forEach((data, docId) => {
+            if (!data.id || !data.client) return;
+            const key = `${data.id}__${data.client}`;
+            if (!idClientMap.has(key)) idClientMap.set(key, []);
+            idClientMap.get(key).push(docId);
+        });
+
+        let strayFixed = 0;
+        let strayBatch = writeBatch(pmDb);
+        let strayOp = 0;
+        const commitStray = async () => {
+            if (strayOp > 0) {
+                try { await strayBatch.commit(); } catch (e) { console.error('保險機制批次寫入失敗:', e); }
+                strayBatch = writeBatch(pmDb);
+                strayOp = 0;
+            }
+        };
+        for (const e of entries) {
+            const key = `${e.idRaw}__${e.client}`;
+            const matches = idClientMap.get(key) || [];
+            for (const docId of matches) {
+                if (docId === e.docId) continue; // 這筆位置正確，上面主要那段已經處理過了
+                const data = existingMap.get(docId);
+                const doneFlag = (e.d[24] || '製') === '完';
+                saveLinkedDocId(e.year, e.row, docId); // 找到真正的位置了，永久記住，以後直接用這個，不再用算的
+                let newStatus = null;
+                if (doneFlag && data.status !== '已完成') newStatus = '已完成';
+                else if (!doneFlag && data.status === '已完成') newStatus = '尚未進行';
+                if (newStatus) {
+                    strayBatch.set(doc(pmDb, 'projects', docId), { status: newStatus }, { merge: true });
+                    strayOp++;
+                    strayFixed++;
+                    if (strayOp >= 450) await commitStray();
+                }
+            }
+        }
+        await commitStray();
+
         // V2.91 新增：反向同步 —— 管理表那邊如果已經被標記「已完成」，但營收表這裡「結案」燈號還是「製」，
         // 自動把燈號改成「完」，不用你自己再手動點一次
         let pulledDoneCount = 0;
@@ -4252,7 +4296,7 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正(保險機制,位置對不上時抓到的) ${strayFixed} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
