@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.98</title>
+    <title>杰冉宇宙營收表 V2.99</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4649,6 +4649,59 @@ window.onload = () => {
             await uiAlert("❌ 還原失敗，請稍後再試。");
         }
     }
+
+    // V2.99 新增：頁面一開啟就安靜檢查一次，只要「這一列已經連結到管理表的哪一份文件」且管理表那邊
+    // 已經被標記完成，就自動把結案燈號拉成「完」，不用你手動按「完整同步管理表」才會發現。
+    // 完全安靜執行，不彈窗、不打擾；沒有變化就什麼都不做。
+    window.autoPullDoneFlags = async function() {
+        if (!pmDb) return;
+        try {
+            const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+            let linkedEntries = [];
+            for (const year of yList) {
+                const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+                for (let r = 0; r < rc; r++) {
+                    const raw = localStorage.getItem(`d_${year}_${r}`);
+                    if (!raw) continue;
+                    let d;
+                    try { d = JSON.parse(raw); } catch (e) { continue; }
+                    const linkedDocId = (d[23] || '').trim();
+                    if (linkedDocId && (d[24] || '製') !== '完') {
+                        linkedEntries.push({ year, row: r, docId: linkedDocId });
+                    }
+                }
+            }
+            if (linkedEntries.length === 0) return;
+
+            const allDocs = await getDocs(collection(pmDb, 'projects'));
+            let statusMap = new Map();
+            allDocs.forEach(docSnap => statusMap.set(docSnap.id, (docSnap.data() || {}).status));
+
+            let changed = false;
+            linkedEntries.forEach(e => {
+                const st = statusMap.get(e.docId);
+                const done = st === '已完成' || st === '已結案' || (st && (String(st).indexOf('完成') !== -1 || String(st).indexOf('結案') !== -1));
+                if (done) {
+                    let raw = localStorage.getItem(`d_${e.year}_${e.row}`);
+                    let d = {};
+                    try { d = raw ? JSON.parse(raw) : {}; } catch (err) {}
+                    d[24] = '完';
+                    localStorage.setItem(`d_${e.year}_${e.row}`, JSON.stringify(d));
+                    if (e.year === curY && window.dCache) window.dCache[e.row] = d;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                clearRowCache();
+                initTable();
+                showToast('✅ 已從管理表自動同步結案狀態');
+            }
+        } catch (e) {
+            console.error('自動拉取管理表狀態失敗:', e);
+        }
+    };
+    // 頁面一載入就跑一次(安靜執行，不會擋住畫面)
+    setTimeout(() => { window.autoPullDoneFlags(); }, 1500);
 </script>
 </body>
 </html>
