@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.87</title>
+    <title>杰冉宇宙營收表 V2.88</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4155,6 +4155,28 @@ window.onload = () => {
         }
         await commitStray();
 
+        // V2.88：不管任何保護規則，只要交件日是本月或之後、但現在卡在「已完成」，一律強制改回「尚未進行」，沒有例外
+        let forceFixed = 0;
+        let forceBatch = writeBatch(pmDb);
+        let forceOp = 0;
+        const commitForce = async () => {
+            if (forceOp > 0) {
+                try { await forceBatch.commit(); } catch (e) { console.error('強制校正批次寫入失敗:', e); }
+                forceBatch = writeBatch(pmDb);
+                forceOp = 0;
+            }
+        };
+        for (const e of entries) {
+            const data = existingMap.get(e.docId);
+            if (!data || data.status !== '已完成') continue;
+            if (inferAutoStatus(e.d[0]) === '已完成') continue; // 真的是本月以前的，不用動
+            forceBatch.set(doc(pmDb, 'projects', e.docId), { status: '尚未進行' }, { merge: true });
+            forceOp++;
+            forceFixed++;
+            if (forceOp >= 450) await commitForce();
+        }
+        await commitForce();
+
         // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
         // 一樣是用上面那個「從沒被指派過、沒有工時」的判斷；只要有一項不符合，就直接跳過、更不會刪除
         let candidates = [];
@@ -4190,7 +4212,7 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正狀態(保險機制) ${strayFixed} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n強制校正本月狀態 ${forceFixed} 筆\n額外校正狀態(保險機制) ${strayFixed} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
