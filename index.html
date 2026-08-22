@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.71</title>
+    <title>杰冉宇宙營收表 V2.72</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -744,6 +744,7 @@
             <div class="app-sidebar-btn" style="color:var(--primary)" onclick="cloudSync('LOAD')" title="從雲端載入"><span class="nav-icon">🔄</span><span class="nav-label">從雲端載入</span></div>
             <div class="app-sidebar-btn backup" onclick="openBackupModal()" title="版本備份"><span class="nav-icon">📜</span><span class="nav-label">版本備份</span></div>
             <div class="app-sidebar-btn" onclick="exportData()" title="匯出電腦備份"><span class="nav-icon">📤</span><span class="nav-label">匯出電腦備份</span></div>
+            <div class="app-sidebar-btn" style="color:#6C5CE7" onclick="bulkSyncAllToPM()" title="把所有案件回填進管理表"><span class="nav-icon">📥</span><span class="nav-label">回填至管理表</span></div>
         </div>
     </aside>
 
@@ -3163,7 +3164,10 @@ async function deleteProjectRow(r) {
     let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
     if (!hasData) return;
 
-    if (!(await uiConfirm(`確定要刪除 / 取消「${d[3] || '此案件'}」嗎？\n刪除後數據中心將同步扣除此筆資料。`, "刪除案件"))) return;
+    if (!(await uiConfirm(`確定要刪除 / 取消「${d[3] || '此案件'}」嗎？\n刪除後數據中心將同步扣除此筆資料，管理表對應的專案(若有)也會一併刪除。`, "刪除案件"))) return;
+
+    // 🌟 刪除前先把管理表對應的文件也刪掉，並讓「列→管理表文件」對照表跟著位移，避免刪除後對照錯列
+    if (window.deletePmRowSync) await window.deletePmRowSync(r, curY);
 
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     for (let i = r; i < rc - 1; i++) {
@@ -3830,10 +3834,13 @@ window.onload = () => {
         return typeStr.includes('圖') ? 'image' : 'video';
     }
 
-    // 把單一列營收資料同步成管理表的一筆「待分派」專案。
-    // V2：管理表改版後，文件 ID 固定用「類別_區域_編號」這條公式(不論新增或編輯都一樣)，
-    // 這裡跟著套用同一條公式，這樣你之後在管理表打開這筆專案存檔時，會更新同一份文件，不會另外多一份。
-    // 只有「客戶」「案名」「編號」都有填，才會建立 —— 缺編號就沒辦法算出跟管理表一致的區域/文件位置，先不建立。
+    // 把單一列營收資料同步成管理表的一筆專案。
+    // V3：文件 ID 固定用「類別_區域_編號」(跟管理表自己存檔用的公式一致)，這樣你之後在管理表打開
+    // 這筆專案存檔，更新的會是同一份文件。
+    // 只有「客戶」「案名」「編號」都有填，才會建立。
+    // 只有「管理表裡還沒有這筆專案」時，才會帶入 producer:尚未暫定 / status:尚未進行；
+    // 如果專案已經存在(不管是之前同步過、還是你自己在管理表建的)，一律不去動製作人跟狀態這兩欄，
+    // 避免你在管理表手動指派好的東西，被營收表這邊的編修動作打回原形。
     window.syncRowToPM = async function(r, year) {
         if (!pmDb) return;
         const d = window.getRowData(r);
@@ -3847,6 +3854,7 @@ window.onload = () => {
         const prefix = prefixMatch ? prefixMatch[0] : 'Z';
         const zone = `${prefix}_${client}`;
         const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+        const docRef = doc(pmDb, 'projects', docId);
 
         const payload = {
             category: category,
@@ -3854,15 +3862,10 @@ window.onload = () => {
             id: idRaw,
             client: client,
             name: name,
-            producer: '尚未暫定',
             type: d[4] || '',
             start: d[5] || '',
             end: d[5] || '',
-            note: `[營收表自動建立] 未稅額 $${d[9] || 0}`,
-            tag: '',
-            status: '尚未進行',
-            hours: 0,
-            link: ''
+            note: `[營收表自動建立] 未稅額 $${d[9] || 0}`
         };
 
         // 記住這一列上次同步到管理表的哪個文件；如果這次編號/客戶/類型改變導致算出的文件位置換了，
@@ -3876,12 +3879,121 @@ window.onload = () => {
             if (prevDocId && prevDocId !== docId) {
                 await deleteDoc(doc(pmDb, 'projects', prevDocId)).catch(() => {});
             }
-            await setDoc(doc(pmDb, 'projects', docId), payload, { merge: true });
+            const existing = await getDoc(docRef);
+            if (!existing.exists()) {
+                payload.producer = '尚未暫定';
+                payload.status = '尚未進行';
+                payload.tag = '';
+                payload.hours = 0;
+                payload.link = '';
+            }
+            await setDoc(docRef, payload, { merge: true });
             pmDocMap[r] = docId;
             localStorage.setItem(mapKey, JSON.stringify(pmDocMap));
         } catch (e) {
             console.error('同步至杰冉管理表失敗:', e);
         }
+    };
+
+    // 🌟 新增：刪除某一列時，順手刪掉管理表對應的文件，並讓「列→文件」對照表跟著往上位移
+    // (跟主表刪除列時「下面資料往上搬」的邏輯保持一致，避免刪除後對照到錯的列)
+    window.deletePmRowSync = async function(r, year) {
+        if (!pmDb) return;
+        const mapKey = `vB_PmDocMap_${year}`;
+        let pmDocMap = {};
+        try { pmDocMap = JSON.parse(localStorage.getItem(mapKey)) || {}; } catch(e) {}
+
+        const docIdToDelete = pmDocMap[r];
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+
+        let newMap = {};
+        for (let i = 0; i < rc; i++) {
+            if (i < r) { if (pmDocMap[i] !== undefined) newMap[i] = pmDocMap[i]; }
+            else if (i < rc - 1) { if (pmDocMap[i + 1] !== undefined) newMap[i] = pmDocMap[i + 1]; }
+        }
+        localStorage.setItem(mapKey, JSON.stringify(newMap));
+
+        if (docIdToDelete) {
+            try { await deleteDoc(doc(pmDb, 'projects', docIdToDelete)); }
+            catch (e) { console.error('刪除管理表對應專案失敗:', e); }
+        }
+    };
+
+    // 🌟 新增：一次把目前所有年度、所有案件明細列回填進管理表(以營收表為準)。
+    // 只針對「管理表裡還沒有」的專案帶入 producer:''(不指定任何人)、status:已完成，
+    // 這樣不會塞爆管理表的「待分派」清單(待分派只看 producer 是不是「尚未暫定」)，
+    // 也不會誤算進魏敏軒/邱仁杰的看板；但數據中心跟 VIP 客戶專區一樣看得到這些資料。
+    // 專案如果已經存在(不管是之前同步過、還是你自己在管理表手動處理過)，一律不去動製作人跟狀態。
+    window.bulkSyncAllToPM = async function() {
+        if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
+        if (!(await uiConfirm(
+            "即將把目前所有年度、所有案件明細列，一次同步進管理表(以營收表為準)。\n\n" +
+            "已經在管理表裡的專案，只會更新客戶/案名/類型/日期/備註，不會動到你已經指派好的製作人跟狀態。\n" +
+            "全新的專案會標記狀態為「已完成」、不指定製作人，不會出現在待分派清單。\n\n" +
+            "案件數量多的話會需要一點時間，確定要執行嗎？",
+            "批次回填確認"
+        ))) return;
+
+        const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+        let successCount = 0, skipCount = 0, failCount = 0;
+
+        for (const year of yList) {
+            const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+            const mapKey = `vB_PmDocMap_${year}`;
+            let pmDocMap = {};
+            try { pmDocMap = JSON.parse(localStorage.getItem(mapKey)) || {}; } catch(e) {}
+
+            for (let r = 0; r < rc; r++) {
+                const raw = localStorage.getItem(`d_${year}_${r}`);
+                if (!raw) continue;
+                let d = {};
+                try { d = JSON.parse(raw); } catch(e) { continue; }
+
+                const client = (d[2] || '').trim();
+                const name = (d[3] || '').trim();
+                const idRaw = (d[1] || '').trim().toUpperCase();
+                if (!client || !name || !idRaw) { skipCount++; continue; }
+
+                const category = mapPmCategory(d[4]);
+                const prefixMatch = idRaw.match(/^[A-Z]+/);
+                const prefix = prefixMatch ? prefixMatch[0] : 'Z';
+                const zone = `${prefix}_${client}`;
+                const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+                const docRef = doc(pmDb, 'projects', docId);
+
+                const payload = {
+                    category: category,
+                    zone: zone,
+                    id: idRaw,
+                    client: client,
+                    name: name,
+                    type: d[4] || '',
+                    start: d[5] || '',
+                    end: d[5] || '',
+                    note: `[營收表自動建立] 未稅額 $${d[9] || 0}`
+                };
+
+                try {
+                    const existing = await getDoc(docRef);
+                    if (!existing.exists()) {
+                        payload.producer = '';
+                        payload.status = '已完成';
+                        payload.tag = '';
+                        payload.hours = 0;
+                        payload.link = '';
+                    }
+                    await setDoc(docRef, payload, { merge: true });
+                    pmDocMap[r] = docId;
+                    successCount++;
+                } catch (e) {
+                    console.error(`${year} 年第 ${r} 列同步失敗:`, e);
+                    failCount++;
+                }
+            }
+            localStorage.setItem(mapKey, JSON.stringify(pmDocMap));
+        }
+
+        await uiAlert(`✅ 批次回填完成！\n成功同步 ${successCount} 筆\n跳過(缺客戶/案名/編號) ${skipCount} 筆\n失敗 ${failCount} 筆`);
     };
 
     // V2.28：讀取並顯示夥伴專屬的分潤總覽資料（唯讀）
