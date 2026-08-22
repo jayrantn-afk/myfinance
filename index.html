@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.83</title>
+    <title>杰冉宇宙營收表 V2.84</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3028,15 +3028,18 @@ function createRow(r) {
         }
         tr.appendChild(td);
 
-        // V2.83：在「類型」欄位右邊插入「指派」欄。資料存在獨立的第 22 欄，不會動到原本 0~21 欄的欄位配置
+        // V2.84：在「類型」欄位右邊插入「指派」欄。資料存在獨立的第 22 欄，不會動到原本 0~21 欄的欄位配置
+        // 順序改成「杰、魏」，兩顆可以同時點亮(代表一起做)
         if (c === 4) {
             let assignVal = saved[22] || '';
+            let hasChiu = assignVal.indexOf('杰') !== -1;
+            let hasWei = assignVal.indexOf('魏') !== -1;
             let assignTd = document.createElement('td');
             assignTd.className = 'calc-cell';
             assignTd.innerHTML = `<input type="hidden" id="r${r}c22" value="${assignVal}">
                 <div style="display:flex; gap:4px; justify-content:center;">
-                    <span class="assign-badge ${assignVal === '魏' ? 'active-wei' : ''}" id="r${r}c22badgeWei" onclick="toggleAssign(${r}, '魏')" title="指派給魏敏軒">魏</span>
-                    <span class="assign-badge ${assignVal === '杰' ? 'active-chiu' : ''}" id="r${r}c22badgeChiu" onclick="toggleAssign(${r}, '杰')" title="指派給邱仁杰">杰</span>
+                    <span class="assign-badge ${hasChiu ? 'active-chiu' : ''}" id="r${r}c22badgeChiu" onclick="toggleAssign(${r}, '杰')" title="指派給邱仁杰">杰</span>
+                    <span class="assign-badge ${hasWei ? 'active-wei' : ''}" id="r${r}c22badgeWei" onclick="toggleAssign(${r}, '魏')" title="指派給魏敏軒">魏</span>
                 </div>`;
             tr.appendChild(assignTd);
         }
@@ -3560,16 +3563,21 @@ function togglePartnerPaid(r) {
 }
 window.togglePartnerPaid = togglePartnerPaid;
 
-// V2.83：指派人員按鈕(魏/杰)，點下去發光標示這案子是誰的，再點一次同一個人取消指派
+// V2.84：指派人員按鈕(杰/魏)，各自獨立切換、可以同時點亮代表「一起做」，再點一次同一顆取消那個人
 function toggleAssign(r, who) {
     const hidden = document.getElementById(`r${r}c22`);
     if (!hidden) return;
-    const newVal = (hidden.value === who) ? '' : who;
+    let cur = hidden.value || '';
+    let hasChiu = cur.indexOf('杰') !== -1;
+    let hasWei = cur.indexOf('魏') !== -1;
+    if (who === '杰') hasChiu = !hasChiu;
+    if (who === '魏') hasWei = !hasWei;
+    const newVal = (hasChiu ? '杰' : '') + (hasWei ? '魏' : '');
     hidden.value = newVal;
     const weiBadge = document.getElementById(`r${r}c22badgeWei`);
     const chiuBadge = document.getElementById(`r${r}c22badgeChiu`);
-    if (weiBadge) weiBadge.classList.toggle('active-wei', newVal === '魏');
-    if (chiuBadge) chiuBadge.classList.toggle('active-chiu', newVal === '杰');
+    if (weiBadge) weiBadge.classList.toggle('active-wei', hasWei);
+    if (chiuBadge) chiuBadge.classList.toggle('active-chiu', hasChiu);
     calc(r, 22, true);
 }
 window.toggleAssign = toggleAssign;
@@ -3965,10 +3973,14 @@ window.onload = () => {
         return typeStr.includes('圖') ? 'image' : 'video';
     }
 
-    // V2.83：營收表的「指派」欄(魏/杰)對應管理表的實際製作人姓名，沒指派就是尚未暫定
+    // V2.84：營收表的「指派」欄(杰/魏)對應管理表的實際製作人，兩個都點就對應「一起」
     function mapPmProducer(assignVal) {
-        if (assignVal === '魏') return '魏敏軒';
-        if (assignVal === '杰') return '邱仁杰';
+        const v = assignVal || '';
+        const hasChiu = v.indexOf('杰') !== -1;
+        const hasWei = v.indexOf('魏') !== -1;
+        if (hasChiu && hasWei) return '一起';
+        if (hasChiu) return '邱仁杰';
+        if (hasWei) return '魏敏軒';
         return '尚未暫定';
     }
 
