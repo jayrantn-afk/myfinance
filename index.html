@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.95</title>
+    <title>杰冉宇宙營收表 V2.96</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4039,7 +4039,11 @@ window.onload = () => {
 
     // V2.95 修正：管理表畫面上「已完成」的綠色標籤，其實對應兩種可能的狀態字串：已完成、已結案，
     // 兩個都會顯示一樣的完成樣式。之前只認「已完成」，完全沒發現「已結案」這個值，才會一直改不掉。
-    function isDoneStatus(s) { return s === '已完成' || s === '已結案'; }
+    function isDoneStatus(s) {
+        if (!s) return false;
+        const t = String(s).trim();
+        return t === '已完成' || t === '已結案' || t.indexOf('完成') !== -1 || t.indexOf('結案') !== -1;
+    }
 
     // V2.86 修正：拿掉「是否已有製作人」這個判斷條件——現在製作人也可能是營收表指派欄(杰/魏/一起)
     // 同步帶進來的，不代表你在管理表手動處理過，不該因此就完全不能再校正。
@@ -4165,6 +4169,7 @@ window.onload = () => {
         // 其餘情況(製，但管理表本來就不是已完成)不去動狀態，保留管理表自己在跑的細節狀態(製作中/審核中等)。
         // 製作人只有在「從沒被指派過、沒有工時」時才會套用指派欄，避免蓋掉手動指派+已經動工的專案。
         let finalStatusByDocId = new Map(); // 記錄「這次同步完之後，管理表這份文件真正的最終狀態」，避免下面回拉燈號時看到修改前的舊資料
+        let rawStatusSamples = []; // 診斷用：把「結案燈號是製、但原始狀態字串長什麼樣子」直接記下來給你看，不用再猜
         let writeOps = entries.map(e => {
             const existing = existingMap.get(e.docId);
             const doneFlag = (e.d[24] || '製') === '完';
@@ -4185,6 +4190,11 @@ window.onload = () => {
                 const noHours = !(parseFloat(existing.hours) > 0);
                 const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
                 if (noHours && noRealProducer) payload.producer = mapPmProducer(e.d[22]);
+
+                const knownNotDone = existing.status === '尚未進行' || existing.status === '製作中' || (existing.status && existing.status.indexOf('審') !== -1);
+                if (!doneFlag && !knownNotDone && rawStatusSamples.length < 8) {
+                    rawStatusSamples.push({ idRaw: e.idRaw, client: e.client, docId: e.docId, rawStatus: JSON.stringify(existing.status), producer: JSON.stringify(existing.producer), hours: JSON.stringify(existing.hours) });
+                }
             }
             finalStatusByDocId.set(e.docId, payload.status || (existing ? existing.status : null));
             return { docId: e.docId, payload };
@@ -4318,6 +4328,10 @@ window.onload = () => {
         }
 
         let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正(保險機制,位置對不上時抓到的) ${strayFixed} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        if (rawStatusSamples.length > 0) {
+            resultMsg += `\n\n🔍 診斷：以下是「結案燈號=製，但管理表原始狀態不是常見值」的實際內容：\n`;
+            resultMsg += rawStatusSamples.map(s => `・編號[${s.idRaw}] 客戶[${s.client}]\n   status=${s.rawStatus} producer=${s.producer} hours=${s.hours}`).join('\n');
+        }
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
