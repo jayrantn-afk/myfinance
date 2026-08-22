@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.72</title>
+    <title>杰冉宇宙營收表 V2.73</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -745,6 +745,7 @@
             <div class="app-sidebar-btn backup" onclick="openBackupModal()" title="版本備份"><span class="nav-icon">📜</span><span class="nav-label">版本備份</span></div>
             <div class="app-sidebar-btn" onclick="exportData()" title="匯出電腦備份"><span class="nav-icon">📤</span><span class="nav-label">匯出電腦備份</span></div>
             <div class="app-sidebar-btn" style="color:#6C5CE7" onclick="bulkSyncAllToPM()" title="把所有案件回填進管理表"><span class="nav-icon">📥</span><span class="nav-label">回填至管理表</span></div>
+            <div class="app-sidebar-btn" style="color:#D32F2F" onclick="pmCleanupOrphans()" title="刪除管理表裡營收表沒有的多餘專案"><span class="nav-icon">🧹</span><span class="nav-label">清理管理表多餘專案</span></div>
         </div>
     </aside>
 
@@ -3812,7 +3813,7 @@ window.onload = () => {
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
 
     // =========================================================
-    // 🌟 新增：連接杰冉管理表(jayran-pm)，做「營收表新增 → 管理表自動建檔」
+    // V2.71 新增：連接杰冉管理表(jayran-pm)，做「營收表新增 → 管理表自動建檔」
     // =========================================================
     const pmFirebaseConfig = {
         apiKey: "AIzaSyC3iyQNiYHWjA9yPbMni27C7KENfIUHZu4",
@@ -3835,7 +3836,7 @@ window.onload = () => {
     }
 
     // 把單一列營收資料同步成管理表的一筆專案。
-    // V3：文件 ID 固定用「類別_區域_編號」(跟管理表自己存檔用的公式一致)，這樣你之後在管理表打開
+    // V2.72：文件 ID 固定用「類別_區域_編號」(跟管理表自己存檔用的公式一致)，這樣你之後在管理表打開
     // 這筆專案存檔，更新的會是同一份文件。
     // 只有「客戶」「案名」「編號」都有填，才會建立。
     // 只有「管理表裡還沒有這筆專案」時，才會帶入 producer:尚未暫定 / status:尚未進行；
@@ -3895,7 +3896,7 @@ window.onload = () => {
         }
     };
 
-    // 🌟 新增：刪除某一列時，順手刪掉管理表對應的文件，並讓「列→文件」對照表跟著往上位移
+    // V2.72 新增：刪除某一列時，順手刪掉管理表對應的文件，並讓「列→文件」對照表跟著往上位移
     // (跟主表刪除列時「下面資料往上搬」的邏輯保持一致，避免刪除後對照到錯的列)
     window.deletePmRowSync = async function(r, year) {
         if (!pmDb) return;
@@ -3919,7 +3920,7 @@ window.onload = () => {
         }
     };
 
-    // 🌟 新增：一次把目前所有年度、所有案件明細列回填進管理表(以營收表為準)。
+    // V2.72 新增：一次把目前所有年度、所有案件明細列回填進管理表(以營收表為準)。
     // 只針對「管理表裡還沒有」的專案帶入 producer:''(不指定任何人)、status:已完成，
     // 這樣不會塞爆管理表的「待分派」清單(待分派只看 producer 是不是「尚未暫定」)，
     // 也不會誤算進魏敏軒/邱仁杰的看板；但數據中心跟 VIP 客戶專區一樣看得到這些資料。
@@ -3994,6 +3995,82 @@ window.onload = () => {
         }
 
         await uiAlert(`✅ 批次回填完成！\n成功同步 ${successCount} 筆\n跳過(缺客戶/案名/編號) ${skipCount} 筆\n失敗 ${failCount} 筆`);
+    };
+
+    // V2.73 新增：以營收表為準，清掉管理表裡「營收表沒有對應資料」的多餘專案
+    // (不管那筆專案是之前同步過的、還是直接在管理表手動新增的，只要營收表這邊找不到對應資料，都算多餘)
+    // 執行前會先列出清單讓你確認，不會沒問過你就砍
+    window.pmCleanupOrphans = async function() {
+        if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
+
+        // Step 1：把營收表目前所有年度、所有列，算出「應該存在」的文件 ID 清單
+        const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+        let expectedDocIds = new Set();
+        for (const year of yList) {
+            const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+            for (let r = 0; r < rc; r++) {
+                const raw = localStorage.getItem(`d_${year}_${r}`);
+                if (!raw) continue;
+                let d = {};
+                try { d = JSON.parse(raw); } catch(e) { continue; }
+                const client = (d[2] || '').trim();
+                const name = (d[3] || '').trim();
+                const idRaw = (d[1] || '').trim().toUpperCase();
+                if (!client || !name || !idRaw) continue;
+                const category = mapPmCategory(d[4]);
+                const prefixMatch = idRaw.match(/^[A-Z]+/);
+                const prefix = prefixMatch ? prefixMatch[0] : 'Z';
+                const zone = `${prefix}_${client}`;
+                expectedDocIds.add(`${category}_${zone.replace(/\s+/g, '')}_${idRaw}`);
+            }
+        }
+
+        // Step 2：讀出管理表目前所有專案，找出不在上面清單裡的
+        let allDocs;
+        try {
+            allDocs = await getDocs(collection(pmDb, 'projects'));
+        } catch(e) {
+            console.error(e);
+            await uiAlert("讀取管理表資料失敗，請稍後再試。");
+            return;
+        }
+
+        let orphans = [];
+        allDocs.forEach(docSnap => {
+            if (!expectedDocIds.has(docSnap.id)) {
+                const data = docSnap.data() || {};
+                orphans.push({ docId: docSnap.id, client: data.client || '', name: data.name || '', pid: data.id || '' });
+            }
+        });
+
+        if (orphans.length === 0) {
+            await uiAlert("目前管理表跟營收表的案件已經一致，沒有找到多餘的專案。");
+            return;
+        }
+
+        const sampleList = orphans.slice(0, 15).map(o => `・${o.pid || '(無編號)'} ${o.client} - ${o.name}`).join('\n');
+        const moreNote = orphans.length > 15 ? `\n...以及其他 ${orphans.length - 15} 筆` : '';
+
+        const confirmed = await uiConfirm(
+            `找到 ${orphans.length} 筆管理表裡「營收表沒有對應資料」的專案：\n\n${sampleList}${moreNote}\n\n` +
+            `⚠️ 這包含你自己直接在管理表新增、沒有記在營收表上的專案，只要營收表找不到對應資料，都會被視為多餘一併刪除。\n` +
+            `確定要把這 ${orphans.length} 筆全部從管理表刪除嗎？此動作無法復原。`,
+            "清理管理表確認"
+        );
+        if (!confirmed) return;
+
+        let deletedCount = 0, failCount = 0;
+        for (const o of orphans) {
+            try {
+                await deleteDoc(doc(pmDb, 'projects', o.docId));
+                deletedCount++;
+            } catch(e) {
+                console.error(`刪除 ${o.docId} 失敗:`, e);
+                failCount++;
+            }
+        }
+
+        await uiAlert(`✅ 清理完成！\n成功刪除 ${deletedCount} 筆\n失敗 ${failCount} 筆`);
     };
 
     // V2.28：讀取並顯示夥伴專屬的分潤總覽資料（唯讀）
