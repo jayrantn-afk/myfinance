@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.74</title>
+    <title>杰冉宇宙營收表 V2.75</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2997,7 +2997,7 @@ function createRow(r) {
         }
         
         if (c===1) {
-            td.innerHTML = `<div class="id-ghost" id="r${r}c${c}ghost"></div><input type="text" id="r${r}c${c}" class="id-input" value="${val}" autocomplete="off" oninput="handleIdInput(${r})" onkeydown="handleIdKeydown(event, ${r})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
+            td.innerHTML = `<div class="id-ghost" id="r${r}c${c}ghost"></div><input type="text" id="r${r}c${c}" class="id-input" value="${val}" autocomplete="off" oninput="handleIdInput(${r})" onkeydown="handleIdKeydown(event, ${r})" onblur="checkIdDuplicate(${r})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
         }
         else if (c===2) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
@@ -3547,20 +3547,46 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 function computeNextIdForPrefix(prefix, currentRow) {
     let maxNum = 0, pad = 3;
-    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    for (let i = 0; i < rc; i++) {
-        if (i === currentRow) continue;
-        let d = getRowData(i);
-        let existingId = (d[1] || '').trim();
-        if (!existingId.startsWith(prefix)) continue; // 區分大小寫，A 系列跟 a 系列不會互相干擾
-        let rest = existingId.slice(prefix.length);
-        let m = rest.match(/^(\d+)/);
-        if (!m) continue;
-        let num = parseInt(m[1], 10);
-        if (num >= maxNum) { maxNum = num; pad = m[1].length; }
-    }
+    // V2.75：改成跨「全部年度」掃描(不再只看目前年度)，避免同一個編號在不同年度被重複建議/重複使用
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    yList.forEach(year => {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let i = 0; i < rc; i++) {
+            if (year === curY && i === currentRow) continue;
+            let d;
+            try { d = JSON.parse(localStorage.getItem(`d_${year}_${i}`)) || {}; } catch(e) { continue; }
+            let existingId = (d[1] || '').trim();
+            if (!existingId.startsWith(prefix)) continue; // 區分大小寫，A 系列跟 a 系列不會互相干擾
+            let rest = existingId.slice(prefix.length);
+            let m = rest.match(/^(\d+)/);
+            if (!m) continue;
+            let num = parseInt(m[1], 10);
+            if (num >= maxNum) { maxNum = num; pad = m[1].length; }
+        }
+    });
     if (maxNum === 0) return null; // 這個字首之前沒紀錄過，不主動建議，讓使用者自己打
     return prefix + String(maxNum + 1).padStart(pad, '0');
+}
+
+// V2.75：編號欄位失焦時，檢查這個完整編號是否在其他年度/其他列已經用過(撞號提醒，不會擋你儲存)
+function checkIdDuplicate(r) {
+    const input = document.getElementById(`r${r}c1`);
+    if (!input) return;
+    const val = input.value.trim();
+    if (!/^[A-Za-z]+\d+$/.test(val)) return; // 只在編號已經是「完整字母+數字」時才檢查
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    for (const year of yList) {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let i = 0; i < rc; i++) {
+            if (year === curY && i === r) continue;
+            let d;
+            try { d = JSON.parse(localStorage.getItem(`d_${year}_${i}`)) || {}; } catch(e) { continue; }
+            if ((d[1] || '').trim() === val) {
+                showToast(`⚠️ 編號 ${val} 在 ${year}年 已經用過(${d[2] || '未填客戶'} - ${d[3] || '未填案名'})，請確認是否打錯`, "error");
+                return;
+            }
+        }
+    }
 }
 
 function updateIdGhost(r) {
@@ -4000,23 +4026,16 @@ window.onload = () => {
     // 專案如果已經存在(不管是之前同步過、還是你自己在管理表手動處理過)，一律不去動製作人跟狀態。
     window.bulkSyncAllToPM = async function() {
         if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
-        if (!(await uiConfirm(
-            "即將把目前所有年度、所有案件明細列，一次同步進管理表(以營收表為準)。\n\n" +
-            "已經在管理表裡的專案，只會更新客戶/案名/類型/日期/備註，不會動到你已經指派好的製作人跟狀態。\n" +
-            "全新的專案會標記狀態為「已完成」、不指定製作人，不會出現在待分派清單。\n\n" +
-            "案件數量多的話會需要一點時間，確定要執行嗎？",
-            "批次回填確認"
-        ))) return;
 
         const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
-        let successCount = 0, skipCount = 0, failCount = 0;
+
+        // Step 1：先掃過一輪，收集每一列算出來的文件位置，順便抓出「缺欄位被跳過」跟「編號重複」的狀況，
+        // 不要悶著頭直接寫，讓你先看得到問題在哪一列
+        let entries = [];
+        let skipped = [];
 
         for (const year of yList) {
             const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
-            const mapKey = `vB_PmDocMap_${year}`;
-            let pmDocMap = {};
-            try { pmDocMap = JSON.parse(localStorage.getItem(mapKey)) || {}; } catch(e) {}
-
             for (let r = 0; r < rc; r++) {
                 const raw = localStorage.getItem(`d_${year}_${r}`);
                 if (!raw) continue;
@@ -4026,48 +4045,98 @@ window.onload = () => {
                 const client = (d[2] || '').trim();
                 const name = (d[3] || '').trim();
                 const idRaw = (d[1] || '').trim().toUpperCase();
-                if (!client || !name || !idRaw) { skipCount++; continue; }
+                if (!client || !name || !idRaw) {
+                    if (client || name || idRaw) { // 完全空白的列不用打擾你，只列出「有填一部分但不完整」的
+                        skipped.push({ year, row: r, client, name, idRaw: (d[1] || '').trim() });
+                    }
+                    continue;
+                }
 
                 const category = mapPmCategory(d[4]);
                 const prefixMatch = idRaw.match(/^[A-Z]+/);
                 const prefix = prefixMatch ? prefixMatch[0] : 'Z';
                 const zone = `${prefix}_${client}`;
                 const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
-                const docRef = doc(pmDb, 'projects', docId);
-
-                const payload = {
-                    category: category,
-                    zone: zone,
-                    id: idRaw,
-                    client: client,
-                    name: name,
-                    type: d[4] || '',
-                    start: d[5] || '',
-                    end: d[5] || '',
-                    note: `[營收表自動建立] 未稅額 $${d[9] || 0}`
-                };
-
-                try {
-                    const existing = await getDoc(docRef);
-                    if (!existing.exists()) {
-                        payload.producer = '';
-                        payload.status = '已完成';
-                        payload.tag = '';
-                        payload.hours = 0;
-                        payload.link = '';
-                    }
-                    await setDoc(docRef, payload, { merge: true });
-                    pmDocMap[r] = docId;
-                    successCount++;
-                } catch (e) {
-                    console.error(`${year} 年第 ${r} 列同步失敗:`, e);
-                    failCount++;
-                }
+                entries.push({ year, row: r, client, name, idRaw, category, zone, docId, d });
             }
-            localStorage.setItem(mapKey, JSON.stringify(pmDocMap));
         }
 
-        await uiAlert(`✅ 批次回填完成！\n成功同步 ${successCount} 筆\n跳過(缺客戶/案名/編號) ${skipCount} 筆\n失敗 ${failCount} 筆`);
+        // 找出算出「同一個管理表文件位置」的重複列(通常是編號在不同年度或不同案子被重複使用)
+        let byDocId = {};
+        entries.forEach(e => { (byDocId[e.docId] = byDocId[e.docId] || []).push(e); });
+        let duplicateGroups = Object.values(byDocId).filter(g => g.length > 1);
+
+        // Step 2：把問題列清楚列出來，讓你決定要不要先回去修正再跑
+        if (skipped.length > 0 || duplicateGroups.length > 0) {
+            let msg = '';
+            if (skipped.length > 0) {
+                msg += `⚠️ 以下 ${skipped.length} 列缺客戶/案名/編號，這次不會同步：\n`;
+                msg += skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
+                if (skipped.length > 10) msg += `\n...以及其他 ${skipped.length - 10} 列`;
+                msg += '\n\n';
+            }
+            if (duplicateGroups.length > 0) {
+                msg += `⚠️ 以下編號重複使用，管理表只會留下最後處理的那一筆：\n`;
+                msg += duplicateGroups.slice(0, 10).map(g =>
+                    `・編號 ${g[0].idRaw}(${g[0].client})：` + g.map(e => `${e.year}年第${e.row + 1}列`).join('、')
+                ).join('\n');
+                if (duplicateGroups.length > 10) msg += `\n...以及其他 ${duplicateGroups.length - 10} 組`;
+            }
+            msg += '\n\n是否仍要繼續同步(重複編號的只會留最後一筆)？建議先按取消，回去修正編號後再重跑。';
+            if (!(await uiConfirm(msg, "回填前發現問題資料"))) return;
+        } else {
+            if (!(await uiConfirm(
+                "即將把目前所有年度、所有案件明細列，一次同步進管理表(以營收表為準)。\n\n" +
+                "已經在管理表裡的專案，只會更新客戶/案名/類型/日期/備註，不會動到你已經指派好的製作人跟狀態。\n" +
+                "全新的專案會標記狀態為「已完成」、不指定製作人，不會出現在待分派清單。\n\n" +
+                "確定要執行嗎？",
+                "批次回填確認"
+            ))) return;
+        }
+
+        // Step 3：正式寫入
+        let successCount = 0, failCount = 0;
+        let pmDocMapByYear = {};
+
+        for (const e of entries) {
+            const docRef = doc(pmDb, 'projects', e.docId);
+            const payload = {
+                category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
+                type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
+                note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
+            };
+            try {
+                const existing = await getDoc(docRef);
+                if (!existing.exists()) {
+                    payload.producer = '';
+                    payload.status = '已完成';
+                    payload.tag = '';
+                    payload.hours = 0;
+                    payload.link = '';
+                }
+                await setDoc(docRef, payload, { merge: true });
+                (pmDocMapByYear[e.year] = pmDocMapByYear[e.year] || {})[e.row] = e.docId;
+                successCount++;
+            } catch (err) {
+                console.error(`${e.year} 年第 ${e.row} 列同步失敗:`, err);
+                failCount++;
+            }
+        }
+
+        for (const year in pmDocMapByYear) {
+            const mapKey = `vB_PmDocMap_${year}`;
+            let existingMap = {};
+            try { existingMap = JSON.parse(localStorage.getItem(mapKey)) || {}; } catch(e) {}
+            Object.assign(existingMap, pmDocMapByYear[year]);
+            localStorage.setItem(mapKey, JSON.stringify(existingMap));
+        }
+
+        const distinctDocCount = new Set(entries.map(e => e.docId)).size;
+        let resultMsg = `✅ 批次回填完成！\n處理 ${entries.length} 列，實際寫入 ${distinctDocCount} 筆專案\n跳過(缺客戶/案名/編號) ${skipped.length} 筆\n寫入失敗 ${failCount} 筆`;
+        if (duplicateGroups.length > 0) {
+            resultMsg += `\n\n提醒：有 ${duplicateGroups.length} 組編號重複，管理表裡只會看到最後處理那一筆的資料，其餘那幾筆的營收記錄還在營收表上，只是沒有各自對應到管理表專案，建議修正編號後重新回填。`;
+        }
+        await uiAlert(resultMsg);
     };
 
     // V2.73 新增：以營收表為準，清掉管理表裡「營收表沒有對應資料」的多餘專案
