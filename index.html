@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.84</title>
+    <title>杰冉宇宙營收表 V2.86</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3984,15 +3984,31 @@ window.onload = () => {
         return '尚未暫定';
     }
 
-    // V2.82 修正：判斷一筆管理表專案是不是「自動建立、從沒被指派過製作人、也沒有工時」的空白樁。
-    // 不管它是全新建立的、還是舊版同步邏輯留下的殘留，只要符合這個條件，都可以安全地把製作人/狀態
-    // 重設成「尚未暫定/尚未進行」讓它正常進待分派；只要你已經指派過人或填過工時，就不算，完全不會被動到。
+    // V2.86 修正：拿掉「是否已有製作人」這個判斷條件——現在製作人也可能是營收表指派欄(杰/魏/一起)
+    // 同步帶進來的，不代表你在管理表手動處理過，不該因此就完全不能再校正。
+    // 改成只看「有沒有真的填過工時」：沒有工時，代表案子實際上還沒真的開始動工，不管製作人是誰，
+    // 管理表都可以放心讓同步繼續依照最新的營收表資料(交件日、指派欄)校正製作人跟狀態；
+    // 只要曾經填過工時，就代表真的動工了，完全不會再被同步碰到。
     function isUntouchedAutoStub(data) {
         if (!data) return true; // 還不存在，等同於全新建立，可以放心設定初始值
         const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
-        const noRealProducer = !data.producer || data.producer === '尚未暫定';
         const noHours = !(parseFloat(data.hours) > 0);
-        return isAutoCreated && noRealProducer && noHours;
+        return isAutoCreated && noHours;
+    }
+
+    // V2.85 修正：狀態不能一律套同一個值，要看「交件日」是不是已經過了。
+    // 用「年月」欄(格式 YYYY-MM，比原始交件日文字更好比對)判斷：比現在月份早 → 已完成；
+    // 本月或還沒到 → 尚未進行。沒有年月資料就一律當尚未進行，不會亂猜。
+    function inferAutoStatus(yearMonthStr) {
+        if (!yearMonthStr) return '尚未進行';
+        const parts = String(yearMonthStr).split('-');
+        if (parts.length !== 2) return '尚未進行';
+        const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+        if (isNaN(y) || isNaN(m)) return '尚未進行';
+        const now = new Date();
+        const curYear = now.getFullYear(), curMonth = now.getMonth() + 1;
+        if (y < curYear || (y === curYear && m < curMonth)) return '已完成';
+        return '尚未進行';
     }
 
     // V2.79 修正：上一版的刪除邏輯太危險——只要編號/客戶/分類算出來的位置沒有剛好對上營收表，
@@ -4076,7 +4092,7 @@ window.onload = () => {
             };
             if (isUntouchedAutoStub(existingMap.get(e.docId))) {
                 payload.producer = mapPmProducer(e.d[22]);
-                payload.status = '尚未進行';
+                payload.status = inferAutoStatus(e.d[0]);
                 payload.tag = '';
                 payload.hours = 0;
                 payload.link = '';
