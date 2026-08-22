@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.94</title>
+    <title>杰冉宇宙營收表 V2.95</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4037,6 +4037,10 @@ window.onload = () => {
         return '尚未暫定';
     }
 
+    // V2.95 修正：管理表畫面上「已完成」的綠色標籤，其實對應兩種可能的狀態字串：已完成、已結案，
+    // 兩個都會顯示一樣的完成樣式。之前只認「已完成」，完全沒發現「已結案」這個值，才會一直改不掉。
+    function isDoneStatus(s) { return s === '已完成' || s === '已結案'; }
+
     // V2.86 修正：拿掉「是否已有製作人」這個判斷條件——現在製作人也可能是營收表指派欄(杰/魏/一起)
     // 同步帶進來的，不代表你在管理表手動處理過，不該因此就完全不能再校正。
     // 改成只看「有沒有真的填過工時」：沒有工時，代表案子實際上還沒真的開始動工，不管製作人是誰，
@@ -4176,8 +4180,8 @@ window.onload = () => {
                 payload.hours = 0;
                 payload.link = '';
             } else {
-                if (doneFlag && existing.status !== '已完成') payload.status = '已完成';
-                else if (!doneFlag && existing.status === '已完成') payload.status = '尚未進行';
+                if (doneFlag && !isDoneStatus(existing.status)) payload.status = '已完成';
+                else if (!doneFlag && isDoneStatus(existing.status)) payload.status = '尚未進行';
                 const noHours = !(parseFloat(existing.hours) > 0);
                 const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
                 if (noHours && noRealProducer) payload.producer = mapPmProducer(e.d[22]);
@@ -4248,8 +4252,8 @@ window.onload = () => {
                     note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
                 };
                 let newStatus = null;
-                if (doneFlag && data.status !== '已完成') newStatus = '已完成';
-                else if (!doneFlag && data.status === '已完成') newStatus = '尚未進行';
+                if (doneFlag && !isDoneStatus(data.status)) newStatus = '已完成';
+                else if (!doneFlag && isDoneStatus(data.status)) newStatus = '尚未進行';
                 if (newStatus) strayPayload.status = newStatus;
 
                 strayBatch.set(doc(pmDb, 'projects', docId), strayPayload, { merge: true });
@@ -4266,7 +4270,7 @@ window.onload = () => {
         let pulledDoneCount = 0;
         entries.forEach(e => {
             const finalStatus = finalStatusByDocId.get(e.docId);
-            if (finalStatus === '已完成' && (e.d[24] || '製') !== '完') {
+            if (isDoneStatus(finalStatus) && (e.d[24] || '製') !== '完') {
                 let raw = localStorage.getItem(`d_${e.year}_${e.row}`);
                 let d = {};
                 try { d = raw ? JSON.parse(raw) : {}; } catch(err) {}
