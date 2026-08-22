@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.90</title>
+    <title>杰冉宇宙營收表 V2.91</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -163,6 +163,10 @@
         .assign-badge:hover { filter: brightness(0.95); }
         .assign-badge.active-wei { color: #FFF; background: #0A84FF; box-shadow: 0 0 8px rgba(10,132,255,0.6); }
         .assign-badge.active-chiu { color: #FFF; background: #00D26A; box-shadow: 0 0 8px rgba(0,210,106,0.6); }
+
+        /* V2.91：公司/老闆/夥伴金額三欄可收合，收合時直接隱藏整欄 */
+        #mainTable.amounts-hidden .amt-col { display: none; }
+        #toggleAmountsBtn.active { background: #1D1D1F; color: #FFF; }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
@@ -838,26 +842,29 @@
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
-                    <div class="month-nav">
-                        <button class="month-btn active" onclick="setMonthFilter('all', this)">全部月份</button>
-                        <button class="month-btn" onclick="setMonthFilter('01', this)">1月</button>
-                        <button class="month-btn" onclick="setMonthFilter('02', this)">2月</button>
-                        <button class="month-btn" onclick="setMonthFilter('03', this)">3月</button>
-                        <button class="month-btn" onclick="setMonthFilter('04', this)">4月</button>
-                        <button class="month-btn" onclick="setMonthFilter('05', this)">5月</button>
-                        <button class="month-btn" onclick="setMonthFilter('06', this)">6月</button>
-                        <button class="month-btn" onclick="setMonthFilter('07', this)">7月</button>
-                        <button class="month-btn" onclick="setMonthFilter('08', this)">8月</button>
-                        <button class="month-btn" onclick="setMonthFilter('09', this)">9月</button>
-                        <button class="month-btn" onclick="setMonthFilter('10', this)">10月</button>
-                        <button class="month-btn" onclick="setMonthFilter('11', this)">11月</button>
-                        <button class="month-btn" onclick="setMonthFilter('12', this)">12月</button>
+                    <div class="month-nav" style="justify-content: space-between; display: flex;">
+                        <div style="display: flex; gap: 8px; overflow-x: auto;">
+                            <button class="month-btn active" onclick="setMonthFilter('all', this)">全部月份</button>
+                            <button class="month-btn" onclick="setMonthFilter('01', this)">1月</button>
+                            <button class="month-btn" onclick="setMonthFilter('02', this)">2月</button>
+                            <button class="month-btn" onclick="setMonthFilter('03', this)">3月</button>
+                            <button class="month-btn" onclick="setMonthFilter('04', this)">4月</button>
+                            <button class="month-btn" onclick="setMonthFilter('05', this)">5月</button>
+                            <button class="month-btn" onclick="setMonthFilter('06', this)">6月</button>
+                            <button class="month-btn" onclick="setMonthFilter('07', this)">7月</button>
+                            <button class="month-btn" onclick="setMonthFilter('08', this)">8月</button>
+                            <button class="month-btn" onclick="setMonthFilter('09', this)">9月</button>
+                            <button class="month-btn" onclick="setMonthFilter('10', this)">10月</button>
+                            <button class="month-btn" onclick="setMonthFilter('11', this)">11月</button>
+                            <button class="month-btn" onclick="setMonthFilter('12', this)">12月</button>
+                        </div>
+                        <button id="toggleAmountsBtn" class="month-btn" onclick="toggleAmountColumns()" title="收合/展開公司、老闆、夥伴金額欄" style="flex-shrink:0;"><i class="fas fa-eye-slash"></i> 分潤金額</button>
                     </div>
                 </div>
                 <div class="table-scroll" id="input-view">
                     <!-- 🚨 隱藏 付款、尾款、未收金額 -->
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th class="amt-col" style="width:80px">公司金額</th><th class="amt-col" style="width:80px">老闆金額</th><th class="amt-col" style="width:80px">夥伴金額</th><th style="width:55px">結案</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -1834,6 +1841,17 @@ async function manageVip(action) {
 
 let currentMonthFilter = 'all';
 function setMonthFilter(m, el) { currentMonthFilter = m; document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); filterTable(); }
+
+// V2.91：收合/展開公司、老闆、夥伴金額三欄，記住使用者上次的選擇
+function toggleAmountColumns() {
+    const table = document.getElementById('mainTable');
+    const btn = document.getElementById('toggleAmountsBtn');
+    table.classList.toggle('amounts-hidden');
+    const hidden = table.classList.contains('amounts-hidden');
+    if (btn) btn.classList.toggle('active', hidden);
+    localStorage.setItem('vB_AmountsHidden', hidden ? '1' : '0');
+}
+window.toggleAmountColumns = toggleAmountColumns;
 
 function setStatusFilter(val, text, el) {
     document.getElementById('ssStatus').value = val;
@@ -3043,6 +3061,22 @@ function createRow(r) {
                 </div>`;
             tr.appendChild(assignTd);
         }
+
+        if ([17, 18, 19].includes(c)) td.classList.add('amt-col');
+
+        // V2.91：在「夥伴金額」欄位右邊、備註左邊插入「結案」欄。資料存在獨立的第 24 欄，
+        // 製/完互斥(一次只能選一個)，新案件預設「製」(製作中)
+        if (c === 19) {
+            let doneVal = saved[24] || '製';
+            let doneTd = document.createElement('td');
+            doneTd.className = 'calc-cell';
+            doneTd.innerHTML = `<input type="hidden" id="r${r}c24" value="${doneVal}">
+                <div style="display:flex; gap:4px; justify-content:center;">
+                    <span class="assign-badge ${doneVal === '製' ? 'active-wei' : ''}" id="r${r}c24badgeZhi" onclick="toggleDoneFlag(${r}, '製')" title="製作中">製</span>
+                    <span class="assign-badge ${doneVal === '完' ? 'active-chiu' : ''}" id="r${r}c24badgeWan" onclick="toggleDoneFlag(${r}, '完')" title="已完成">完</span>
+                </div>`;
+            tr.appendChild(doneTd);
+        }
     }
     
     let delTd = document.createElement('td');
@@ -3582,6 +3616,19 @@ function toggleAssign(r, who) {
 }
 window.toggleAssign = toggleAssign;
 
+// V2.91：結案燈號(製/完)，兩者互斥，點哪個就切到哪個狀態，這是管理表狀態同步的唯一依據
+function toggleDoneFlag(r, val) {
+    const hidden = document.getElementById(`r${r}c24`);
+    if (!hidden) return;
+    hidden.value = val;
+    const zhiBadge = document.getElementById(`r${r}c24badgeZhi`);
+    const wanBadge = document.getElementById(`r${r}c24badgeWan`);
+    if (zhiBadge) zhiBadge.classList.toggle('active-wei', val === '製');
+    if (wanBadge) wanBadge.classList.toggle('active-chiu', val === '完');
+    calc(r, 24, true);
+}
+window.toggleDoneFlag = toggleDoneFlag;
+
 // V2.74：編號欄位淺色自動建議 — 大小寫視為兩套獨立序號(大寫=剪片、小寫=圖片)，
 // 只在「純字母、還沒打數字」的狀態下才顯示建議，一打數字就代表使用者要自己填，建議自動消失
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -3770,7 +3817,8 @@ function calc(r, c, save=true) {
     if (partnerBadge) partnerBadge.classList.toggle('active', g(21) === true);
     
     if(save) {
-        setRowData(r, {0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21), 22:g(22)});
+        let existingRow = getRowData(r); // 先取得現有資料，避免蓋掉沒有對應輸入框的背景欄位(例如第23欄的管理表連結)
+        setRowData(r, {...existingRow, 0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21), 22:g(22), 24:g(24)});
         
         if(window.calcTimer1) clearTimeout(window.calcTimer1);
         window.calcTimer1 = setTimeout(() => {
@@ -3875,6 +3923,11 @@ window.onload = () => {
     initTable(); 
     initInvoiceTable();
     renderYearList(); 
+    if (localStorage.getItem('vB_AmountsHidden') === '1') {
+        document.getElementById('mainTable').classList.add('amounts-hidden');
+        const btn = document.getElementById('toggleAmountsBtn');
+        if (btn) btn.classList.add('active');
+    }
     let activeTab = document.querySelector('.app-nav-item.active');
     if (activeTab && activeTab.innerText.includes('數據中心')) renderDashboard();
 };
@@ -4038,7 +4091,8 @@ window.onload = () => {
         if (!(await uiConfirm(
             "即將以營收表目前的資料為準，同步管理表：\n" +
             "・營收表有、管理表沒有的專案 → 建立\n" +
-            "・兩邊都有的專案 → 更新客戶/案名/類型/日期/備註(不會動你已經指派好的製作人跟狀態)\n" +
+            "・兩邊都有的專案 → 更新客戶/案名/類型/日期/備註，並依照「結案」燈號(製/完)校正狀態\n" +
+            "・管理表那邊如果已經被標記完成，營收表的結案燈號也會自動改成「完」\n" +
             "・管理表裡「純粹是自動建立、從沒被指派過製作人也沒有工時」的空白專案，如果營收表已經沒有對應資料 → 會列出來讓你確認要不要刪除\n" +
             "・任何有指派製作人或工時紀錄的專案，不管有沒有對應到營收表，都不會被刪除\n\n" +
             "確定要執行嗎？",
@@ -4102,22 +4156,30 @@ window.onload = () => {
             return;
         }
 
-        // Step 3：建立/更新 —— 用批次寫入，一次最多 450 筆包成一批送出
-        // 不管是全新建立、還是舊版同步留下的「從沒被指派過」空白樁，都會套用營收表「指派」欄位的結果
-        // (有打勾魏/杰就直接帶那個人，沒打勾才是尚未暫定)；
-        // 只要已經被你在管理表指派過製作人或填過工時，一律不去動這兩欄
+        // V2.91 修正：整套日期猜測邏輯拿掉，改用「結案」欄(製/完)當唯一依據，不用再猜。
+        // 完 → 強制管理表狀態變已完成；製 → 如果管理表現在是已完成，改回尚未進行(代表重新開工)；
+        // 其餘情況(製，但管理表本來就不是已完成)不去動狀態，保留管理表自己在跑的細節狀態(製作中/審核中等)。
+        // 製作人只有在「從沒被指派過、沒有工時」時才會套用指派欄，避免蓋掉手動指派+已經動工的專案。
         let writeOps = entries.map(e => {
+            const existing = existingMap.get(e.docId);
+            const doneFlag = (e.d[24] || '製') === '完';
             const payload = {
                 category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
                 type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
                 note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
             };
-            if (isUntouchedAutoStub(existingMap.get(e.docId))) {
+            if (!existing) {
                 payload.producer = mapPmProducer(e.d[22]);
-                payload.status = inferAutoStatusFromDeliveryDate(e.d[5], e.year);
+                payload.status = doneFlag ? '已完成' : '尚未進行';
                 payload.tag = '';
                 payload.hours = 0;
                 payload.link = '';
+            } else {
+                if (doneFlag && existing.status !== '已完成') payload.status = '已完成';
+                else if (!doneFlag && existing.status === '已完成') payload.status = '尚未進行';
+                const noHours = !(parseFloat(existing.hours) > 0);
+                const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
+                if (noHours && noRealProducer) payload.producer = mapPmProducer(e.d[22]);
             }
             return { docId: e.docId, payload };
         });
@@ -4138,79 +4200,22 @@ window.onload = () => {
         // 把這次第一次連上的文件位置永久記下來，下次同步不用再重新用猜的比對這一列
         entries.filter(e => e.needsLinkSave).forEach(e => saveLinkedDocId(e.year, e.row, e.docId));
 
-        // V2.87 新增：保險機制 —— 有些舊資料在管理表裡的文件位置，可能跟這次用「類別_區域_編號」算出來的
-        // 不一樣(比如當初分類判斷不同、客戶名稱寫法有差)，導致上面那段「建立/更新」修正不到它，
-        // 狀態就一直卡住改不掉。這裡改用「編號+客戶」直接比對管理表現有的資料，不管文件位置算得準不準，
-        // 只要那筆工時是 0，一律強制依照交件日重新校正狀態。
-        let idClientMap = new Map();
-        existingMap.forEach((data, docId) => {
-            if (!data.id || !data.client) return;
-            const key = `${data.id}__${data.client}`;
-            if (!idClientMap.has(key)) idClientMap.set(key, []);
-            idClientMap.get(key).push(docId);
+        // V2.91 新增：反向同步 —— 管理表那邊如果已經被標記「已完成」，但營收表這裡「結案」燈號還是「製」，
+        // 自動把燈號改成「完」，不用你自己再手動點一次
+        let pulledDoneCount = 0;
+        entries.forEach(e => {
+            const existing = existingMap.get(e.docId);
+            if (existing && existing.status === '已完成' && (e.d[24] || '製') !== '完') {
+                let raw = localStorage.getItem(`d_${e.year}_${e.row}`);
+                let d = {};
+                try { d = raw ? JSON.parse(raw) : {}; } catch(err) {}
+                d[24] = '完';
+                localStorage.setItem(`d_${e.year}_${e.row}`, JSON.stringify(d));
+                if (e.year === curY && window.dCache) window.dCache[e.row] = d;
+                pulledDoneCount++;
+            }
         });
-
-        let strayFixed = 0;
-        let strayBatch = writeBatch(pmDb);
-        let strayOp = 0;
-        const commitStray = async () => {
-            if (strayOp > 0) {
-                try { await strayBatch.commit(); } catch (e) { console.error('保險機制批次寫入失敗:', e); }
-                strayBatch = writeBatch(pmDb);
-                strayOp = 0;
-            }
-        };
-        for (const e of entries) {
-            const key = `${e.idRaw}__${e.client}`;
-            const matches = idClientMap.get(key) || [];
-            for (const docId of matches) {
-                if (docId === e.docId) continue; // 這筆位置正確，上面已經處理過了
-                const data = existingMap.get(docId);
-                const noHours = !(parseFloat(data.hours) > 0);
-                if (!noHours) continue; // 有工時的一律不碰
-                const correctedStatus = inferAutoStatusFromDeliveryDate(e.d[5], e.year);
-                saveLinkedDocId(e.year, e.row, docId); // 找到了就永久記住，下次不用再猜
-                if (data.status !== correctedStatus) {
-                    strayBatch.set(doc(pmDb, 'projects', docId), { status: correctedStatus }, { merge: true });
-                    strayOp++;
-                    strayFixed++;
-                    if (strayOp >= 450) await commitStray();
-                }
-            }
-        }
-        await commitStray();
-
-        // 診斷用：找出「這個月不該是已完成、但管理表裡完全找不到這一列對應資料」的狀況，
-        // 如果強制校正還是沒生效，這份清單能直接告訴你是不是連結真的沒對到，而不用再用猜的
-        let noMatchFound = [];
-        for (const e of entries) {
-            if (inferAutoStatusFromDeliveryDate(e.d[5], e.year) === '已完成') continue;
-            if (!existingMap.get(e.docId)) {
-                noMatchFound.push({ idRaw: e.idRaw, client: e.client, name: e.name, year: e.year, deliveryDate: e.d[5] || '(空白)' });
-            }
-        }
-
-        // V2.88：不管任何保護規則，只要交件日是本月或之後、但現在卡在「已完成」，一律強制改回「尚未進行」，沒有例外
-        let forceFixed = 0;
-        let forceBatch = writeBatch(pmDb);
-        let forceOp = 0;
-        const commitForce = async () => {
-            if (forceOp > 0) {
-                try { await forceBatch.commit(); } catch (e) { console.error('強制校正批次寫入失敗:', e); }
-                forceBatch = writeBatch(pmDb);
-                forceOp = 0;
-            }
-        };
-        for (const e of entries) {
-            const data = existingMap.get(e.docId);
-            if (!data || data.status !== '已完成') continue;
-            if (inferAutoStatusFromDeliveryDate(e.d[5], e.year) === '已完成') continue; // 真的是本月以前的，不用動
-            forceBatch.set(doc(pmDb, 'projects', e.docId), { status: '尚未進行' }, { merge: true });
-            forceOp++;
-            forceFixed++;
-            if (forceOp >= 450) await commitForce();
-        }
-        await commitForce();
+        if (pulledDoneCount > 0) { clearRowCache(); initTable(); }
 
         // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
         // 一樣是用上面那個「從沒被指派過、沒有工時」的判斷；只要有一項不符合，就直接跳過、更不會刪除
@@ -4247,12 +4252,7 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n強制校正本月狀態 ${forceFixed} 筆\n額外校正狀態(保險機制) ${strayFixed} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
-        if (noMatchFound.length > 0) {
-            resultMsg += `\n\n🔍 診斷：以下 ${noMatchFound.length} 筆本月不該是已完成，但在管理表完全找不到對應資料(可能是連結真的沒對到，麻煩截圖這段給我)：\n`;
-            resultMsg += noMatchFound.slice(0, 10).map(o => `・${o.year}年 編號[${o.idRaw}] 客戶[${o.client}] 案名[${o.name}] 交件日[${o.deliveryDate}]`).join('\n');
-            if (noMatchFound.length > 10) resultMsg += `\n...以及其他 ${noMatchFound.length - 10} 筆`;
-        }
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
