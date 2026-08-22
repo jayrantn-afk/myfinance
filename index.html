@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.81</title>
+    <title>杰冉宇宙營收表 V2.82</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3928,6 +3928,17 @@ window.onload = () => {
         return typeStr.includes('圖') ? 'image' : 'video';
     }
 
+    // V2.82 修正：判斷一筆管理表專案是不是「自動建立、從沒被指派過製作人、也沒有工時」的空白樁。
+    // 不管它是全新建立的、還是舊版同步邏輯留下的殘留，只要符合這個條件，都可以安全地把製作人/狀態
+    // 重設成「尚未暫定/尚未進行」讓它正常進待分派；只要你已經指派過人或填過工時，就不算，完全不會被動到。
+    function isUntouchedAutoStub(data) {
+        if (!data) return true; // 還不存在，等同於全新建立，可以放心設定初始值
+        const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
+        const noRealProducer = !data.producer || data.producer === '尚未暫定';
+        const noHours = !(parseFloat(data.hours) > 0);
+        return isAutoCreated && noRealProducer && noHours;
+    }
+
     // V2.79 修正：上一版的刪除邏輯太危險——只要編號/客戶/分類算出來的位置沒有剛好對上營收表，
     // 就會被當成「多餘」直接刪掉，結果連你手動指派好、已經在排程的專案都被誤刪了。
     // 這次改成非常保守：只有「這筆本來就是自動同步建立、而且從來沒被指派過製作人、也沒有工時紀錄」的
@@ -3997,15 +4008,16 @@ window.onload = () => {
             return;
         }
 
-        // Step 3：建立/更新 —— 用批次寫入，一次最多 450 筆包成一批送出(這一步永遠安全，只新增或更新描述性欄位，不會刪東西)
+        // Step 3：建立/更新 —— 用批次寫入，一次最多 450 筆包成一批送出
+        // 不管是全新建立、還是舊版同步留下的「從沒被指派過」空白樁，都會修正成「尚未暫定」正常進待分派；
+        // 只要已經被你指派過製作人或填過工時，一律不去動這兩欄
         let writeOps = entries.map(e => {
             const payload = {
                 category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
                 type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
                 note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
             };
-            if (!existingMap.has(e.docId)) {
-                // V2.80：不再假設營收表的案子都已經做完，全新建立的專案一律進待分派，交由你自己判斷指派
+            if (isUntouchedAutoStub(existingMap.get(e.docId))) {
                 payload.producer = '尚未暫定';
                 payload.status = '尚未進行';
                 payload.tag = '';
@@ -4030,18 +4042,11 @@ window.onload = () => {
         }
 
         // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
-        // 一定要同時符合以下三個條件才會被列入候選，缺一不可：
-        // (a) 是這套自動同步建立的(備註開頭是固定標記，不是你自己手打的專案)
-        // (b) 從來沒有被指派過製作人(製作人是空白或「尚未暫定」)
-        // (c) 沒有任何工時紀錄
-        // 只要有一項不符合，就直接跳過、不列入候選、更不會刪除
+        // 一樣是用上面那個「從沒被指派過、沒有工時」的判斷；只要有一項不符合，就直接跳過、更不會刪除
         let candidates = [];
         existingMap.forEach((data, docId) => {
             if (expectedDocIds.has(docId)) return;
-            const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
-            const noProducer = !data.producer || data.producer === '尚未暫定';
-            const noHours = !(parseFloat(data.hours) > 0);
-            if (isAutoCreated && noProducer && noHours) {
+            if (isUntouchedAutoStub(data)) {
                 candidates.push({ docId, client: data.client || '', name: data.name || '', pid: data.id || '' });
             }
         });
