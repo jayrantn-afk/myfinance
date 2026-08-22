@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.78</title>
+    <title>杰冉宇宙營收表 V2.79</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3928,21 +3928,21 @@ window.onload = () => {
         return typeStr.includes('圖') ? 'image' : 'video';
     }
 
-    // V2.78 新增：以營收表為準，「完整同步」管理表 —— 每次執行都用營收表目前最新的全部資料重新算一遍，
-    // 該建立/更新的建立更新、該刪除的刪除，一次到位。取代舊版「打字就即時同步」的做法(那種做法容易因為
-    // 拖曳排序、跨年度撞號等各種小狀況越滾越歪，卻不容易發現)。
-    // 只針對「管理表裡還沒有」的專案帶入 producer:''(不指定任何人)、status:已完成，
-    // 這樣不會塞爆管理表的「待分派」清單，也不會誤算進魏敏軒/邱仁杰的看板；
-    // 專案如果已經存在(不管是之前同步過、還是你自己在管理表手動處理過)，一律不去動製作人跟狀態。
+    // V2.79 修正：上一版的刪除邏輯太危險——只要編號/客戶/分類算出來的位置沒有剛好對上營收表，
+    // 就會被當成「多餘」直接刪掉，結果連你手動指派好、已經在排程的專案都被誤刪了。
+    // 這次改成非常保守：只有「這筆本來就是自動同步建立、而且從來沒被指派過製作人、也沒有工時紀錄」的
+    // 空白暫存專案，才有資格被視為多餘；只要有指派製作人、有工時、或不是自動建立的，一律不會被動到。
+    // 而且真的要刪之前，一定會先列出完整清單給你看過、按下確定才會執行。
     window.reconcilePMWithRevenue = async function() {
         if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
         if (!(await uiConfirm(
-            "即將以營收表目前的資料為準，完整同步管理表：\n" +
+            "即將以營收表目前的資料為準，同步管理表：\n" +
             "・營收表有、管理表沒有的專案 → 建立\n" +
             "・兩邊都有的專案 → 更新客戶/案名/類型/日期/備註(不會動你已經指派好的製作人跟狀態)\n" +
-            "・管理表有、營收表沒有的專案 → 刪除(包含你自己直接在管理表新增、沒有記在營收表上的專案)\n\n" +
-            "確定要執行嗎？此動作無法復原。",
-            "完整同步管理表"
+            "・管理表裡「純粹是自動建立、從沒被指派過製作人也沒有工時」的空白專案，如果營收表已經沒有對應資料 → 會列出來讓你確認要不要刪除\n" +
+            "・任何有指派製作人或工時紀錄的專案，不管有沒有對應到營收表，都不會被刪除\n\n" +
+            "確定要執行嗎？",
+            "同步管理表"
         ))) return;
 
         const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
@@ -3982,7 +3982,7 @@ window.onload = () => {
         let duplicateGroups = Object.values(byDocId).filter(g => g.length > 1);
         const expectedDocIds = new Set(Object.keys(byDocId));
 
-        // Step 2：建立/更新
+        // Step 2：建立/更新(這一步永遠安全，只新增或更新描述性欄位，不會刪東西)
         let createdOrUpdated = 0, writeFailCount = 0;
         for (const e of entries) {
             const docRef = doc(pmDb, 'projects', e.docId);
@@ -4008,28 +4008,48 @@ window.onload = () => {
             }
         }
 
-        // Step 3：刪除管理表裡「營收表已經沒有」的多餘專案
-        let deletedCount = 0, deleteFailCount = 0;
+        // Step 3：找出「可能多餘」的候選 —— 一定要同時符合以下三個條件才會被列入候選，缺一不可：
+        // (a) 是這套自動同步建立的(備註開頭是固定標記，不是你自己手打的專案)
+        // (b) 從來沒有被指派過製作人(製作人是空白或「尚未暫定」)
+        // (c) 沒有任何工時紀錄
+        // 只要有一項不符合，就直接跳過、不列入候選、更不會刪除
+        let candidates = [];
         try {
             const allDocs = await getDocs(collection(pmDb, 'projects'));
-            for (const docSnap of allDocs.docs) {
-                if (!expectedDocIds.has(docSnap.id)) {
-                    try {
-                        await deleteDoc(doc(pmDb, 'projects', docSnap.id));
-                        deletedCount++;
-                    } catch (e) {
-                        console.error(`刪除 ${docSnap.id} 失敗:`, e);
-                        deleteFailCount++;
-                    }
+            allDocs.forEach(docSnap => {
+                if (expectedDocIds.has(docSnap.id)) return;
+                const data = docSnap.data() || {};
+                const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
+                const noProducer = !data.producer || data.producer === '尚未暫定';
+                const noHours = !(parseFloat(data.hours) > 0);
+                if (isAutoCreated && noProducer && noHours) {
+                    candidates.push({ docId: docSnap.id, client: data.client || '', name: data.name || '', pid: data.id || '' });
                 }
-            }
+            });
         } catch (e) {
             console.error(e);
-            await uiAlert("讀取管理表資料失敗，建立/更新已完成，但這次沒有執行刪除多餘的步驟，請稍後再執行一次。");
+            await uiAlert("讀取管理表資料失敗，建立/更新已完成，但這次沒有檢查多餘專案，請稍後再執行一次。");
             return;
         }
 
-        let resultMsg = `✅ 完整同步完成！\n建立/更新 ${createdOrUpdated} 筆\n刪除多餘 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        let deletedCount = 0, deleteFailCount = 0;
+        if (candidates.length > 0) {
+            const sampleList = candidates.slice(0, 20).map(o => `・${o.pid || '(無編號)'} ${o.client} - ${o.name}`).join('\n');
+            const moreNote = candidates.length > 20 ? `\n...以及其他 ${candidates.length - 20} 筆` : '';
+            const confirmed = await uiConfirm(
+                `找到 ${candidates.length} 筆「自動建立、從未指派、沒有工時」的空白專案，營收表已經沒有對應資料：\n\n${sampleList}${moreNote}\n\n` +
+                `這些不會影響任何你已經在排程或有工時的專案。確定要刪除這 ${candidates.length} 筆嗎？`,
+                "確認刪除多餘空白專案"
+            );
+            if (confirmed) {
+                for (const c of candidates) {
+                    try { await deleteDoc(doc(pmDb, 'projects', c.docId)); deletedCount++; }
+                    catch (e) { console.error(`刪除 ${c.docId} 失敗:`, e); deleteFailCount++; }
+                }
+            }
+        }
+
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
