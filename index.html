@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.85</title>
+    <title>杰冉宇宙營收表 V2.90</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3984,30 +3984,48 @@ window.onload = () => {
         return '尚未暫定';
     }
 
-    // V2.82 修正：判斷一筆管理表專案是不是「自動建立、從沒被指派過製作人、也沒有工時」的空白樁。
-    // 不管它是全新建立的、還是舊版同步邏輯留下的殘留，只要符合這個條件，都可以安全地把製作人/狀態
-    // 重設成「尚未暫定/尚未進行」讓它正常進待分派；只要你已經指派過人或填過工時，就不算，完全不會被動到。
+    // V2.86 修正：拿掉「是否已有製作人」這個判斷條件——現在製作人也可能是營收表指派欄(杰/魏/一起)
+    // 同步帶進來的，不代表你在管理表手動處理過，不該因此就完全不能再校正。
+    // 改成只看「有沒有真的填過工時」：沒有工時，代表案子實際上還沒真的開始動工，不管製作人是誰，
+    // 管理表都可以放心讓同步繼續依照最新的營收表資料(交件日、指派欄)校正製作人跟狀態；
+    // 只要曾經填過工時，就代表真的動工了，完全不會再被同步碰到。
     function isUntouchedAutoStub(data) {
         if (!data) return true; // 還不存在，等同於全新建立，可以放心設定初始值
         const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
-        const noRealProducer = !data.producer || data.producer === '尚未暫定';
         const noHours = !(parseFloat(data.hours) > 0);
-        return isAutoCreated && noRealProducer && noHours;
+        return isAutoCreated && noHours;
     }
 
     // V2.85 修正：狀態不能一律套同一個值，要看「交件日」是不是已經過了。
     // 用「年月」欄(格式 YYYY-MM，比原始交件日文字更好比對)判斷：比現在月份早 → 已完成；
     // 本月或還沒到 → 尚未進行。沒有年月資料就一律當尚未進行，不會亂猜。
-    function inferAutoStatus(yearMonthStr) {
-        if (!yearMonthStr) return '尚未進行';
-        const parts = String(yearMonthStr).split('-');
-        if (parts.length !== 2) return '尚未進行';
-        const y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
-        if (isNaN(y) || isNaN(m)) return '尚未進行';
+    // V2.90 修正：不再依賴 d[0](年月)這個中間換算值——它是「上次編輯交件日當下」算出來的，
+    // 如果那次編輯時選的年度分頁跟現在不一樣，它可能卡在錯的年份，跟實際交件日對不起來。
+    // 改成直接解析「交件日」原始文字(d[5])的月份，年份用這一列真正存放的年度分頁(year，一定不會錯)。
+    function inferAutoStatusFromDeliveryDate(dateStr, year) {
+        const y = parseInt(year, 10);
+        if (isNaN(y)) return '尚未進行';
+        if (!dateStr) return '尚未進行';
+        const separator = dateStr.includes('/') ? '/' : (dateStr.includes('-') ? '-' : null);
+        if (!separator) return '尚未進行';
+        const monthPart = dateStr.split(separator)[0].replace(/\D/g, '');
+        const m = parseInt(monthPart, 10);
+        if (isNaN(m)) return '尚未進行';
         const now = new Date();
         const curYear = now.getFullYear(), curMonth = now.getMonth() + 1;
         if (y < curYear || (y === curYear && m < curMonth)) return '已完成';
         return '尚未進行';
+    }
+
+    // V2.89 新增：把這一列「實際連到管理表哪一份文件」永久記在隱藏的第 23 欄，之後同步都直接用這個，不再重猜
+    function saveLinkedDocId(year, row, docId) {
+        try {
+            const raw = localStorage.getItem(`d_${year}_${row}`);
+            let d = raw ? JSON.parse(raw) : {};
+            d[23] = docId;
+            localStorage.setItem(`d_${year}_${row}`, JSON.stringify(d));
+            if (year === curY && window.dCache) window.dCache[row] = d;
+        } catch (e) { console.error('儲存管理表連結失敗:', e); }
     }
 
     // V2.79 修正：上一版的刪除邏輯太危險——只要編號/客戶/分類算出來的位置沒有剛好對上營收表，
@@ -4030,6 +4048,9 @@ window.onload = () => {
         const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
 
         // Step 1：掃出營收表目前「應該存在」的每一筆
+        // V2.89 修正：新增「永久連結」機制。每一列存一個隱藏欄位(第 23 欄)記住「上次成功連到管理表的哪一份文件」，
+        // 一旦連上了，以後這一列不管編號大小寫、客戶名稱打法、分類怎麼改，都固定用這個記住的文件位置，
+        // 不再每次都重新用「分類+客戶+編號」猜一次——這正是之前狀態一直對不準、修不掉的根本原因。
         let entries = [];
         let skipped = [];
         for (const year of yList) {
@@ -4054,8 +4075,10 @@ window.onload = () => {
                 const prefixMatch = idRaw.match(/^[A-Za-z]+/);
                 const prefix = prefixMatch ? prefixMatch[0] : 'Z';
                 const zone = `${prefix}_${client}`;
-                const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
-                entries.push({ year, row: r, client, name, idRaw, category, zone, docId, d });
+                const computedDocId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+                const linkedDocId = (d[23] || '').trim();
+                const docId = linkedDocId || computedDocId; // 有記住的連結就一定用連結，沒有才用算的
+                entries.push({ year, row: r, client, name, idRaw, category, zone, docId, d, needsLinkSave: !linkedDocId });
             }
         }
 
@@ -4091,7 +4114,7 @@ window.onload = () => {
             };
             if (isUntouchedAutoStub(existingMap.get(e.docId))) {
                 payload.producer = mapPmProducer(e.d[22]);
-                payload.status = inferAutoStatus(e.d[0]);
+                payload.status = inferAutoStatusFromDeliveryDate(e.d[5], e.year);
                 payload.tag = '';
                 payload.hours = 0;
                 payload.link = '';
@@ -4112,6 +4135,82 @@ window.onload = () => {
                 writeFailCount += chunk.length;
             }
         }
+        // 把這次第一次連上的文件位置永久記下來，下次同步不用再重新用猜的比對這一列
+        entries.filter(e => e.needsLinkSave).forEach(e => saveLinkedDocId(e.year, e.row, e.docId));
+
+        // V2.87 新增：保險機制 —— 有些舊資料在管理表裡的文件位置，可能跟這次用「類別_區域_編號」算出來的
+        // 不一樣(比如當初分類判斷不同、客戶名稱寫法有差)，導致上面那段「建立/更新」修正不到它，
+        // 狀態就一直卡住改不掉。這裡改用「編號+客戶」直接比對管理表現有的資料，不管文件位置算得準不準，
+        // 只要那筆工時是 0，一律強制依照交件日重新校正狀態。
+        let idClientMap = new Map();
+        existingMap.forEach((data, docId) => {
+            if (!data.id || !data.client) return;
+            const key = `${data.id}__${data.client}`;
+            if (!idClientMap.has(key)) idClientMap.set(key, []);
+            idClientMap.get(key).push(docId);
+        });
+
+        let strayFixed = 0;
+        let strayBatch = writeBatch(pmDb);
+        let strayOp = 0;
+        const commitStray = async () => {
+            if (strayOp > 0) {
+                try { await strayBatch.commit(); } catch (e) { console.error('保險機制批次寫入失敗:', e); }
+                strayBatch = writeBatch(pmDb);
+                strayOp = 0;
+            }
+        };
+        for (const e of entries) {
+            const key = `${e.idRaw}__${e.client}`;
+            const matches = idClientMap.get(key) || [];
+            for (const docId of matches) {
+                if (docId === e.docId) continue; // 這筆位置正確，上面已經處理過了
+                const data = existingMap.get(docId);
+                const noHours = !(parseFloat(data.hours) > 0);
+                if (!noHours) continue; // 有工時的一律不碰
+                const correctedStatus = inferAutoStatusFromDeliveryDate(e.d[5], e.year);
+                saveLinkedDocId(e.year, e.row, docId); // 找到了就永久記住，下次不用再猜
+                if (data.status !== correctedStatus) {
+                    strayBatch.set(doc(pmDb, 'projects', docId), { status: correctedStatus }, { merge: true });
+                    strayOp++;
+                    strayFixed++;
+                    if (strayOp >= 450) await commitStray();
+                }
+            }
+        }
+        await commitStray();
+
+        // 診斷用：找出「這個月不該是已完成、但管理表裡完全找不到這一列對應資料」的狀況，
+        // 如果強制校正還是沒生效，這份清單能直接告訴你是不是連結真的沒對到，而不用再用猜的
+        let noMatchFound = [];
+        for (const e of entries) {
+            if (inferAutoStatusFromDeliveryDate(e.d[5], e.year) === '已完成') continue;
+            if (!existingMap.get(e.docId)) {
+                noMatchFound.push({ idRaw: e.idRaw, client: e.client, name: e.name, year: e.year, deliveryDate: e.d[5] || '(空白)' });
+            }
+        }
+
+        // V2.88：不管任何保護規則，只要交件日是本月或之後、但現在卡在「已完成」，一律強制改回「尚未進行」，沒有例外
+        let forceFixed = 0;
+        let forceBatch = writeBatch(pmDb);
+        let forceOp = 0;
+        const commitForce = async () => {
+            if (forceOp > 0) {
+                try { await forceBatch.commit(); } catch (e) { console.error('強制校正批次寫入失敗:', e); }
+                forceBatch = writeBatch(pmDb);
+                forceOp = 0;
+            }
+        };
+        for (const e of entries) {
+            const data = existingMap.get(e.docId);
+            if (!data || data.status !== '已完成') continue;
+            if (inferAutoStatusFromDeliveryDate(e.d[5], e.year) === '已完成') continue; // 真的是本月以前的，不用動
+            forceBatch.set(doc(pmDb, 'projects', e.docId), { status: '尚未進行' }, { merge: true });
+            forceOp++;
+            forceFixed++;
+            if (forceOp >= 450) await commitForce();
+        }
+        await commitForce();
 
         // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
         // 一樣是用上面那個「從沒被指派過、沒有工時」的判斷；只要有一項不符合，就直接跳過、更不會刪除
@@ -4148,7 +4247,12 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n強制校正本月狀態 ${forceFixed} 筆\n額外校正狀態(保險機制) ${strayFixed} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        if (noMatchFound.length > 0) {
+            resultMsg += `\n\n🔍 診斷：以下 ${noMatchFound.length} 筆本月不該是已完成，但在管理表完全找不到對應資料(可能是連結真的沒對到，麻煩截圖這段給我)：\n`;
+            resultMsg += noMatchFound.slice(0, 10).map(o => `・${o.year}年 編號[${o.idRaw}] 客戶[${o.client}] 案名[${o.name}] 交件日[${o.deliveryDate}]`).join('\n');
+            if (noMatchFound.length > 10) resultMsg += `\n...以及其他 ${noMatchFound.length - 10} 筆`;
+        }
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
