@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.96</title>
+    <title>杰冉宇宙營收表 V2.98</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4045,6 +4045,18 @@ window.onload = () => {
         return t === '已完成' || t === '已結案' || t.indexOf('完成') !== -1 || t.indexOf('結案') !== -1;
     }
 
+    // V2.98 修正：管理表的日期選擇器要求完整「年-月-日」格式，營收表的交件日只有「月/日」沒有年份，
+    // 選擇器解析不了就整個顯示空白。這裡補上這一列所屬的年度分頁，轉成管理表看得懂的完整日期。
+    function toFullDateString(dateStr, year) {
+        if (!dateStr) return '';
+        const separator = dateStr.includes('/') ? '/' : (dateStr.includes('-') ? '-' : null);
+        if (!separator) return '';
+        const parts = dateStr.split(separator);
+        const m = parseInt(parts[0], 10), d = parseInt(parts[1], 10);
+        if (isNaN(m) || isNaN(d)) return '';
+        return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
     // V2.86 修正：拿掉「是否已有製作人」這個判斷條件——現在製作人也可能是營收表指派欄(杰/魏/一起)
     // 同步帶進來的，不代表你在管理表手動處理過，不該因此就完全不能再校正。
     // 改成只看「有沒有真的填過工時」：沒有工時，代表案子實際上還沒真的開始動工，不管製作人是誰，
@@ -4175,7 +4187,7 @@ window.onload = () => {
             const doneFlag = (e.d[24] || '製') === '完';
             const payload = {
                 category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
-                type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
+                type: e.d[4] || '', start: toFullDateString(e.d[5], e.year), end: toFullDateString(e.d[5], e.year),
                 note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
             };
             if (!existing) {
@@ -4187,9 +4199,8 @@ window.onload = () => {
             } else {
                 if (doneFlag && !isDoneStatus(existing.status)) payload.status = '已完成';
                 else if (!doneFlag && isDoneStatus(existing.status)) payload.status = '尚未進行';
-                const noHours = !(parseFloat(existing.hours) > 0);
                 const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
-                if (noHours && noRealProducer) payload.producer = mapPmProducer(e.d[22]);
+                if (noRealProducer) payload.producer = mapPmProducer(e.d[22]);
 
                 const knownNotDone = existing.status === '尚未進行' || existing.status === '製作中' || (existing.status && existing.status.indexOf('審') !== -1);
                 if (!doneFlag && !knownNotDone && rawStatusSamples.length < 8) {
@@ -4233,6 +4244,21 @@ window.onload = () => {
             idClientMap.get(key).push(docId);
         });
 
+        // V2.97 新增：診斷 —— 找出同一個編號在管理表裡對應到「兩份以上不同文件」的狀況(真正的重複資料)，
+        // 直接列出每一份的狀態，這樣才知道是不是同步改到了 A 份，畫面顯示的卻是完全沒被動過的 B 份
+        let duplicatePmDocs = [];
+        idOnlyMap.forEach((docIds, idVal) => {
+            if (docIds.length > 1) {
+                duplicatePmDocs.push({
+                    idVal,
+                    docs: docIds.map(docId => {
+                        const data = existingMap.get(docId) || {};
+                        return `docId=${docId} client=${JSON.stringify(data.client)} status=${JSON.stringify(data.status)} hours=${JSON.stringify(data.hours)}`;
+                    })
+                });
+            }
+        });
+
         let strayFixed = 0;
         let strayBatch = writeBatch(pmDb);
         let strayOp = 0;
@@ -4258,7 +4284,7 @@ window.onload = () => {
                 // 以營收表為準，把客戶名稱等基本資料也一併校正回來(不是只改狀態) —— 這正是打字不一致的根源
                 const strayPayload = {
                     category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
-                    type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
+                    type: e.d[4] || '', start: toFullDateString(e.d[5], e.year), end: toFullDateString(e.d[5], e.year),
                     note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
                 };
                 let newStatus = null;
@@ -4331,6 +4357,11 @@ window.onload = () => {
         if (rawStatusSamples.length > 0) {
             resultMsg += `\n\n🔍 診斷：以下是「結案燈號=製，但管理表原始狀態不是常見值」的實際內容：\n`;
             resultMsg += rawStatusSamples.map(s => `・編號[${s.idRaw}] 客戶[${s.client}]\n   status=${s.rawStatus} producer=${s.producer} hours=${s.hours}`).join('\n');
+        }
+        if (duplicatePmDocs.length > 0) {
+            resultMsg += `\n\n⚠️ 診斷：管理表裡發現以下編號對應到「兩份以上不同文件」，可能是真正的重複資料：\n`;
+            resultMsg += duplicatePmDocs.slice(0, 5).map(d => `・編號[${d.idVal}]:\n   ` + d.docs.join('\n   ')).join('\n');
+            if (duplicatePmDocs.length > 5) resultMsg += `\n...以及其他 ${duplicatePmDocs.length - 5} 組`;
         }
         if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
         if (skipped.length > 0) {
