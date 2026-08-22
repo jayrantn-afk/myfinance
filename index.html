@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.75</title>
+    <title>杰冉宇宙營收表 V2.77</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3946,11 +3946,11 @@ window.onload = () => {
         const d = window.getRowData(r);
         const client = (d[2] || '').trim();
         const name = (d[3] || '').trim();
-        const idRaw = (d[1] || '').trim().toUpperCase();
+        const idRaw = (d[1] || '').trim();
         if (!client || !name || !idRaw) return;
 
         const category = mapPmCategory(d[4]);
-        const prefixMatch = idRaw.match(/^[A-Z]+/);
+        const prefixMatch = idRaw.match(/^[A-Za-z]+/);
         const prefix = prefixMatch ? prefixMatch[0] : 'Z';
         const zone = `${prefix}_${client}`;
         const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
@@ -4044,7 +4044,7 @@ window.onload = () => {
 
                 const client = (d[2] || '').trim();
                 const name = (d[3] || '').trim();
-                const idRaw = (d[1] || '').trim().toUpperCase();
+                const idRaw = (d[1] || '').trim();
                 if (!client || !name || !idRaw) {
                     if (client || name || idRaw) { // 完全空白的列不用打擾你，只列出「有填一部分但不完整」的
                         skipped.push({ year, row: r, client, name, idRaw: (d[1] || '').trim() });
@@ -4053,7 +4053,7 @@ window.onload = () => {
                 }
 
                 const category = mapPmCategory(d[4]);
-                const prefixMatch = idRaw.match(/^[A-Z]+/);
+                const prefixMatch = idRaw.match(/^[A-Za-z]+/);
                 const prefix = prefixMatch ? prefixMatch[0] : 'Z';
                 const zone = `${prefix}_${client}`;
                 const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
@@ -4066,33 +4066,15 @@ window.onload = () => {
         entries.forEach(e => { (byDocId[e.docId] = byDocId[e.docId] || []).push(e); });
         let duplicateGroups = Object.values(byDocId).filter(g => g.length > 1);
 
-        // Step 2：把問題列清楚列出來，讓你決定要不要先回去修正再跑
-        if (skipped.length > 0 || duplicateGroups.length > 0) {
-            let msg = '';
-            if (skipped.length > 0) {
-                msg += `⚠️ 以下 ${skipped.length} 列缺客戶/案名/編號，這次不會同步：\n`;
-                msg += skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
-                if (skipped.length > 10) msg += `\n...以及其他 ${skipped.length - 10} 列`;
-                msg += '\n\n';
-            }
-            if (duplicateGroups.length > 0) {
-                msg += `⚠️ 以下編號重複使用，管理表只會留下最後處理的那一筆：\n`;
-                msg += duplicateGroups.slice(0, 10).map(g =>
-                    `・編號 ${g[0].idRaw}(${g[0].client})：` + g.map(e => `${e.year}年第${e.row + 1}列`).join('、')
-                ).join('\n');
-                if (duplicateGroups.length > 10) msg += `\n...以及其他 ${duplicateGroups.length - 10} 組`;
-            }
-            msg += '\n\n是否仍要繼續同步(重複編號的只會留最後一筆)？建議先按取消，回去修正編號後再重跑。';
-            if (!(await uiConfirm(msg, "回填前發現問題資料"))) return;
-        } else {
-            if (!(await uiConfirm(
-                "即將把目前所有年度、所有案件明細列，一次同步進管理表(以營收表為準)。\n\n" +
-                "已經在管理表裡的專案，只會更新客戶/案名/類型/日期/備註，不會動到你已經指派好的製作人跟狀態。\n" +
-                "全新的專案會標記狀態為「已完成」、不指定製作人，不會出現在待分派清單。\n\n" +
-                "確定要執行嗎？",
-                "批次回填確認"
-            ))) return;
-        }
+        // Step 2：只問一次是否要執行，不會因為有缺欄位或撞號又跳出來多問一次擋你
+        if (!(await uiConfirm(
+            "即將把目前所有年度、所有案件明細列，一次同步進管理表(以營收表為準)。\n\n" +
+            "已經在管理表裡的專案，只會更新客戶/案名/類型/日期/備註，不會動到你已經指派好的製作人跟狀態。\n" +
+            "全新的專案會標記狀態為「已完成」、不指定製作人，不會出現在待分派清單。\n" +
+            "如果同一個編號被重複使用，管理表只會留下最後處理的那一筆(詳情會列在完成後的結果訊息)。\n\n" +
+            "確定要執行嗎？",
+            "批次回填確認"
+        ))) return;
 
         // Step 3：正式寫入
         let successCount = 0, failCount = 0;
@@ -4157,10 +4139,10 @@ window.onload = () => {
                 try { d = JSON.parse(raw); } catch(e) { continue; }
                 const client = (d[2] || '').trim();
                 const name = (d[3] || '').trim();
-                const idRaw = (d[1] || '').trim().toUpperCase();
+                const idRaw = (d[1] || '').trim();
                 if (!client || !name || !idRaw) continue;
                 const category = mapPmCategory(d[4]);
-                const prefixMatch = idRaw.match(/^[A-Z]+/);
+                const prefixMatch = idRaw.match(/^[A-Za-z]+/);
                 const prefix = prefixMatch ? prefixMatch[0] : 'Z';
                 const zone = `${prefix}_${client}`;
                 expectedDocIds.add(`${category}_${zone.replace(/\s+/g, '')}_${idRaw}`);
