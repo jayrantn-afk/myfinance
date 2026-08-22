@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.73</title>
+    <title>杰冉宇宙營收表 V2.74</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -193,6 +193,17 @@
         /* 填充把手樣式 */
         .fill-handle { position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; background: var(--primary); cursor: crosshair; opacity: 0; transition: opacity 0.2s; }
         td:hover .fill-handle { opacity: 1; }
+
+        /* V2.74：編號欄位「淺色自動建議」— 打字母時淺灰顯示推測的下一個編號，按 Enter 接受 */
+        .id-input { text-align: left !important; padding-left: 6px !important; position: relative; z-index: 2; }
+        .id-ghost {
+            position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; padding-left: 6px;
+            font-size: 13px; font-weight: 600; font-family: inherit;
+            white-space: pre; overflow: hidden; pointer-events: none; z-index: 1;
+        }
+        .id-ghost .ghost-typed { visibility: hidden; }
+        .id-ghost .ghost-suggest { color: #C7C7D1; }
         .cell-filling { background-color: rgba(var(--primary-rgb), 0.1) !important; outline: 1px dashed var(--primary); }
 
         .selection-stats-bar {
@@ -2986,7 +2997,7 @@ function createRow(r) {
         }
         
         if (c===1) {
-            td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
+            td.innerHTML = `<div class="id-ghost" id="r${r}c${c}ghost"></div><input type="text" id="r${r}c${c}" class="id-input" value="${val}" autocomplete="off" oninput="handleIdInput(${r})" onkeydown="handleIdKeydown(event, ${r})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
         }
         else if (c===2) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
@@ -3529,6 +3540,68 @@ function togglePartnerPaid(r) {
     if (cb) { cb.checked = !cb.checked; calc(r, 21, true); }
 }
 window.togglePartnerPaid = togglePartnerPaid;
+
+// V2.74：編號欄位淺色自動建議 — 大小寫視為兩套獨立序號(大寫=剪片、小寫=圖片)，
+// 只在「純字母、還沒打數字」的狀態下才顯示建議，一打數字就代表使用者要自己填，建議自動消失
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function computeNextIdForPrefix(prefix, currentRow) {
+    let maxNum = 0, pad = 3;
+    let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
+    for (let i = 0; i < rc; i++) {
+        if (i === currentRow) continue;
+        let d = getRowData(i);
+        let existingId = (d[1] || '').trim();
+        if (!existingId.startsWith(prefix)) continue; // 區分大小寫，A 系列跟 a 系列不會互相干擾
+        let rest = existingId.slice(prefix.length);
+        let m = rest.match(/^(\d+)/);
+        if (!m) continue;
+        let num = parseInt(m[1], 10);
+        if (num >= maxNum) { maxNum = num; pad = m[1].length; }
+    }
+    if (maxNum === 0) return null; // 這個字首之前沒紀錄過，不主動建議，讓使用者自己打
+    return prefix + String(maxNum + 1).padStart(pad, '0');
+}
+
+function updateIdGhost(r) {
+    const input = document.getElementById(`r${r}c1`);
+    const ghostEl = document.getElementById(`r${r}c1ghost`);
+    if (!input || !ghostEl) return;
+    const val = input.value;
+    const match = val.match(/^([A-Za-z]+)$/);
+    if (!match) { ghostEl.innerHTML = ''; input.dataset.suggestion = ''; return; }
+    const suggestion = computeNextIdForPrefix(match[1], r);
+    if (!suggestion || suggestion.length <= val.length) { ghostEl.innerHTML = ''; input.dataset.suggestion = ''; return; }
+    const remainder = suggestion.slice(val.length);
+    ghostEl.innerHTML = `<span class="ghost-typed">${escHtml(val)}</span><span class="ghost-suggest">${escHtml(remainder)}</span>`;
+    input.dataset.suggestion = suggestion;
+}
+
+function clearIdGhost(r) {
+    const ghostEl = document.getElementById(`r${r}c1ghost`);
+    if (ghostEl) ghostEl.innerHTML = '';
+    const input = document.getElementById(`r${r}c1`);
+    if (input) input.dataset.suggestion = '';
+}
+
+function handleIdInput(r) {
+    updateIdGhost(r);
+    calc(r, 1);
+}
+
+function handleIdKeydown(e, r) {
+    if (e.key === 'Enter') {
+        const input = document.getElementById(`r${r}c1`);
+        const suggestion = input ? input.dataset.suggestion : '';
+        if (suggestion && /^[A-Za-z]+$/.test(input.value)) {
+            e.preventDefault();
+            e.stopPropagation();
+            input.value = suggestion;
+            clearIdGhost(r);
+            calc(r, 1);
+        }
+    }
+}
 
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
