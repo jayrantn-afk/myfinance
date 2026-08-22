@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.92</title>
+    <title>杰冉宇宙營收表 V2.94</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4160,6 +4160,7 @@ window.onload = () => {
         // 完 → 強制管理表狀態變已完成；製 → 如果管理表現在是已完成，改回尚未進行(代表重新開工)；
         // 其餘情況(製，但管理表本來就不是已完成)不去動狀態，保留管理表自己在跑的細節狀態(製作中/審核中等)。
         // 製作人只有在「從沒被指派過、沒有工時」時才會套用指派欄，避免蓋掉手動指派+已經動工的專案。
+        let finalStatusByDocId = new Map(); // 記錄「這次同步完之後，管理表這份文件真正的最終狀態」，避免下面回拉燈號時看到修改前的舊資料
         let writeOps = entries.map(e => {
             const existing = existingMap.get(e.docId);
             const doneFlag = (e.d[24] || '製') === '完';
@@ -4181,6 +4182,7 @@ window.onload = () => {
                 const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
                 if (noHours && noRealProducer) payload.producer = mapPmProducer(e.d[22]);
             }
+            finalStatusByDocId.set(e.docId, payload.status || (existing ? existing.status : null));
             return { docId: e.docId, payload };
         });
 
@@ -4206,8 +4208,12 @@ window.onload = () => {
         // 畫面上看起來就像完全沒生效。這裡改用「編號+客戶」直接比對管理表現有資料，不管位置準不準，
         // 找到了就依照結案燈號校正狀態，並把這個真正的位置永久記住，下次不用再用猜的。
         let idClientMap = new Map();
+        let idOnlyMap = new Map();
         existingMap.forEach((data, docId) => {
-            if (!data.id || !data.client) return;
+            if (!data.id) return;
+            if (!idOnlyMap.has(data.id)) idOnlyMap.set(data.id, []);
+            idOnlyMap.get(data.id).push(docId);
+            if (!data.client) return;
             const key = `${data.id}__${data.client}`;
             if (!idClientMap.has(key)) idClientMap.set(key, []);
             idClientMap.get(key).push(docId);
@@ -4224,22 +4230,33 @@ window.onload = () => {
             }
         };
         for (const e of entries) {
+            // 第一層：編號+客戶都對得上
             const key = `${e.idRaw}__${e.client}`;
-            const matches = idClientMap.get(key) || [];
+            let matches = idClientMap.get(key) || [];
+            // 第二層：客戶名稱可能打法不同(例如「董鎮綱」vs「董鎮網」)，退而求其次只用編號比對
+            if (matches.length === 0) matches = idOnlyMap.get(e.idRaw) || [];
             for (const docId of matches) {
                 if (docId === e.docId) continue; // 這筆位置正確，上面主要那段已經處理過了
                 const data = existingMap.get(docId);
                 const doneFlag = (e.d[24] || '製') === '完';
                 saveLinkedDocId(e.year, e.row, docId); // 找到真正的位置了，永久記住，以後直接用這個，不再用算的
+
+                // 以營收表為準，把客戶名稱等基本資料也一併校正回來(不是只改狀態) —— 這正是打字不一致的根源
+                const strayPayload = {
+                    category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
+                    type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
+                    note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
+                };
                 let newStatus = null;
                 if (doneFlag && data.status !== '已完成') newStatus = '已完成';
                 else if (!doneFlag && data.status === '已完成') newStatus = '尚未進行';
-                if (newStatus) {
-                    strayBatch.set(doc(pmDb, 'projects', docId), { status: newStatus }, { merge: true });
-                    strayOp++;
-                    strayFixed++;
-                    if (strayOp >= 450) await commitStray();
-                }
+                if (newStatus) strayPayload.status = newStatus;
+
+                strayBatch.set(doc(pmDb, 'projects', docId), strayPayload, { merge: true });
+                strayOp++;
+                strayFixed++;
+                finalStatusByDocId.set(docId, newStatus || data.status);
+                if (strayOp >= 450) await commitStray();
             }
         }
         await commitStray();
@@ -4248,8 +4265,8 @@ window.onload = () => {
         // 自動把燈號改成「完」，不用你自己再手動點一次
         let pulledDoneCount = 0;
         entries.forEach(e => {
-            const existing = existingMap.get(e.docId);
-            if (existing && existing.status === '已完成' && (e.d[24] || '製') !== '完') {
+            const finalStatus = finalStatusByDocId.get(e.docId);
+            if (finalStatus === '已完成' && (e.d[24] || '製') !== '完') {
                 let raw = localStorage.getItem(`d_${e.year}_${e.row}`);
                 let d = {};
                 try { d = raw ? JSON.parse(raw) : {}; } catch(err) {}
