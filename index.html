@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.70</title>
+    <title>杰冉宇宙營收表 V2.71</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3831,20 +3831,27 @@ window.onload = () => {
     }
 
     // 把單一列營收資料同步成管理表的一筆「待分派」專案。
-    // 用固定的 docId(AUTO_年份_列號)寫入，重複呼叫只會更新同一筆，不會產生重複資料。
-    // 只有「客戶」跟「案名」都有填，才會建立，避免打字打到一半就建立一堆半成品專案。
+    // V2：管理表改版後，文件 ID 固定用「類別_區域_編號」這條公式(不論新增或編輯都一樣)，
+    // 這裡跟著套用同一條公式，這樣你之後在管理表打開這筆專案存檔時，會更新同一份文件，不會另外多一份。
+    // 只有「客戶」「案名」「編號」都有填，才會建立 —— 缺編號就沒辦法算出跟管理表一致的區域/文件位置，先不建立。
     window.syncRowToPM = async function(r, year) {
         if (!pmDb) return;
         const d = window.getRowData(r);
         const client = (d[2] || '').trim();
         const name = (d[3] || '').trim();
-        if (!client || !name) return;
+        const idRaw = (d[1] || '').trim().toUpperCase();
+        if (!client || !name || !idRaw) return;
 
-        const docId = `AUTO_${year}_${r}`;
+        const category = mapPmCategory(d[4]);
+        const prefixMatch = idRaw.match(/^[A-Z]+/);
+        const prefix = prefixMatch ? prefixMatch[0] : 'Z';
+        const zone = `${prefix}_${client}`;
+        const docId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+
         const payload = {
-            category: mapPmCategory(d[4]),
-            zone: `Z_${client}`,
-            id: d[1] || docId,
+            category: category,
+            zone: zone,
+            id: idRaw,
             client: client,
             name: name,
             producer: '尚未暫定',
@@ -3857,8 +3864,21 @@ window.onload = () => {
             hours: 0,
             link: ''
         };
+
+        // 記住這一列上次同步到管理表的哪個文件；如果這次編號/客戶/類型改變導致算出的文件位置換了，
+        // 先把上一份刪掉，避免舊文件變成沒人管的孤兒資料
+        const mapKey = `vB_PmDocMap_${year}`;
+        let pmDocMap = {};
+        try { pmDocMap = JSON.parse(localStorage.getItem(mapKey)) || {}; } catch(e) {}
+        const prevDocId = pmDocMap[r];
+
         try {
+            if (prevDocId && prevDocId !== docId) {
+                await deleteDoc(doc(pmDb, 'projects', prevDocId)).catch(() => {});
+            }
             await setDoc(doc(pmDb, 'projects', docId), payload, { merge: true });
+            pmDocMap[r] = docId;
+            localStorage.setItem(mapKey, JSON.stringify(pmDocMap));
         } catch (e) {
             console.error('同步至杰冉管理表失敗:', e);
         }
