@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.79</title>
+    <title>杰冉宇宙營收表 V2.81</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3837,7 +3837,7 @@ window.onload = () => {
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -3982,55 +3982,69 @@ window.onload = () => {
         let duplicateGroups = Object.values(byDocId).filter(g => g.length > 1);
         const expectedDocIds = new Set(Object.keys(byDocId));
 
-        // Step 2：建立/更新(這一步永遠安全，只新增或更新描述性欄位，不會刪東西)
-        let createdOrUpdated = 0, writeFailCount = 0;
-        for (const e of entries) {
-            const docRef = doc(pmDb, 'projects', e.docId);
+        // V2.81 修正：原本每一筆都各自「查詢是否存在→再寫入」，335 筆等於跑 670 次網路來回，
+        // 難怪跑得慢。改成「一次把管理表全部資料抓下來」+「用批次寫入(writeBatch)一次或分幾批送出」，
+        // 網路來回從 670 次壓到大約 2~3 次，速度差非常多。
+
+        // Step 2：一次把管理表目前全部專案抓下來，之後判斷「存不存在」跟找多餘專案都直接用這份，不用再連線查詢
+        let existingMap = new Map();
+        try {
+            const allDocs = await getDocs(collection(pmDb, 'projects'));
+            allDocs.forEach(docSnap => existingMap.set(docSnap.id, docSnap.data() || {}));
+        } catch (e) {
+            console.error(e);
+            await uiAlert("讀取管理表資料失敗，請稍後再試。");
+            return;
+        }
+
+        // Step 3：建立/更新 —— 用批次寫入，一次最多 450 筆包成一批送出(這一步永遠安全，只新增或更新描述性欄位，不會刪東西)
+        let writeOps = entries.map(e => {
             const payload = {
                 category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
                 type: e.d[4] || '', start: e.d[5] || '', end: e.d[5] || '',
                 note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
             };
+            if (!existingMap.has(e.docId)) {
+                // V2.80：不再假設營收表的案子都已經做完，全新建立的專案一律進待分派，交由你自己判斷指派
+                payload.producer = '尚未暫定';
+                payload.status = '尚未進行';
+                payload.tag = '';
+                payload.hours = 0;
+                payload.link = '';
+            }
+            return { docId: e.docId, payload };
+        });
+
+        let createdOrUpdated = 0, writeFailCount = 0;
+        for (let i = 0; i < writeOps.length; i += 450) {
+            const chunk = writeOps.slice(i, i + 450);
+            const batch = writeBatch(pmDb);
+            chunk.forEach(op => batch.set(doc(pmDb, 'projects', op.docId), op.payload, { merge: true }));
             try {
-                const existing = await getDoc(docRef);
-                if (!existing.exists()) {
-                    payload.producer = '';
-                    payload.status = '已完成';
-                    payload.tag = '';
-                    payload.hours = 0;
-                    payload.link = '';
-                }
-                await setDoc(docRef, payload, { merge: true });
-                createdOrUpdated++;
+                await batch.commit();
+                createdOrUpdated += chunk.length;
             } catch (err) {
-                console.error(`${e.year} 年第 ${e.row} 列同步失敗:`, err);
-                writeFailCount++;
+                console.error('批次寫入失敗:', err);
+                writeFailCount += chunk.length;
             }
         }
 
-        // Step 3：找出「可能多餘」的候選 —— 一定要同時符合以下三個條件才會被列入候選，缺一不可：
+        // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
+        // 一定要同時符合以下三個條件才會被列入候選，缺一不可：
         // (a) 是這套自動同步建立的(備註開頭是固定標記，不是你自己手打的專案)
         // (b) 從來沒有被指派過製作人(製作人是空白或「尚未暫定」)
         // (c) 沒有任何工時紀錄
         // 只要有一項不符合，就直接跳過、不列入候選、更不會刪除
         let candidates = [];
-        try {
-            const allDocs = await getDocs(collection(pmDb, 'projects'));
-            allDocs.forEach(docSnap => {
-                if (expectedDocIds.has(docSnap.id)) return;
-                const data = docSnap.data() || {};
-                const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
-                const noProducer = !data.producer || data.producer === '尚未暫定';
-                const noHours = !(parseFloat(data.hours) > 0);
-                if (isAutoCreated && noProducer && noHours) {
-                    candidates.push({ docId: docSnap.id, client: data.client || '', name: data.name || '', pid: data.id || '' });
-                }
-            });
-        } catch (e) {
-            console.error(e);
-            await uiAlert("讀取管理表資料失敗，建立/更新已完成，但這次沒有檢查多餘專案，請稍後再執行一次。");
-            return;
-        }
+        existingMap.forEach((data, docId) => {
+            if (expectedDocIds.has(docId)) return;
+            const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
+            const noProducer = !data.producer || data.producer === '尚未暫定';
+            const noHours = !(parseFloat(data.hours) > 0);
+            if (isAutoCreated && noProducer && noHours) {
+                candidates.push({ docId, client: data.client || '', name: data.name || '', pid: data.id || '' });
+            }
+        });
 
         let deletedCount = 0, deleteFailCount = 0;
         if (candidates.length > 0) {
@@ -4042,9 +4056,17 @@ window.onload = () => {
                 "確認刪除多餘空白專案"
             );
             if (confirmed) {
-                for (const c of candidates) {
-                    try { await deleteDoc(doc(pmDb, 'projects', c.docId)); deletedCount++; }
-                    catch (e) { console.error(`刪除 ${c.docId} 失敗:`, e); deleteFailCount++; }
+                for (let i = 0; i < candidates.length; i += 450) {
+                    const chunk = candidates.slice(i, i + 450);
+                    const delBatch = writeBatch(pmDb);
+                    chunk.forEach(c => delBatch.delete(doc(pmDb, 'projects', c.docId)));
+                    try {
+                        await delBatch.commit();
+                        deletedCount += chunk.length;
+                    } catch (e) {
+                        console.error('批次刪除失敗:', e);
+                        deleteFailCount += chunk.length;
+                    }
                 }
             }
         }
