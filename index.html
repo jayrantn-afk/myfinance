@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.0</title>
+    <title>杰冉宇宙營收表 V3.1</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4363,25 +4363,20 @@ window.onload = () => {
 
         let deletedCount = 0, deleteFailCount = 0;
         if (candidates.length > 0) {
-            const sampleList = candidates.slice(0, 20).map(o => `・${o.pid || '(無編號)'} ${o.client} - ${o.name}`).join('\n');
-            const moreNote = candidates.length > 20 ? `\n...以及其他 ${candidates.length - 20} 筆` : '';
-            const confirmed = await uiConfirm(
-                `找到 ${candidates.length} 筆「自動建立、從未指派、沒有工時」的空白專案，營收表已經沒有對應資料：\n\n${sampleList}${moreNote}\n\n` +
-                `這些不會影響任何你已經在排程或有工時的專案。確定要刪除這 ${candidates.length} 筆嗎？`,
-                "確認刪除多餘空白專案"
-            );
-            if (confirmed) {
-                for (let i = 0; i < candidates.length; i += 450) {
-                    const chunk = candidates.slice(i, i + 450);
-                    const delBatch = writeBatch(pmDb);
-                    chunk.forEach(c => delBatch.delete(doc(pmDb, 'projects', c.docId)));
-                    try {
-                        await delBatch.commit();
-                        deletedCount += chunk.length;
-                    } catch (e) {
-                        console.error('批次刪除失敗:', e);
-                        deleteFailCount += chunk.length;
-                    }
+            // V3.0 修正：使用者反應同一筆空白專案每次同步都跳出來要求確認很煩——
+            // 這裡的安全條件本來就已經很嚴格(必須是「自動建立、從沒被指派過、沒有工時」)，
+            // 不可能誤刪真的有在跑的案子，所以拿掉每次都要點「確定」的彈窗，直接自動清除，
+            // 事後只在結果訊息裡列出清單讓你看到刪了什麼，不用再手動點一次。
+            for (let i = 0; i < candidates.length; i += 450) {
+                const chunk = candidates.slice(i, i + 450);
+                const delBatch = writeBatch(pmDb);
+                chunk.forEach(c => delBatch.delete(doc(pmDb, 'projects', c.docId)));
+                try {
+                    await delBatch.commit();
+                    deletedCount += chunk.length;
+                } catch (e) {
+                    console.error('批次刪除失敗:', e);
+                    deleteFailCount += chunk.length;
                 }
             }
         }
