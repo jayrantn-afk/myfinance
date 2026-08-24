@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.6</title>
+    <title>杰冉宇宙營收表 V3.7</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3930,6 +3930,7 @@ window.onload = () => {
     }
     let activeTab = document.querySelector('.app-nav-item.active');
     if (activeTab && activeTab.innerText.includes('數據中心')) renderDashboard();
+    setTimeout(() => { if (typeof autoPullCompletionFromPM === 'function') autoPullCompletionFromPM(); }, 800);
 };
 </script>
 
@@ -4106,6 +4107,53 @@ window.onload = () => {
     // 這次改成非常保守：只有「這筆本來就是自動同步建立、而且從來沒被指派過製作人、也沒有工時紀錄」的
     // 空白暫存專案，才有資格被視為多餘；只要有指派製作人、有工時、或不是自動建立的，一律不會被動到。
     // 而且真的要刪之前，一定會先列出完整清單給你看過、按下確定才會執行。
+    window.autoPullCompletionFromPM = async function() {
+        if (!pmDb) return;
+        try {
+            const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+            let rows = [];
+            for (const year of yList) {
+                const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+                for (let r = 0; r < rc; r++) {
+                    const raw = localStorage.getItem(`d_${year}_${r}`);
+                    if (!raw) continue;
+                    let d = {};
+                    try { d = JSON.parse(raw); } catch(e) { continue; }
+                    const client = (d[2] || '').trim();
+                    const name = (d[3] || '').trim();
+                    const idRaw = (d[1] || '').trim();
+                    if (!client || !name || !idRaw) continue;
+                    if ((d[24] || '製') === '完') continue;
+                    const category = mapPmCategory(d[4]);
+                    const prefixMatch = idRaw.match(/^[A-Za-z]+/);
+                    const prefix = prefixMatch ? prefixMatch[0] : 'Z';
+                    const zone = `${prefix}_${client}`;
+                    const computedDocId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+                    const linkedDocId = (d[23] || '').trim();
+                    const docId = linkedDocId || computedDocId;
+                    rows.push({ year, row: r, docId, d });
+                }
+            }
+            if (rows.length === 0) return;
+
+            const allDocs = await getDocs(collection(pmDb, 'projects'));
+            const existingMap = new Map();
+            allDocs.forEach(docSnap => existingMap.set(docSnap.id, docSnap.data() || {}));
+
+            let changed = false;
+            rows.forEach(({ year, row, docId, d }) => {
+                const data = existingMap.get(docId);
+                if (data && isDoneStatus(data.status)) {
+                    d[24] = '完';
+                    localStorage.setItem(`d_${year}_${row}`, JSON.stringify(d));
+                    if (year === curY && window.dCache) window.dCache[row] = d;
+                    changed = true;
+                }
+            });
+            if (changed) { clearRowCache(); initTable(); }
+        } catch (e) { console.error('自動同步完成燈號失敗:', e); }
+    }
+
     window.reconcilePMWithRevenue = async function() {
         if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
         if (!(await uiConfirm(
