@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.3</title>
+    <title>杰冉宇宙營收表 V3.4</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4391,11 +4391,12 @@ window.onload = () => {
 
         let resultMsg = `✅ 同步完成！共處理 ${createdOrUpdated} 筆`;
         const extraNotes = [];
-        if (strayFixed > 0) extraNotes.push(`校正 ${strayFixed} 筆（${strayFixedItems.join('、')}）`);
-        if (producerFixItems.length > 0) extraNotes.push(`製作人校正 ${producerFixItems.length} 筆（${producerFixItems.join('、')}）`);
+        const listBlock = (items) => items.map(i => `\n　・${i}`).join('');
+        if (strayFixed > 0) extraNotes.push(`校正 ${strayFixed} 筆：${listBlock(strayFixedItems)}`);
+        if (producerFixItems.length > 0) extraNotes.push(`製作人校正 ${producerFixItems.length} 筆：${listBlock(producerFixItems)}`);
         if (pulledDoneCount > 0) extraNotes.push(`結案燈號同步 ${pulledDoneCount} 筆`);
-        if (deletedCount > 0) extraNotes.push(`清除空白 ${deletedCount} 筆（${candidates.map(c => `${c.pid || '無編號'}-${c.client}`).join('、')}）`);
-        if (autoDedupCount > 0) extraNotes.push(`清除重複 ${autoDedupCount} 筆（${autoDedupItems.join('、')}）`);
+        if (deletedCount > 0) extraNotes.push(`清除空白 ${deletedCount} 筆：${listBlock(candidates.map(c => `${c.pid || '無編號'}-${c.client}`))}`);
+        if (autoDedupCount > 0) extraNotes.push(`清除重複 ${autoDedupCount} 筆：${listBlock(autoDedupItems)}`);
         if (skipped.length > 0) extraNotes.push(`跳過 ${skipped.length} 筆`);
         if (extraNotes.length > 0) resultMsg += `\n\n${extraNotes.join('\n')}`;
         if (rawStatusSamples.length > 0) {
