@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.2</title>
+    <title>杰冉宇宙營收表 V3.3</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4176,6 +4176,7 @@ window.onload = () => {
         // 製作人只有在「從沒被指派過、沒有工時」時才會套用指派欄，避免蓋掉手動指派+已經動工的專案。
         let finalStatusByDocId = new Map(); // 記錄「這次同步完之後，管理表這份文件真正的最終狀態」，避免下面回拉燈號時看到修改前的舊資料
         let rawStatusSamples = []; // 診斷用：把「結案燈號是製、但原始狀態字串長什麼樣子」直接記下來給你看，不用再猜
+        let producerFixItems = []; // V3.3 新增：記錄這次同步實際校正了哪些案子的製作人，結果訊息才能列出具體項目
         let writeOps = entries.map(e => {
             const existing = existingMap.get(e.docId);
             const doneFlag = (e.d[24] || '製') === '完';
@@ -4191,10 +4192,19 @@ window.onload = () => {
                 payload.hours = 0;
                 payload.link = '';
             } else {
-                if (doneFlag && !isDoneStatus(existing.status)) payload.status = '已完成';
-                else if (!doneFlag && isDoneStatus(existing.status)) payload.status = '尚未進行';
-                const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
-                if (noRealProducer) payload.producer = mapPmProducer(e.d[22]);
+                let newStatus = null;
+                if (doneFlag && !isDoneStatus(existing.status)) newStatus = '已完成';
+                else if (!doneFlag && isDoneStatus(existing.status)) newStatus = '尚未進行';
+                if (newStatus) payload.status = newStatus;
+                // V3.3 修正：使用者反應「營收表明明兩人一起做，管理表卻只顯示一人」——
+                // 原因是這裡以前只有「管理表還沒指派過」時才會套用營收表的指派欄，
+                // 一旦管理表已經有任何一個人選，之後不管營收表怎麼改，都不會再更新。
+                // 既然原則是「一律以營收表為準」，這裡改成每次同步都強制覆蓋，不再只看「第一次」。
+                const newProducer = mapPmProducer(e.d[22]);
+                if (newProducer !== existing.producer) {
+                    payload.producer = newProducer;
+                    producerFixItems.push(`${e.idRaw}-${e.client}（${existing.producer || '未指派'}→${newProducer}）`);
+                }
 
                 const knownNotDone = existing.status === '尚未進行' || existing.status === '製作中' || (existing.status && existing.status.indexOf('審') !== -1);
                 if (!doneFlag && !knownNotDone && rawStatusSamples.length < 8) {
@@ -4245,6 +4255,7 @@ window.onload = () => {
         // 是刪掉真的做過的工時紀錄沒辦法復原，這一步還是想讓你自己點頭比較保險。
         let duplicatePmDocs = [];
         let autoDedupCount = 0, autoDedupFailCount = 0;
+        let autoDedupItems = []; // V3.3 新增：記錄實際清除了哪些編號的重複資料
         let dedupNeedsReview = [];
         {
             let dedupBatch = writeBatch(pmDb);
@@ -4277,6 +4288,7 @@ window.onload = () => {
                         dedupBatch.delete(doc(pmDb, 'projects', docId));
                         dedupOp++;
                         autoDedupCount++;
+                        autoDedupItems.push(`${idVal}-${data.client || ''}`);
                         if (dedupOp >= 450) await commitDedup();
                     } else {
                         dedupNeedsReview.push(`編號[${idVal}] docId=${docId} client=${JSON.stringify(data.client)} status=${JSON.stringify(data.status)} hours=${JSON.stringify(data.hours)}（有填過工時，怕誤刪真實紀錄，沒有自動刪除）`);
@@ -4287,6 +4299,7 @@ window.onload = () => {
         }
 
         let strayFixed = 0;
+        let strayFixedItems = []; // V3.3 新增：記錄這次「額外校正」實際動到哪些案子
         let strayBatch = writeBatch(pmDb);
         let strayOp = 0;
         const commitStray = async () => {
@@ -4322,6 +4335,7 @@ window.onload = () => {
                 strayBatch.set(doc(pmDb, 'projects', docId), strayPayload, { merge: true });
                 strayOp++;
                 strayFixed++;
+                strayFixedItems.push(`${e.idRaw}-${e.client}`);
                 finalStatusByDocId.set(docId, newStatus || data.status);
                 if (strayOp >= 450) await commitStray();
             }
@@ -4377,12 +4391,13 @@ window.onload = () => {
 
         let resultMsg = `✅ 同步完成！共處理 ${createdOrUpdated} 筆`;
         const extraNotes = [];
-        if (strayFixed > 0) extraNotes.push(`校正 ${strayFixed} 筆`);
+        if (strayFixed > 0) extraNotes.push(`校正 ${strayFixed} 筆（${strayFixedItems.join('、')}）`);
+        if (producerFixItems.length > 0) extraNotes.push(`製作人校正 ${producerFixItems.length} 筆（${producerFixItems.join('、')}）`);
         if (pulledDoneCount > 0) extraNotes.push(`結案燈號同步 ${pulledDoneCount} 筆`);
-        if (deletedCount > 0) extraNotes.push(`清除空白 ${deletedCount} 筆`);
-        if (autoDedupCount > 0) extraNotes.push(`清除重複 ${autoDedupCount} 筆`);
+        if (deletedCount > 0) extraNotes.push(`清除空白 ${deletedCount} 筆（${candidates.map(c => `${c.pid || '無編號'}-${c.client}`).join('、')}）`);
+        if (autoDedupCount > 0) extraNotes.push(`清除重複 ${autoDedupCount} 筆（${autoDedupItems.join('、')}）`);
         if (skipped.length > 0) extraNotes.push(`跳過 ${skipped.length} 筆`);
-        if (extraNotes.length > 0) resultMsg += `（${extraNotes.join('、')}）`;
+        if (extraNotes.length > 0) resultMsg += `\n\n${extraNotes.join('\n')}`;
         if (rawStatusSamples.length > 0) {
             resultMsg += `\n\n🔍 診斷：以下是「結案燈號=製，但管理表原始狀態不是常見值」的實際內容：\n`;
             resultMsg += rawStatusSamples.map(s => `・編號[${s.idRaw}] 客戶[${s.client}]\n   status=${s.rawStatus} producer=${s.producer} hours=${s.hours}`).join('\n');
