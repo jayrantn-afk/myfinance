@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.4</title>
+    <title>杰冉宇宙營收表 V3.6</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4315,11 +4315,19 @@ window.onload = () => {
             let matches = idClientMap.get(key) || [];
             // 第二層：客戶名稱可能打法不同(例如「董鎮綱」vs「董鎮網」)，退而求其次只用編號比對
             if (matches.length === 0) matches = idOnlyMap.get(e.idRaw) || [];
+            // V3.5 修正：抓到真正的根本 bug —— 如果同一個編號同時對到「兩份以上」文件(代表還有
+            // 重複幽靈資料沒清乾淨)，這裡以前會把「永久記住位置」的快取，依序覆蓋成迴圈跑到的最後一份，
+            // 等於隨機記到其中一份(可能剛好是幽靈那份)。下次同步用快取位置去讀，抓到的就是幽靈，
+            // 原本正確的那份反而變成「找不到對應」被打回候選刪除名單——這正是同一筆案子每次同步
+            // 都在「校正/清除空白/清除重複」清單裡輪流出現、殺不死的真正原因。
+            // 修法：只有「唯一一份」時才記住位置；抓到兩份以上，先不記，等清除重複機制把多的殺掉、
+            // 只剩一份不會混淆了，之後同步才會記住正確位置。
+            const isAmbiguous = matches.length > 1;
             for (const docId of matches) {
                 if (docId === e.docId) continue; // 這筆位置正確，上面主要那段已經處理過了
                 const data = existingMap.get(docId);
                 const doneFlag = (e.d[24] || '製') === '完';
-                saveLinkedDocId(e.year, e.row, docId); // 找到真正的位置了，永久記住，以後直接用這個，不再用算的
+                if (!isAmbiguous) saveLinkedDocId(e.year, e.row, docId); // 找到真正唯一的位置了，永久記住，以後直接用這個，不再用算的
 
                 // 以營收表為準，把客戶名稱等基本資料也一併校正回來(不是只改狀態) —— 這正是打字不一致的根源
                 const strayPayload = {
@@ -4391,11 +4399,22 @@ window.onload = () => {
 
         let resultMsg = `✅ 同步完成！共處理 ${createdOrUpdated} 筆`;
         const extraNotes = [];
+        // V3.6 修正：同一筆資料如果同時符合「校正／清除空白／清除重複」好幾種情況，
+        // 以前會在報告裡出現三次，看起來像鬧鬼、其實是同一刀被三個檢查各自記了一筆帳。
+        // 改成每個編號只留在「最重要」的那一類：清除重複 > 清除空白 > 校正。
+        const idOf = (s) => (String(s).split('-')[0] || '').trim();
+        const dedupIdSet = new Set(autoDedupItems.map(idOf));
+        const blankIdSet = new Set(candidates.map(c => idOf(c.pid || '')));
+        const filteredStrayItems = strayFixedItems.filter(s => !dedupIdSet.has(idOf(s)) && !blankIdSet.has(idOf(s)));
+        const filteredCandidates = candidates.filter(c => !dedupIdSet.has(idOf(c.pid || '')));
+        const filteredStrayCount = filteredStrayItems.length;
+        const filteredDeletedCount = filteredCandidates.length;
+
         const listBlock = (items) => items.map(i => `\n　・${i}`).join('');
-        if (strayFixed > 0) extraNotes.push(`校正 ${strayFixed} 筆：${listBlock(strayFixedItems)}`);
+        if (filteredStrayCount > 0) extraNotes.push(`校正 ${filteredStrayCount} 筆：${listBlock(filteredStrayItems)}`);
         if (producerFixItems.length > 0) extraNotes.push(`製作人校正 ${producerFixItems.length} 筆：${listBlock(producerFixItems)}`);
         if (pulledDoneCount > 0) extraNotes.push(`結案燈號同步 ${pulledDoneCount} 筆`);
-        if (deletedCount > 0) extraNotes.push(`清除空白 ${deletedCount} 筆：${listBlock(candidates.map(c => `${c.pid || '無編號'}-${c.client}`))}`);
+        if (filteredDeletedCount > 0) extraNotes.push(`清除空白 ${filteredDeletedCount} 筆：${listBlock(filteredCandidates.map(c => `${c.pid || '無編號'}-${c.client}`))}`);
         if (autoDedupCount > 0) extraNotes.push(`清除重複 ${autoDedupCount} 筆：${listBlock(autoDedupItems)}`);
         if (skipped.length > 0) extraNotes.push(`跳過 ${skipped.length} 筆`);
         if (extraNotes.length > 0) resultMsg += `\n\n${extraNotes.join('\n')}`;
