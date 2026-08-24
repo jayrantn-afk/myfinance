@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.1</title>
+    <title>杰冉宇宙營收表 V3.2</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4109,13 +4109,7 @@ window.onload = () => {
     window.reconcilePMWithRevenue = async function() {
         if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
         if (!(await uiConfirm(
-            "即將以營收表目前的資料為準，同步管理表：\n" +
-            "・營收表有、管理表沒有的專案 → 建立\n" +
-            "・兩邊都有的專案 → 更新客戶/案名/類型/日期/備註，並依照「結案」燈號(製/完)校正狀態\n" +
-            "・管理表那邊如果已經被標記完成，營收表的結案燈號也會自動改成「完」\n" +
-            "・管理表裡「純粹是自動建立、從沒被指派過製作人也沒有工時」的空白專案，如果營收表已經沒有對應資料 → 會列出來讓你確認要不要刪除\n" +
-            "・任何有指派製作人或工時紀錄的專案，不管有沒有對應到營收表，都不會被刪除\n\n" +
-            "確定要執行嗎？",
+            "以營收表為準，同步管理表（建立/更新/校正，安全清除空白殘留）。\n\n確定要執行嗎？",
             "同步管理表"
         ))) return;
 
@@ -4381,7 +4375,14 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正(保險機制,位置對不上時抓到的) ${strayFixed} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n自動清除重複幽靈資料 ${autoDedupCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        let resultMsg = `✅ 同步完成！共處理 ${createdOrUpdated} 筆`;
+        const extraNotes = [];
+        if (strayFixed > 0) extraNotes.push(`校正 ${strayFixed} 筆`);
+        if (pulledDoneCount > 0) extraNotes.push(`結案燈號同步 ${pulledDoneCount} 筆`);
+        if (deletedCount > 0) extraNotes.push(`清除空白 ${deletedCount} 筆`);
+        if (autoDedupCount > 0) extraNotes.push(`清除重複 ${autoDedupCount} 筆`);
+        if (skipped.length > 0) extraNotes.push(`跳過 ${skipped.length} 筆`);
+        if (extraNotes.length > 0) resultMsg += `（${extraNotes.join('、')}）`;
         if (rawStatusSamples.length > 0) {
             resultMsg += `\n\n🔍 診斷：以下是「結案燈號=製，但管理表原始狀態不是常見值」的實際內容：\n`;
             resultMsg += rawStatusSamples.map(s => `・編號[${s.idRaw}] 客戶[${s.client}]\n   status=${s.rawStatus} producer=${s.producer} hours=${s.hours}`).join('\n');
