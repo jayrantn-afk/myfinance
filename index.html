@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.99</title>
+    <title>杰冉宇宙營收表 V3.0</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4244,20 +4244,53 @@ window.onload = () => {
             idClientMap.get(key).push(docId);
         });
 
-        // V2.97 新增：診斷 —— 找出同一個編號在管理表裡對應到「兩份以上不同文件」的狀況(真正的重複資料)，
-        // 直接列出每一份的狀態，這樣才知道是不是同步改到了 A 份，畫面顯示的卻是完全沒被動過的 B 份
+        // V2.99 修正：使用者要求「一律以營收表為準，不一樣的地方直接覆蓋/清掉，不用每次都跳出來問」
+        // 改成自動清除重複幽靈資料，不再只是把「兩份文件」的診斷資訊丟出來要你自己判斷。
+        // 安全規則只留一條：如果其中一份「真的填過工時」(代表有人真的動工、可能有實際請款紀錄)，
+        // 絕對不自動刪除，改成列在最後的「需要你確認」清單——這不是不聽你的話，
+        // 是刪掉真的做過的工時紀錄沒辦法復原，這一步還是想讓你自己點頭比較保險。
         let duplicatePmDocs = [];
-        idOnlyMap.forEach((docIds, idVal) => {
-            if (docIds.length > 1) {
-                duplicatePmDocs.push({
-                    idVal,
-                    docs: docIds.map(docId => {
-                        const data = existingMap.get(docId) || {};
-                        return `docId=${docId} client=${JSON.stringify(data.client)} status=${JSON.stringify(data.status)} hours=${JSON.stringify(data.hours)}`;
-                    })
-                });
+        let autoDedupCount = 0, autoDedupFailCount = 0;
+        let dedupNeedsReview = [];
+        {
+            let dedupBatch = writeBatch(pmDb);
+            let dedupOp = 0;
+            const commitDedup = async () => {
+                if (dedupOp > 0) {
+                    try { await dedupBatch.commit(); } catch (e) { console.error('自動清除重複資料失敗:', e); autoDedupFailCount += dedupOp; }
+                    dedupBatch = writeBatch(pmDb);
+                    dedupOp = 0;
+                }
+            };
+            for (const [idVal, docIds] of idOnlyMap) {
+                if (docIds.length <= 1) continue;
+                const correctDocId = docIds.find(d => expectedDocIds.has(d));
+                if (!correctDocId) {
+                    // 沒有一份對得到目前營收表算出來的正確位置，沒辦法安全判斷該留哪份，列出來給你看
+                    duplicatePmDocs.push({
+                        idVal,
+                        docs: docIds.map(docId => {
+                            const data = existingMap.get(docId) || {};
+                            return `docId=${docId} client=${JSON.stringify(data.client)} status=${JSON.stringify(data.status)} hours=${JSON.stringify(data.hours)}`;
+                        })
+                    });
+                    continue;
+                }
+                for (const docId of docIds) {
+                    if (docId === correctDocId) continue;
+                    const data = existingMap.get(docId);
+                    if (isUntouchedAutoStub(data)) {
+                        dedupBatch.delete(doc(pmDb, 'projects', docId));
+                        dedupOp++;
+                        autoDedupCount++;
+                        if (dedupOp >= 450) await commitDedup();
+                    } else {
+                        dedupNeedsReview.push(`編號[${idVal}] docId=${docId} client=${JSON.stringify(data.client)} status=${JSON.stringify(data.status)} hours=${JSON.stringify(data.hours)}（有填過工時，怕誤刪真實紀錄，沒有自動刪除）`);
+                    }
+                }
             }
-        });
+            await commitDedup();
+        }
 
         let strayFixed = 0;
         let strayBatch = writeBatch(pmDb);
@@ -4353,17 +4386,22 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正(保險機制,位置對不上時抓到的) ${strayFixed} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正(保險機制,位置對不上時抓到的) ${strayFixed} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n自動清除重複幽靈資料 ${autoDedupCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
         if (rawStatusSamples.length > 0) {
             resultMsg += `\n\n🔍 診斷：以下是「結案燈號=製，但管理表原始狀態不是常見值」的實際內容：\n`;
             resultMsg += rawStatusSamples.map(s => `・編號[${s.idRaw}] 客戶[${s.client}]\n   status=${s.rawStatus} producer=${s.producer} hours=${s.hours}`).join('\n');
         }
+        if (dedupNeedsReview.length > 0) {
+            resultMsg += `\n\n⚠️ 以下重複資料因為其中一份「有填過工時」，怕誤刪真實紀錄，沒有自動清除，麻煩你自己確認要留哪份：\n`;
+            resultMsg += dedupNeedsReview.slice(0, 8).join('\n');
+            if (dedupNeedsReview.length > 8) resultMsg += `\n...以及其他 ${dedupNeedsReview.length - 8} 筆`;
+        }
         if (duplicatePmDocs.length > 0) {
-            resultMsg += `\n\n⚠️ 診斷：管理表裡發現以下編號對應到「兩份以上不同文件」，可能是真正的重複資料：\n`;
+            resultMsg += `\n\n⚠️ 以下編號對應到「兩份以上不同文件」，但都找不到跟目前營收表對得上的正確位置，沒辦法安全判斷該留哪份，麻煩你自己去管理表確認：\n`;
             resultMsg += duplicatePmDocs.slice(0, 5).map(d => `・編號[${d.idVal}]:\n   ` + d.docs.join('\n   ')).join('\n');
             if (duplicatePmDocs.length > 5) resultMsg += `\n...以及其他 ${duplicatePmDocs.length - 5} 組`;
         }
-        if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
+        if (writeFailCount || deleteFailCount || autoDedupFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆、清除重複資料失敗 ${autoDedupFailCount} 筆`;
         if (skipped.length > 0) {
             resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
             if (skipped.length > 10) resultMsg += `\n...以及其他 ${skipped.length - 10} 列`;
