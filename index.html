@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.71</title>
+    <title>杰冉宇宙營收表 V2.72</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1273,7 +1273,7 @@
 
                         <div id="qt-export-terms-section" style="display: none; margin-top: 20px;">
                             <div style="background: #1D1D1F; color: #FFF; font-weight: 800; padding: 8px 14px; font-size: 13px;">合作與交付說明</div>
-                            <table id="qt-export-terms-table" style="width: 100%; border-collapse: collapse; font-size: 12px;"></table>
+                            <table id="qt-export-terms-table" style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;"></table>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; font-size: 12px; page-break-inside: avoid;">
@@ -2633,8 +2633,8 @@ async function downloadQuotationPDF() {
                 : lines[0];
             return `
             <tr style="page-break-inside: avoid;">
-                <td style="background: #F0C64B; font-weight: 800; padding: 8px 12px; width: 90px; border-bottom: 1px solid #FFF; vertical-align: top;">${label}</td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid #E5E5EA; color: #475467;">${valueHtml}</td>
+                <td style="background: #F0C64B; font-weight: 800; padding: 8px 12px; width: 90px; border-bottom: 1px solid #FFF; vertical-align: top; text-align: left;">${label}</td>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #E5E5EA; color: #475467; text-align: left; word-wrap: break-word; overflow-wrap: break-word;">${valueHtml}</td>
             </tr>
         `;
         }).join('');
