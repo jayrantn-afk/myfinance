@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V2.72</title>
+    <title>杰冉宇宙營收表 V3.00</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -124,10 +124,10 @@
         #mainTable tbody tr:nth-child(even) td { background: #F7F9FC; }
 
         /* 金額類欄位靠右對齊（訂金/未稅額/稅金/含稅總額/公司金額/老闆金額/夥伴金額），符合會計慣例好比大小 */
-        #mainTable td:nth-child(10) input, #mainTable td:nth-child(11) input,
-        #mainTable td:nth-child(12) input, #mainTable td:nth-child(13) input,
-        #mainTable td:nth-child(19) input, #mainTable td:nth-child(20) input,
-        #mainTable td:nth-child(21) input {
+        #mainTable td:nth-child(11) input, #mainTable td:nth-child(12) input,
+        #mainTable td:nth-child(13) input, #mainTable td:nth-child(14) input,
+        #mainTable td:nth-child(20) input, #mainTable td:nth-child(21) input,
+        #mainTable td:nth-child(22) input {
             text-align: right; padding-right: 12px; box-sizing: border-box;
         }
 
@@ -153,6 +153,20 @@
         .settled-badge:hover, .partner-badge:hover { filter: brightness(0.95); }
         .settled-badge.active { color: #00A651; background: rgba(0,166,81,0.16); }
         .partner-badge.active { color: #8E24C9; background: rgba(191,90,242,0.18); }
+
+        /* V2.83：案件明細新增「指派」欄位，魏/杰兩顆小按鈕，點下去會發光標示這案子是誰的 */
+        .assign-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%; cursor: pointer; user-select: none;
+            font-size: 12px; font-weight: 800; color: var(--light); background: rgba(0,0,0,0.06); transition: all 0.15s;
+        }
+        .assign-badge:hover { filter: brightness(0.95); }
+        .assign-badge.active-wei { color: #FFF; background: #0A84FF; box-shadow: 0 0 8px rgba(10,132,255,0.6); }
+        .assign-badge.active-chiu { color: #FFF; background: #00D26A; box-shadow: 0 0 8px rgba(0,210,106,0.6); }
+
+        /* V2.91：公司/老闆/夥伴金額三欄可收合，收合時直接隱藏整欄 */
+        #mainTable.amounts-hidden .amt-col { display: none; }
+        #toggleAmountsBtn.active { background: #1D1D1F; color: #FFF; }
         #settleTable { min-width: 100%; table-layout: fixed; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
@@ -193,6 +207,17 @@
         /* 填充把手樣式 */
         .fill-handle { position: absolute; right: 0; bottom: 0; width: 6px; height: 6px; background: var(--primary); cursor: crosshair; opacity: 0; transition: opacity 0.2s; }
         td:hover .fill-handle { opacity: 1; }
+
+        /* V2.74：編號欄位「淺色自動建議」— 打字母時淺灰顯示推測的下一個編號，按 Enter 接受 */
+        .id-input { text-align: left !important; padding-left: 6px !important; position: relative; z-index: 2; }
+        .id-ghost {
+            position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; padding-left: 6px;
+            font-size: 13px; font-weight: 600; font-family: inherit;
+            white-space: pre; overflow: hidden; pointer-events: none; z-index: 1;
+        }
+        .id-ghost .ghost-typed { visibility: hidden; }
+        .id-ghost .ghost-suggest { color: #C7C7D1; }
         .cell-filling { background-color: rgba(var(--primary-rgb), 0.1) !important; outline: 1px dashed var(--primary); }
 
         .selection-stats-bar {
@@ -744,6 +769,7 @@
             <div class="app-sidebar-btn" style="color:var(--primary)" onclick="cloudSync('LOAD')" title="從雲端載入"><span class="nav-icon">🔄</span><span class="nav-label">從雲端載入</span></div>
             <div class="app-sidebar-btn backup" onclick="openBackupModal()" title="版本備份"><span class="nav-icon">📜</span><span class="nav-label">版本備份</span></div>
             <div class="app-sidebar-btn" onclick="exportData()" title="匯出電腦備份"><span class="nav-icon">📤</span><span class="nav-label">匯出電腦備份</span></div>
+            <div class="app-sidebar-btn" style="color:#6C5CE7" onclick="reconcilePMWithRevenue()" title="以營收表為準，完整同步管理表(建立/更新/刪除多餘)"><span class="nav-icon">🔄</span><span class="nav-label">完整同步管理表</span></div>
         </div>
     </aside>
 
@@ -816,26 +842,29 @@
         <div class="page-content">
             <div class="white-card">
                 <div class="month-nav-wrapper">
-                    <div class="month-nav">
-                        <button class="month-btn active" onclick="setMonthFilter('all', this)">全部月份</button>
-                        <button class="month-btn" onclick="setMonthFilter('01', this)">1月</button>
-                        <button class="month-btn" onclick="setMonthFilter('02', this)">2月</button>
-                        <button class="month-btn" onclick="setMonthFilter('03', this)">3月</button>
-                        <button class="month-btn" onclick="setMonthFilter('04', this)">4月</button>
-                        <button class="month-btn" onclick="setMonthFilter('05', this)">5月</button>
-                        <button class="month-btn" onclick="setMonthFilter('06', this)">6月</button>
-                        <button class="month-btn" onclick="setMonthFilter('07', this)">7月</button>
-                        <button class="month-btn" onclick="setMonthFilter('08', this)">8月</button>
-                        <button class="month-btn" onclick="setMonthFilter('09', this)">9月</button>
-                        <button class="month-btn" onclick="setMonthFilter('10', this)">10月</button>
-                        <button class="month-btn" onclick="setMonthFilter('11', this)">11月</button>
-                        <button class="month-btn" onclick="setMonthFilter('12', this)">12月</button>
+                    <div class="month-nav" style="justify-content: space-between; display: flex;">
+                        <div style="display: flex; gap: 8px; overflow-x: auto;">
+                            <button class="month-btn active" onclick="setMonthFilter('all', this)">全部月份</button>
+                            <button class="month-btn" onclick="setMonthFilter('01', this)">1月</button>
+                            <button class="month-btn" onclick="setMonthFilter('02', this)">2月</button>
+                            <button class="month-btn" onclick="setMonthFilter('03', this)">3月</button>
+                            <button class="month-btn" onclick="setMonthFilter('04', this)">4月</button>
+                            <button class="month-btn" onclick="setMonthFilter('05', this)">5月</button>
+                            <button class="month-btn" onclick="setMonthFilter('06', this)">6月</button>
+                            <button class="month-btn" onclick="setMonthFilter('07', this)">7月</button>
+                            <button class="month-btn" onclick="setMonthFilter('08', this)">8月</button>
+                            <button class="month-btn" onclick="setMonthFilter('09', this)">9月</button>
+                            <button class="month-btn" onclick="setMonthFilter('10', this)">10月</button>
+                            <button class="month-btn" onclick="setMonthFilter('11', this)">11月</button>
+                            <button class="month-btn" onclick="setMonthFilter('12', this)">12月</button>
+                        </div>
+                        <button id="toggleAmountsBtn" class="month-btn" onclick="toggleAmountColumns()" title="收合/展開公司、老闆、夥伴金額欄" style="flex-shrink:0;"><i class="fas fa-eye-slash"></i> 分潤金額</button>
                     </div>
                 </div>
                 <div class="table-scroll" id="input-view">
                     <!-- 🚨 隱藏 付款、尾款、未收金額 -->
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th style="width:80px">公司金額</th><th style="width:80px">老闆金額</th><th style="width:80px">夥伴金額</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th class="amt-col" style="width:80px">公司金額</th><th class="amt-col" style="width:80px">老闆金額</th><th class="amt-col" style="width:80px">夥伴金額</th><th style="width:55px">結案</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -1043,7 +1072,7 @@
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 14px;">
                                     <div style="font-weight: 700;">請款單位</div>
-                                    <img src="data:image/png;base64,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" style="height: 36px; width: auto;" alt="JAYRAN 杰冉影像工作室">
+                                    <img src="data:image/png;base64,PLACEHOLDER_LOGO_BASE64" style="height: 36px; width: auto;" alt="JAYRAN 杰冉影像工作室">
                                 </div>
                             </div>
                         </div>
@@ -1226,13 +1255,13 @@
                         <div id="qt-total-label" style="font-size: 20px; font-weight: 900; color: #1D1D1F; margin-top: 6px;">總價（含稅）：$ <span id="qt-total" style="color: #C89B2C;">0</span></div>
                     </div>
 
-                    <h3 style="font-size: 13px; color: #1D1D1F; margin: 22px 0 10px 0; font-weight: 900; display: flex; align-items: center; gap: 6px;"><span style="width: 4px; height: 14px; background: #F0C64B; display: inline-block;"></span>合作與交付說明（選填，有填才會印出來，一行算一點，想列幾點就換行打幾行）</h3>
+                    <h3 style="font-size: 13px; color: #1D1D1F; margin: 22px 0 10px 0; font-weight: 900; display: flex; align-items: center; gap: 6px;"><span style="width: 4px; height: 14px; background: #F0C64B; display: inline-block;"></span>合作與交付說明（選填，有填才會印出來；每行算一點，可以列兩點以上）</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <textarea id="qt-term-basis" placeholder="製作基準" class="qt-input" rows="3" style="height: auto; padding: 8px 12px; resize: vertical; line-height: 1.5;"></textarea>
-                        <textarea id="qt-term-revision" placeholder="修改次數" class="qt-input" rows="3" style="height: auto; padding: 8px 12px; resize: vertical; line-height: 1.5;"></textarea>
-                        <textarea id="qt-term-addon" placeholder="追加項目" class="qt-input" rows="3" style="height: auto; padding: 8px 12px; resize: vertical; line-height: 1.5;"></textarea>
-                        <textarea id="qt-term-payment" placeholder="付款方式" class="qt-input" rows="3" style="height: auto; padding: 8px 12px; resize: vertical; line-height: 1.5;"></textarea>
-                        <textarea id="qt-term-exclude" placeholder="不含項目" class="qt-input" rows="3" style="height: auto; padding: 8px 12px; resize: vertical; line-height: 1.5; grid-column: 1 / -1;"></textarea>
+                        <textarea id="qt-term-basis" placeholder="製作基準（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
+                        <textarea id="qt-term-revision" placeholder="修改次數（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
+                        <textarea id="qt-term-addon" placeholder="追加項目（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
+                        <textarea id="qt-term-payment" placeholder="付款方式（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
+                        <textarea id="qt-term-exclude" placeholder="不含項目（可分行列多點）" class="qt-input" rows="3" style="grid-column: 1 / -1; height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
                     </div>
                 </div>
 
@@ -1273,7 +1302,7 @@
 
                         <div id="qt-export-terms-section" style="display: none; margin-top: 20px;">
                             <div style="background: #1D1D1F; color: #FFF; font-weight: 800; padding: 8px 14px; font-size: 13px;">合作與交付說明</div>
-                            <table id="qt-export-terms-table" style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed;"></table>
+                            <table id="qt-export-terms-table" style="width: 100%; border-collapse: collapse; font-size: 12px;"></table>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; font-size: 12px; page-break-inside: avoid;">
@@ -1284,7 +1313,7 @@
                             </div>
                             <div style="display: flex; align-items: center; gap: 14px;">
                                 <div style="font-weight: 700;">報價單位</div>
-                                <img src="data:image/png;base64,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" style="height: 36px; width: auto;" alt="JAYRAN 杰冉影像工作室">
+                                <img src="data:image/png;base64,PLACEHOLDER_LOGO_BASE64" style="height: 36px; width: auto;" alt="JAYRAN 杰冉影像工作室">
                             </div>
                         </div>
                     </div>
@@ -1812,6 +1841,17 @@ async function manageVip(action) {
 
 let currentMonthFilter = 'all';
 function setMonthFilter(m, el) { currentMonthFilter = m; document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); filterTable(); }
+
+// V2.91：收合/展開公司、老闆、夥伴金額三欄，記住使用者上次的選擇
+function toggleAmountColumns() {
+    const table = document.getElementById('mainTable');
+    const btn = document.getElementById('toggleAmountsBtn');
+    table.classList.toggle('amounts-hidden');
+    const hidden = table.classList.contains('amounts-hidden');
+    if (btn) btn.classList.toggle('active', hidden);
+    localStorage.setItem('vB_AmountsHidden', hidden ? '1' : '0');
+}
+window.toggleAmountColumns = toggleAmountColumns;
 
 function setStatusFilter(val, text, el) {
     document.getElementById('ssStatus').value = val;
@@ -2613,7 +2653,14 @@ async function downloadQuotationPDF() {
         <tr style="page-break-inside: avoid; background: #F0C64B;"><td colspan="4" style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px; border: 1px solid #1D1D1F;">${totalLabel}</td><td style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px; border: 1px solid #1D1D1F;">${total.toLocaleString()}</td></tr>
     `;
 
-    // 合作與交付說明（只放有填的項目）
+    // 合作與交付說明（只放有填的項目；每行算一點，兩行以上自動變成條列）
+    function formatTermValue(val) {
+        const lines = String(val).split('\n').map(s => s.trim()).filter(s => s);
+        if (lines.length <= 1) return escapeHtmlTerm(lines[0] || '');
+        return '<ul style="margin:0; padding-left:16px;">' + lines.map(l => `<li style="margin-bottom:3px;">${escapeHtmlTerm(l)}</li>`).join('') + '</ul>';
+    }
+    function escapeHtmlTerm(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
     let termsMap = [
         ['製作基準', document.getElementById('qt-term-basis').value.trim()],
         ['修改次數', document.getElementById('qt-term-revision').value.trim()],
@@ -2626,18 +2673,12 @@ async function downloadQuotationPDF() {
     let termsTable = document.getElementById('qt-export-terms-table');
     if (termsMap.length > 0) {
         termsSection.style.display = 'block';
-        termsTable.innerHTML = termsMap.map(([label, val]) => {
-            let lines = val.split('\n').map(l => l.trim()).filter(l => l !== '');
-            let valueHtml = lines.length > 1
-                ? lines.map((l, i) => `<div style="${i > 0 ? 'margin-top:4px;' : ''}">${i + 1}. ${l}</div>`).join('')
-                : lines[0];
-            return `
+        termsTable.innerHTML = termsMap.map(([label, val]) => `
             <tr style="page-break-inside: avoid;">
-                <td style="background: #F0C64B; font-weight: 800; padding: 8px 12px; width: 90px; border-bottom: 1px solid #FFF; vertical-align: top; text-align: left;">${label}</td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid #E5E5EA; color: #475467; text-align: left; word-wrap: break-word; overflow-wrap: break-word;">${valueHtml}</td>
+                <td style="background: #F0C64B; font-weight: 800; padding: 8px 12px; width: 90px; border-bottom: 1px solid #FFF; vertical-align: top;">${label}</td>
+                <td style="padding: 8px 12px; border-bottom: 1px solid #E5E5EA; color: #475467;">${formatTermValue(val)}</td>
             </tr>
-        `;
-        }).join('');
+        `).join('');
     } else {
         termsSection.style.display = 'none';
     }
@@ -2990,7 +3031,7 @@ function createRow(r) {
         }
         
         if (c===1) {
-            td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
+            td.innerHTML = `<div class="id-ghost" id="r${r}c${c}ghost"></div><input type="text" id="r${r}c${c}" class="id-input" value="${val}" autocomplete="off" oninput="handleIdInput(${r})" onkeydown="handleIdKeydown(event, ${r})" onblur="checkIdDuplicate(${r})"><div class="fill-handle" onmousedown="startFill(event, ${r}, ${c})"></div>`;
         }
         else if (c===2) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" autocomplete="off" onfocus="openMainVipMenu(this, ${r})" oninput="filterMainVipMenu(this.value); calc(${r},${c})">`;
@@ -3011,6 +3052,38 @@ function createRow(r) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" class="${ro?'readonly':''}" ${ro?'readonly tabindex="-1"':''} oninput="calc(${r},${c})">`;
         }
         tr.appendChild(td);
+
+        // V2.84：在「類型」欄位右邊插入「指派」欄。資料存在獨立的第 22 欄，不會動到原本 0~21 欄的欄位配置
+        // 順序改成「杰、魏」，兩顆可以同時點亮(代表一起做)
+        if (c === 4) {
+            let assignVal = saved[22] || '';
+            let hasChiu = assignVal.indexOf('杰') !== -1;
+            let hasWei = assignVal.indexOf('魏') !== -1;
+            let assignTd = document.createElement('td');
+            assignTd.className = 'calc-cell';
+            assignTd.innerHTML = `<input type="hidden" id="r${r}c22" value="${assignVal}">
+                <div style="display:flex; gap:4px; justify-content:center;">
+                    <span class="assign-badge ${hasChiu ? 'active-chiu' : ''}" id="r${r}c22badgeChiu" onclick="toggleAssign(${r}, '杰')" title="指派給邱仁杰">杰</span>
+                    <span class="assign-badge ${hasWei ? 'active-wei' : ''}" id="r${r}c22badgeWei" onclick="toggleAssign(${r}, '魏')" title="指派給魏敏軒">魏</span>
+                </div>`;
+            tr.appendChild(assignTd);
+        }
+
+        if ([17, 18, 19].includes(c)) td.classList.add('amt-col');
+
+        // V2.91：在「夥伴金額」欄位右邊、備註左邊插入「結案」欄。資料存在獨立的第 24 欄，
+        // 製/完互斥(一次只能選一個)，新案件預設「製」(製作中)
+        if (c === 19) {
+            let doneVal = saved[24] || '製';
+            let doneTd = document.createElement('td');
+            doneTd.className = 'calc-cell';
+            doneTd.innerHTML = `<input type="hidden" id="r${r}c24" value="${doneVal}">
+                <div style="display:flex; gap:4px; justify-content:center;">
+                    <span class="assign-badge ${doneVal === '製' ? 'active-wei' : ''}" id="r${r}c24badgeZhi" onclick="toggleDoneFlag(${r}, '製')" title="製作中">製</span>
+                    <span class="assign-badge ${doneVal === '完' ? 'active-chiu' : ''}" id="r${r}c24badgeWan" onclick="toggleDoneFlag(${r}, '完')" title="已完成">完</span>
+                </div>`;
+            tr.appendChild(doneTd);
+        }
     }
     
     let delTd = document.createElement('td');
@@ -3169,7 +3242,7 @@ async function deleteProjectRow(r) {
     let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
     if (!hasData) return;
 
-    if (!(await uiConfirm(`確定要刪除 / 取消「${d[3] || '此案件'}」嗎？\n刪除後數據中心將同步扣除此筆資料。`, "刪除案件"))) return;
+    if (!(await uiConfirm(`確定要刪除 / 取消「${d[3] || '此案件'}」嗎？\n刪除後數據中心將同步扣除此筆資料。\n(管理表對應的專案要記得之後按「完整同步管理表」清掉)`, "刪除案件"))) return;
 
     let rc = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     for (let i = r; i < rc - 1; i++) {
@@ -3531,6 +3604,126 @@ function togglePartnerPaid(r) {
 }
 window.togglePartnerPaid = togglePartnerPaid;
 
+// V2.84：指派人員按鈕(杰/魏)，各自獨立切換、可以同時點亮代表「一起做」，再點一次同一顆取消那個人
+function toggleAssign(r, who) {
+    const hidden = document.getElementById(`r${r}c22`);
+    if (!hidden) return;
+    let cur = hidden.value || '';
+    let hasChiu = cur.indexOf('杰') !== -1;
+    let hasWei = cur.indexOf('魏') !== -1;
+    if (who === '杰') hasChiu = !hasChiu;
+    if (who === '魏') hasWei = !hasWei;
+    const newVal = (hasChiu ? '杰' : '') + (hasWei ? '魏' : '');
+    hidden.value = newVal;
+    const weiBadge = document.getElementById(`r${r}c22badgeWei`);
+    const chiuBadge = document.getElementById(`r${r}c22badgeChiu`);
+    if (weiBadge) weiBadge.classList.toggle('active-wei', hasWei);
+    if (chiuBadge) chiuBadge.classList.toggle('active-chiu', hasChiu);
+    calc(r, 22, true);
+}
+window.toggleAssign = toggleAssign;
+
+// V2.91：結案燈號(製/完)，兩者互斥，點哪個就切到哪個狀態，這是管理表狀態同步的唯一依據
+function toggleDoneFlag(r, val) {
+    const hidden = document.getElementById(`r${r}c24`);
+    if (!hidden) return;
+    hidden.value = val;
+    const zhiBadge = document.getElementById(`r${r}c24badgeZhi`);
+    const wanBadge = document.getElementById(`r${r}c24badgeWan`);
+    if (zhiBadge) zhiBadge.classList.toggle('active-wei', val === '製');
+    if (wanBadge) wanBadge.classList.toggle('active-chiu', val === '完');
+    calc(r, 24, true);
+}
+window.toggleDoneFlag = toggleDoneFlag;
+
+// V2.74：編號欄位淺色自動建議 — 大小寫視為兩套獨立序號(大寫=剪片、小寫=圖片)，
+// 只在「純字母、還沒打數字」的狀態下才顯示建議，一打數字就代表使用者要自己填，建議自動消失
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function computeNextIdForPrefix(prefix, currentRow) {
+    let maxNum = 0, pad = 3;
+    // V2.75：改成跨「全部年度」掃描(不再只看目前年度)，避免同一個編號在不同年度被重複建議/重複使用
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    yList.forEach(year => {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let i = 0; i < rc; i++) {
+            if (year === curY && i === currentRow) continue;
+            let d;
+            try { d = JSON.parse(localStorage.getItem(`d_${year}_${i}`)) || {}; } catch(e) { continue; }
+            let existingId = (d[1] || '').trim();
+            if (!existingId.startsWith(prefix)) continue; // 區分大小寫，A 系列跟 a 系列不會互相干擾
+            let rest = existingId.slice(prefix.length);
+            let m = rest.match(/^(\d+)/);
+            if (!m) continue;
+            let num = parseInt(m[1], 10);
+            if (num >= maxNum) { maxNum = num; pad = m[1].length; }
+        }
+    });
+    if (maxNum === 0) return null; // 這個字首之前沒紀錄過，不主動建議，讓使用者自己打
+    return prefix + String(maxNum + 1).padStart(pad, '0');
+}
+
+// V2.75：編號欄位失焦時，檢查這個完整編號是否在其他年度/其他列已經用過(撞號提醒，不會擋你儲存)
+function checkIdDuplicate(r) {
+    const input = document.getElementById(`r${r}c1`);
+    if (!input) return;
+    const val = input.value.trim();
+    if (!/^[A-Za-z]+\d+$/.test(val)) return; // 只在編號已經是「完整字母+數字」時才檢查
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    for (const year of yList) {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let i = 0; i < rc; i++) {
+            if (year === curY && i === r) continue;
+            let d;
+            try { d = JSON.parse(localStorage.getItem(`d_${year}_${i}`)) || {}; } catch(e) { continue; }
+            if ((d[1] || '').trim() === val) {
+                showToast(`⚠️ 編號 ${val} 在 ${year}年 已經用過(${d[2] || '未填客戶'} - ${d[3] || '未填案名'})，請確認是否打錯`, "error");
+                return;
+            }
+        }
+    }
+}
+
+function updateIdGhost(r) {
+    const input = document.getElementById(`r${r}c1`);
+    const ghostEl = document.getElementById(`r${r}c1ghost`);
+    if (!input || !ghostEl) return;
+    const val = input.value;
+    const match = val.match(/^([A-Za-z]+)$/);
+    if (!match) { ghostEl.innerHTML = ''; input.dataset.suggestion = ''; return; }
+    const suggestion = computeNextIdForPrefix(match[1], r);
+    if (!suggestion || suggestion.length <= val.length) { ghostEl.innerHTML = ''; input.dataset.suggestion = ''; return; }
+    const remainder = suggestion.slice(val.length);
+    ghostEl.innerHTML = `<span class="ghost-typed">${escHtml(val)}</span><span class="ghost-suggest">${escHtml(remainder)}</span>`;
+    input.dataset.suggestion = suggestion;
+}
+
+function clearIdGhost(r) {
+    const ghostEl = document.getElementById(`r${r}c1ghost`);
+    if (ghostEl) ghostEl.innerHTML = '';
+    const input = document.getElementById(`r${r}c1`);
+    if (input) input.dataset.suggestion = '';
+}
+
+function handleIdInput(r) {
+    updateIdGhost(r);
+    calc(r, 1);
+}
+
+function handleIdKeydown(e, r) {
+    if (e.key === 'Enter') {
+        const input = document.getElementById(`r${r}c1`);
+        const suggestion = input ? input.dataset.suggestion : '';
+        if (suggestion && /^[A-Za-z]+$/.test(input.value)) {
+            e.preventDefault();
+            e.stopPropagation();
+            input.value = suggestion;
+            clearIdGhost(r);
+            calc(r, 1);
+        }
+    }
+}
+
 function calc(r, c, save=true) {
     const g = (col) => { let el = document.getElementById(`r${r}c${col}`); return el ? (el.type==='checkbox'?el.checked:el.value) : ""; };
     const s = (col, val) => { if(document.getElementById(`r${r}c${col}`)) document.getElementById(`r${r}c${col}`).value = val; };
@@ -3631,7 +3824,8 @@ function calc(r, c, save=true) {
     if (partnerBadge) partnerBadge.classList.toggle('active', g(21) === true);
     
     if(save) {
-        setRowData(r, {0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21)});
+        let existingRow = getRowData(r); // 先取得現有資料，避免蓋掉沒有對應輸入框的背景欄位(例如第23欄的管理表連結)
+        setRowData(r, {...existingRow, 0:g(0), 1:g(1), 2:g(2), 3:g(3), 4:g(4), 5:g(5), 6:g(6), 7:g(7), 8:g(8), 9:g(9), 10:g(10), 11:g(11), 12:g(12), 13:rem, 14:g(14), 15:g(15), 16:g(16), 17:g(17), 18:g(18), 19:g(19), 20:g(20), 21:g(21), 22:g(22), 24:g(24)});
         
         if(window.calcTimer1) clearTimeout(window.calcTimer1);
         window.calcTimer1 = setTimeout(() => {
@@ -3736,6 +3930,11 @@ window.onload = () => {
     initTable(); 
     initInvoiceTable();
     renderYearList(); 
+    if (localStorage.getItem('vB_AmountsHidden') === '1') {
+        document.getElementById('mainTable').classList.add('amounts-hidden');
+        const btn = document.getElementById('toggleAmountsBtn');
+        if (btn) btn.classList.add('active');
+    }
     let activeTab = document.querySelector('.app-nav-item.active');
     if (activeTab && activeTab.innerText.includes('數據中心')) renderDashboard();
 };
@@ -3743,7 +3942,7 @@ window.onload = () => {
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, limit, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -3810,6 +4009,381 @@ window.onload = () => {
             }
         });
     } catch (err) { console.error("Firebase 初始化失敗:", err); }
+
+    // =========================================================
+    // V2.71 新增：連接杰冉管理表(jayran-pm)，做「營收表新增 → 管理表自動建檔」
+    // =========================================================
+    const pmFirebaseConfig = {
+        apiKey: "AIzaSyC3iyQNiYHWjA9yPbMni27C7KENfIUHZu4",
+        authDomain: "jayran-pm.firebaseapp.com",
+        projectId: "jayran-pm",
+        storageBucket: "jayran-pm.firebasestorage.app",
+        messagingSenderId: "1027379707228",
+        appId: "1:1027379707228:web:9142240fd6ad34d47ed599"
+    };
+    let pmDb = null;
+    try {
+        const pmApp = initializeApp(pmFirebaseConfig, 'pmApp');
+        pmDb = getFirestore(pmApp);
+    } catch (e) { console.error('連接杰冉管理表失敗:', e); }
+
+    // 營收表「類型」欄位對應管理表的 category(video/image)：文字含「圖」就歸圖文，其餘一律歸剪輯
+    function mapPmCategory(typeStr) {
+        if (!typeStr) return 'video';
+        return typeStr.includes('圖') ? 'image' : 'video';
+    }
+
+    // V2.84：營收表的「指派」欄(杰/魏)對應管理表的實際製作人，兩個都點就對應「一起」
+    function mapPmProducer(assignVal) {
+        const v = assignVal || '';
+        const hasChiu = v.indexOf('杰') !== -1;
+        const hasWei = v.indexOf('魏') !== -1;
+        if (hasChiu && hasWei) return '一起';
+        if (hasChiu) return '邱仁杰';
+        if (hasWei) return '魏敏軒';
+        return '尚未暫定';
+    }
+
+    // V2.95 修正：管理表畫面上「已完成」的綠色標籤，其實對應兩種可能的狀態字串：已完成、已結案，
+    // 兩個都會顯示一樣的完成樣式。之前只認「已完成」，完全沒發現「已結案」這個值，才會一直改不掉。
+    function isDoneStatus(s) {
+        if (!s) return false;
+        const t = String(s).trim();
+        return t === '已完成' || t === '已結案' || t.indexOf('完成') !== -1 || t.indexOf('結案') !== -1;
+    }
+
+    // V2.98 修正：管理表的日期選擇器要求完整「年-月-日」格式，營收表的交件日只有「月/日」沒有年份，
+    // 選擇器解析不了就整個顯示空白。這裡補上這一列所屬的年度分頁，轉成管理表看得懂的完整日期。
+    function toFullDateString(dateStr, year) {
+        if (!dateStr) return '';
+        const separator = dateStr.includes('/') ? '/' : (dateStr.includes('-') ? '-' : null);
+        if (!separator) return '';
+        const parts = dateStr.split(separator);
+        const m = parseInt(parts[0], 10), d = parseInt(parts[1], 10);
+        if (isNaN(m) || isNaN(d)) return '';
+        return `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    // V2.86 修正：拿掉「是否已有製作人」這個判斷條件——現在製作人也可能是營收表指派欄(杰/魏/一起)
+    // 同步帶進來的，不代表你在管理表手動處理過，不該因此就完全不能再校正。
+    // 改成只看「有沒有真的填過工時」：沒有工時，代表案子實際上還沒真的開始動工，不管製作人是誰，
+    // 管理表都可以放心讓同步繼續依照最新的營收表資料(交件日、指派欄)校正製作人跟狀態；
+    // 只要曾經填過工時，就代表真的動工了，完全不會再被同步碰到。
+    function isUntouchedAutoStub(data) {
+        if (!data) return true; // 還不存在，等同於全新建立，可以放心設定初始值
+        const isAutoCreated = typeof data.note === 'string' && data.note.indexOf('[營收表自動建立]') === 0;
+        const noHours = !(parseFloat(data.hours) > 0);
+        return isAutoCreated && noHours;
+    }
+
+    // V2.85 修正：狀態不能一律套同一個值，要看「交件日」是不是已經過了。
+    // 用「年月」欄(格式 YYYY-MM，比原始交件日文字更好比對)判斷：比現在月份早 → 已完成；
+    // 本月或還沒到 → 尚未進行。沒有年月資料就一律當尚未進行，不會亂猜。
+    // V2.90 修正：不再依賴 d[0](年月)這個中間換算值——它是「上次編輯交件日當下」算出來的，
+    // 如果那次編輯時選的年度分頁跟現在不一樣，它可能卡在錯的年份，跟實際交件日對不起來。
+    // 改成直接解析「交件日」原始文字(d[5])的月份，年份用這一列真正存放的年度分頁(year，一定不會錯)。
+    function inferAutoStatusFromDeliveryDate(dateStr, year) {
+        const y = parseInt(year, 10);
+        if (isNaN(y)) return '尚未進行';
+        if (!dateStr) return '尚未進行';
+        const separator = dateStr.includes('/') ? '/' : (dateStr.includes('-') ? '-' : null);
+        if (!separator) return '尚未進行';
+        const monthPart = dateStr.split(separator)[0].replace(/\D/g, '');
+        const m = parseInt(monthPart, 10);
+        if (isNaN(m)) return '尚未進行';
+        const now = new Date();
+        const curYear = now.getFullYear(), curMonth = now.getMonth() + 1;
+        if (y < curYear || (y === curYear && m < curMonth)) return '已完成';
+        return '尚未進行';
+    }
+
+    // V2.89 新增：把這一列「實際連到管理表哪一份文件」永久記在隱藏的第 23 欄，之後同步都直接用這個，不再重猜
+    function saveLinkedDocId(year, row, docId) {
+        try {
+            const raw = localStorage.getItem(`d_${year}_${row}`);
+            let d = raw ? JSON.parse(raw) : {};
+            d[23] = docId;
+            localStorage.setItem(`d_${year}_${row}`, JSON.stringify(d));
+            if (year === curY && window.dCache) window.dCache[row] = d;
+        } catch (e) { console.error('儲存管理表連結失敗:', e); }
+    }
+
+    // V2.79 修正：上一版的刪除邏輯太危險——只要編號/客戶/分類算出來的位置沒有剛好對上營收表，
+    // 就會被當成「多餘」直接刪掉，結果連你手動指派好、已經在排程的專案都被誤刪了。
+    // 這次改成非常保守：只有「這筆本來就是自動同步建立、而且從來沒被指派過製作人、也沒有工時紀錄」的
+    // 空白暫存專案，才有資格被視為多餘；只要有指派製作人、有工時、或不是自動建立的，一律不會被動到。
+    // 而且真的要刪之前，一定會先列出完整清單給你看過、按下確定才會執行。
+    window.reconcilePMWithRevenue = async function() {
+        if (!pmDb) { await uiAlert("管理表尚未連線，請稍後再試。"); return; }
+        if (!(await uiConfirm(
+            "即將以營收表目前的資料為準，同步管理表：\n" +
+            "・營收表有、管理表沒有的專案 → 建立\n" +
+            "・兩邊都有的專案 → 更新客戶/案名/類型/日期/備註，並依照「結案」燈號(製/完)校正狀態\n" +
+            "・管理表那邊如果已經被標記完成，營收表的結案燈號也會自動改成「完」\n" +
+            "・管理表裡「純粹是自動建立、從沒被指派過製作人也沒有工時」的空白專案，如果營收表已經沒有對應資料 → 會列出來讓你確認要不要刪除\n" +
+            "・任何有指派製作人或工時紀錄的專案，不管有沒有對應到營收表，都不會被刪除\n\n" +
+            "確定要執行嗎？",
+            "同步管理表"
+        ))) return;
+
+        const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+
+        // Step 1：掃出營收表目前「應該存在」的每一筆
+        // V2.89 修正：新增「永久連結」機制。每一列存一個隱藏欄位(第 23 欄)記住「上次成功連到管理表的哪一份文件」，
+        // 一旦連上了，以後這一列不管編號大小寫、客戶名稱打法、分類怎麼改，都固定用這個記住的文件位置，
+        // 不再每次都重新用「分類+客戶+編號」猜一次——這正是之前狀態一直對不準、修不掉的根本原因。
+        let entries = [];
+        let skipped = [];
+        for (const year of yList) {
+            const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+            for (let r = 0; r < rc; r++) {
+                const raw = localStorage.getItem(`d_${year}_${r}`);
+                if (!raw) continue;
+                let d = {};
+                try { d = JSON.parse(raw); } catch(e) { continue; }
+
+                const client = (d[2] || '').trim();
+                const name = (d[3] || '').trim();
+                const idRaw = (d[1] || '').trim();
+                if (!client || !name || !idRaw) {
+                    if (client || name || idRaw) { // 完全空白的列不用打擾你，只列出「有填一部分但不完整」的
+                        skipped.push({ year, row: r, client, name, idRaw });
+                    }
+                    continue;
+                }
+
+                const category = mapPmCategory(d[4]);
+                const prefixMatch = idRaw.match(/^[A-Za-z]+/);
+                const prefix = prefixMatch ? prefixMatch[0] : 'Z';
+                const zone = `${prefix}_${client}`;
+                const computedDocId = `${category}_${zone.replace(/\s+/g, '')}_${idRaw}`;
+                const linkedDocId = (d[23] || '').trim();
+                const docId = linkedDocId || computedDocId; // 有記住的連結就一定用連結，沒有才用算的
+                entries.push({ year, row: r, client, name, idRaw, category, zone, docId, d, needsLinkSave: !linkedDocId });
+            }
+        }
+
+        let byDocId = {};
+        entries.forEach(e => { (byDocId[e.docId] = byDocId[e.docId] || []).push(e); });
+        let duplicateGroups = Object.values(byDocId).filter(g => g.length > 1);
+        const expectedDocIds = new Set(Object.keys(byDocId));
+
+        // V2.81 修正：原本每一筆都各自「查詢是否存在→再寫入」，335 筆等於跑 670 次網路來回，
+        // 難怪跑得慢。改成「一次把管理表全部資料抓下來」+「用批次寫入(writeBatch)一次或分幾批送出」，
+        // 網路來回從 670 次壓到大約 2~3 次，速度差非常多。
+
+        // Step 2：一次把管理表目前全部專案抓下來，之後判斷「存不存在」跟找多餘專案都直接用這份，不用再連線查詢
+        let existingMap = new Map();
+        try {
+            const allDocs = await getDocs(collection(pmDb, 'projects'));
+            allDocs.forEach(docSnap => existingMap.set(docSnap.id, docSnap.data() || {}));
+        } catch (e) {
+            console.error(e);
+            await uiAlert("讀取管理表資料失敗，請稍後再試。");
+            return;
+        }
+
+        // V2.91 修正：整套日期猜測邏輯拿掉，改用「結案」欄(製/完)當唯一依據，不用再猜。
+        // 完 → 強制管理表狀態變已完成；製 → 如果管理表現在是已完成，改回尚未進行(代表重新開工)；
+        // 其餘情況(製，但管理表本來就不是已完成)不去動狀態，保留管理表自己在跑的細節狀態(製作中/審核中等)。
+        // 製作人只有在「從沒被指派過、沒有工時」時才會套用指派欄，避免蓋掉手動指派+已經動工的專案。
+        let finalStatusByDocId = new Map(); // 記錄「這次同步完之後，管理表這份文件真正的最終狀態」，避免下面回拉燈號時看到修改前的舊資料
+        let rawStatusSamples = []; // 診斷用：把「結案燈號是製、但原始狀態字串長什麼樣子」直接記下來給你看，不用再猜
+        let writeOps = entries.map(e => {
+            const existing = existingMap.get(e.docId);
+            const doneFlag = (e.d[24] || '製') === '完';
+            const payload = {
+                category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
+                type: e.d[4] || '', start: toFullDateString(e.d[5], e.year), end: toFullDateString(e.d[5], e.year),
+                note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
+            };
+            if (!existing) {
+                payload.producer = mapPmProducer(e.d[22]);
+                payload.status = doneFlag ? '已完成' : '尚未進行';
+                payload.tag = '';
+                payload.hours = 0;
+                payload.link = '';
+            } else {
+                if (doneFlag && !isDoneStatus(existing.status)) payload.status = '已完成';
+                else if (!doneFlag && isDoneStatus(existing.status)) payload.status = '尚未進行';
+                const noRealProducer = !existing.producer || existing.producer === '尚未暫定';
+                if (noRealProducer) payload.producer = mapPmProducer(e.d[22]);
+
+                const knownNotDone = existing.status === '尚未進行' || existing.status === '製作中' || (existing.status && existing.status.indexOf('審') !== -1);
+                if (!doneFlag && !knownNotDone && rawStatusSamples.length < 8) {
+                    rawStatusSamples.push({ idRaw: e.idRaw, client: e.client, docId: e.docId, rawStatus: JSON.stringify(existing.status), producer: JSON.stringify(existing.producer), hours: JSON.stringify(existing.hours) });
+                }
+            }
+            finalStatusByDocId.set(e.docId, payload.status || (existing ? existing.status : null));
+            return { docId: e.docId, payload };
+        });
+
+        let createdOrUpdated = 0, writeFailCount = 0;
+        for (let i = 0; i < writeOps.length; i += 450) {
+            const chunk = writeOps.slice(i, i + 450);
+            const batch = writeBatch(pmDb);
+            chunk.forEach(op => batch.set(doc(pmDb, 'projects', op.docId), op.payload, { merge: true }));
+            try {
+                await batch.commit();
+                createdOrUpdated += chunk.length;
+            } catch (err) {
+                console.error('批次寫入失敗:', err);
+                writeFailCount += chunk.length;
+            }
+        }
+        // 把這次第一次連上的文件位置永久記下來，下次同步不用再重新用猜的比對這一列
+        entries.filter(e => e.needsLinkSave).forEach(e => saveLinkedDocId(e.year, e.row, e.docId));
+
+        // V2.92 修正：重新加回「編號+客戶」直接比對的保險機制(上一版簡化時誤刪了)。
+        // 如果這一列算出來的文件位置(docId)跟管理表實際存放的位置對不上，主要那段的「更新」就會誤判成
+        // 「這是全新專案」，新建一份正確狀態的文件，但原本錯誤的「已完成」舊文件會變成孤兒、沒人去改它，
+        // 畫面上看起來就像完全沒生效。這裡改用「編號+客戶」直接比對管理表現有資料，不管位置準不準，
+        // 找到了就依照結案燈號校正狀態，並把這個真正的位置永久記住，下次不用再用猜的。
+        let idClientMap = new Map();
+        let idOnlyMap = new Map();
+        existingMap.forEach((data, docId) => {
+            if (!data.id) return;
+            if (!idOnlyMap.has(data.id)) idOnlyMap.set(data.id, []);
+            idOnlyMap.get(data.id).push(docId);
+            if (!data.client) return;
+            const key = `${data.id}__${data.client}`;
+            if (!idClientMap.has(key)) idClientMap.set(key, []);
+            idClientMap.get(key).push(docId);
+        });
+
+        // V2.97 新增：診斷 —— 找出同一個編號在管理表裡對應到「兩份以上不同文件」的狀況(真正的重複資料)，
+        // 直接列出每一份的狀態，這樣才知道是不是同步改到了 A 份，畫面顯示的卻是完全沒被動過的 B 份
+        let duplicatePmDocs = [];
+        idOnlyMap.forEach((docIds, idVal) => {
+            if (docIds.length > 1) {
+                duplicatePmDocs.push({
+                    idVal,
+                    docs: docIds.map(docId => {
+                        const data = existingMap.get(docId) || {};
+                        return `docId=${docId} client=${JSON.stringify(data.client)} status=${JSON.stringify(data.status)} hours=${JSON.stringify(data.hours)}`;
+                    })
+                });
+            }
+        });
+
+        let strayFixed = 0;
+        let strayBatch = writeBatch(pmDb);
+        let strayOp = 0;
+        const commitStray = async () => {
+            if (strayOp > 0) {
+                try { await strayBatch.commit(); } catch (e) { console.error('保險機制批次寫入失敗:', e); }
+                strayBatch = writeBatch(pmDb);
+                strayOp = 0;
+            }
+        };
+        for (const e of entries) {
+            // 第一層：編號+客戶都對得上
+            const key = `${e.idRaw}__${e.client}`;
+            let matches = idClientMap.get(key) || [];
+            // 第二層：客戶名稱可能打法不同(例如「董鎮綱」vs「董鎮網」)，退而求其次只用編號比對
+            if (matches.length === 0) matches = idOnlyMap.get(e.idRaw) || [];
+            for (const docId of matches) {
+                if (docId === e.docId) continue; // 這筆位置正確，上面主要那段已經處理過了
+                const data = existingMap.get(docId);
+                const doneFlag = (e.d[24] || '製') === '完';
+                saveLinkedDocId(e.year, e.row, docId); // 找到真正的位置了，永久記住，以後直接用這個，不再用算的
+
+                // 以營收表為準，把客戶名稱等基本資料也一併校正回來(不是只改狀態) —— 這正是打字不一致的根源
+                const strayPayload = {
+                    category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
+                    type: e.d[4] || '', start: toFullDateString(e.d[5], e.year), end: toFullDateString(e.d[5], e.year),
+                    note: `[營收表自動建立] 未稅額 $${e.d[9] || 0}`
+                };
+                let newStatus = null;
+                if (doneFlag && !isDoneStatus(data.status)) newStatus = '已完成';
+                else if (!doneFlag && isDoneStatus(data.status)) newStatus = '尚未進行';
+                if (newStatus) strayPayload.status = newStatus;
+
+                strayBatch.set(doc(pmDb, 'projects', docId), strayPayload, { merge: true });
+                strayOp++;
+                strayFixed++;
+                finalStatusByDocId.set(docId, newStatus || data.status);
+                if (strayOp >= 450) await commitStray();
+            }
+        }
+        await commitStray();
+
+        // V2.91 新增：反向同步 —— 管理表那邊如果已經被標記「已完成」，但營收表這裡「結案」燈號還是「製」，
+        // 自動把燈號改成「完」，不用你自己再手動點一次
+        let pulledDoneCount = 0;
+        entries.forEach(e => {
+            const finalStatus = finalStatusByDocId.get(e.docId);
+            if (isDoneStatus(finalStatus) && (e.d[24] || '製') !== '完') {
+                let raw = localStorage.getItem(`d_${e.year}_${e.row}`);
+                let d = {};
+                try { d = raw ? JSON.parse(raw) : {}; } catch(err) {}
+                d[24] = '完';
+                localStorage.setItem(`d_${e.year}_${e.row}`, JSON.stringify(d));
+                if (e.year === curY && window.dCache) window.dCache[e.row] = d;
+                pulledDoneCount++;
+            }
+        });
+        if (pulledDoneCount > 0) { clearRowCache(); initTable(); }
+
+        // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
+        // 一樣是用上面那個「從沒被指派過、沒有工時」的判斷；只要有一項不符合，就直接跳過、更不會刪除
+        let candidates = [];
+        existingMap.forEach((data, docId) => {
+            if (expectedDocIds.has(docId)) return;
+            if (isUntouchedAutoStub(data)) {
+                candidates.push({ docId, client: data.client || '', name: data.name || '', pid: data.id || '' });
+            }
+        });
+
+        let deletedCount = 0, deleteFailCount = 0;
+        if (candidates.length > 0) {
+            const sampleList = candidates.slice(0, 20).map(o => `・${o.pid || '(無編號)'} ${o.client} - ${o.name}`).join('\n');
+            const moreNote = candidates.length > 20 ? `\n...以及其他 ${candidates.length - 20} 筆` : '';
+            const confirmed = await uiConfirm(
+                `找到 ${candidates.length} 筆「自動建立、從未指派、沒有工時」的空白專案，營收表已經沒有對應資料：\n\n${sampleList}${moreNote}\n\n` +
+                `這些不會影響任何你已經在排程或有工時的專案。確定要刪除這 ${candidates.length} 筆嗎？`,
+                "確認刪除多餘空白專案"
+            );
+            if (confirmed) {
+                for (let i = 0; i < candidates.length; i += 450) {
+                    const chunk = candidates.slice(i, i + 450);
+                    const delBatch = writeBatch(pmDb);
+                    chunk.forEach(c => delBatch.delete(doc(pmDb, 'projects', c.docId)));
+                    try {
+                        await delBatch.commit();
+                        deletedCount += chunk.length;
+                    } catch (e) {
+                        console.error('批次刪除失敗:', e);
+                        deleteFailCount += chunk.length;
+                    }
+                }
+            }
+        }
+
+        let resultMsg = `✅ 同步完成！\n建立/更新 ${createdOrUpdated} 筆\n額外校正(保險機制,位置對不上時抓到的) ${strayFixed} 筆\n從管理表拉回結案燈號 ${pulledDoneCount} 筆\n刪除多餘空白專案 ${deletedCount} 筆\n跳過(缺客戶/案名/編號) ${skipped.length} 筆`;
+        if (rawStatusSamples.length > 0) {
+            resultMsg += `\n\n🔍 診斷：以下是「結案燈號=製，但管理表原始狀態不是常見值」的實際內容：\n`;
+            resultMsg += rawStatusSamples.map(s => `・編號[${s.idRaw}] 客戶[${s.client}]\n   status=${s.rawStatus} producer=${s.producer} hours=${s.hours}`).join('\n');
+        }
+        if (duplicatePmDocs.length > 0) {
+            resultMsg += `\n\n⚠️ 診斷：管理表裡發現以下編號對應到「兩份以上不同文件」，可能是真正的重複資料：\n`;
+            resultMsg += duplicatePmDocs.slice(0, 5).map(d => `・編號[${d.idVal}]:\n   ` + d.docs.join('\n   ')).join('\n');
+            if (duplicatePmDocs.length > 5) resultMsg += `\n...以及其他 ${duplicatePmDocs.length - 5} 組`;
+        }
+        if (writeFailCount || deleteFailCount) resultMsg += `\n寫入失敗 ${writeFailCount} 筆、刪除失敗 ${deleteFailCount} 筆`;
+        if (skipped.length > 0) {
+            resultMsg += `\n\n跳過清單：\n` + skipped.slice(0, 10).map(s => `・${s.year}年 第${s.row + 1}列：編號[${s.idRaw || '空白'}] 客戶[${s.client || '空白'}] 案名[${s.name || '空白'}]`).join('\n');
+            if (skipped.length > 10) resultMsg += `\n...以及其他 ${skipped.length - 10} 列`;
+        }
+        if (duplicateGroups.length > 0) {
+            resultMsg += `\n\n⚠️ 有 ${duplicateGroups.length} 組編號重複使用，管理表只會留下最後處理那一筆：\n`;
+            resultMsg += duplicateGroups.slice(0, 8).map(g =>
+                `・編號 ${g[0].idRaw}(${g[0].client})：` + g.map(e => `${e.year}年第${e.row + 1}列`).join('、')
+            ).join('\n');
+            if (duplicateGroups.length > 8) resultMsg += `\n...以及其他 ${duplicateGroups.length - 8} 組`;
+        }
+        await uiAlert(resultMsg);
+    };
 
     // V2.28：讀取並顯示夥伴專屬的分潤總覽資料（唯讀）
     window.loadPartnerView = async function() {
@@ -4082,6 +4656,59 @@ window.onload = () => {
             await uiAlert("❌ 還原失敗，請稍後再試。");
         }
     }
+
+    // V2.99 新增：頁面一開啟就安靜檢查一次，只要「這一列已經連結到管理表的哪一份文件」且管理表那邊
+    // 已經被標記完成，就自動把結案燈號拉成「完」，不用你手動按「完整同步管理表」才會發現。
+    // 完全安靜執行，不彈窗、不打擾；沒有變化就什麼都不做。
+    window.autoPullDoneFlags = async function() {
+        if (!pmDb) return;
+        try {
+            const yList = JSON.parse(localStorage.getItem('vB_List')) || [localStorage.getItem('vB_Y') || '2026'];
+            let linkedEntries = [];
+            for (const year of yList) {
+                const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+                for (let r = 0; r < rc; r++) {
+                    const raw = localStorage.getItem(`d_${year}_${r}`);
+                    if (!raw) continue;
+                    let d;
+                    try { d = JSON.parse(raw); } catch (e) { continue; }
+                    const linkedDocId = (d[23] || '').trim();
+                    if (linkedDocId && (d[24] || '製') !== '完') {
+                        linkedEntries.push({ year, row: r, docId: linkedDocId });
+                    }
+                }
+            }
+            if (linkedEntries.length === 0) return;
+
+            const allDocs = await getDocs(collection(pmDb, 'projects'));
+            let statusMap = new Map();
+            allDocs.forEach(docSnap => statusMap.set(docSnap.id, (docSnap.data() || {}).status));
+
+            let changed = false;
+            linkedEntries.forEach(e => {
+                const st = statusMap.get(e.docId);
+                const done = st === '已完成' || st === '已結案' || (st && (String(st).indexOf('完成') !== -1 || String(st).indexOf('結案') !== -1));
+                if (done) {
+                    let raw = localStorage.getItem(`d_${e.year}_${e.row}`);
+                    let d = {};
+                    try { d = raw ? JSON.parse(raw) : {}; } catch (err) {}
+                    d[24] = '完';
+                    localStorage.setItem(`d_${e.year}_${e.row}`, JSON.stringify(d));
+                    if (e.year === curY && window.dCache) window.dCache[e.row] = d;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                clearRowCache();
+                initTable();
+                showToast('✅ 已從管理表自動同步結案狀態');
+            }
+        } catch (e) {
+            console.error('自動拉取管理表狀態失敗:', e);
+        }
+    };
+    // 頁面一載入就跑一次(安靜執行，不會擋住畫面)
+    setTimeout(() => { window.autoPullDoneFlags(); }, 1500);
 </script>
 </body>
 </html>
