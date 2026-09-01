@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.03</title>
+    <title>杰冉宇宙營收表 V3.04</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2795,12 +2795,12 @@ function runQuoteSearch() {
             let totalAmt = parseFloat(String(d[11]).replace(/,/g,''))||0;
             
             invWrapper.innerHTML += `
-            <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}">
+            <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${d[4] || ''}">
                 <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
                     <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
                 </div>
                 <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${d[1]||''}</div>
-                <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;">${d[3]}</div>
+                <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;"><span class="inv-item-name-text">${d[3]}</span>${d[4] ? ` <span style="display:inline-block; margin-left:4px; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:800; background:#FEF3C7; color:#92400E; vertical-align:middle;">${d[4]}</span>` : ''}</div>
                 <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${preTax.toLocaleString()}</div>
                 <div style="width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${(d[10]||0).toLocaleString()}</div>
                 <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${totalAmt.toLocaleString()}</div>
@@ -2913,10 +2913,11 @@ function downloadPDF() {
         let cb = item.querySelector('.quote-cb');
         if (!cb || !cb.checked) return;
         let idEl = item.querySelector('.inv-col-id');
-        let nameEl = item.querySelector('.inv-col-info');
+        let nameEl = item.querySelector('.inv-item-name-text') || item.querySelector('.inv-col-info');
         let pre = parseFloat(item.getAttribute('data-pre')) || 0;
         let total = parseFloat(item.getAttribute('data-total')) || 0;
-        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', pre, tax: total - pre, total });
+        let type = item.getAttribute('data-type') || '';
+        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', type, pre, tax: total - pre, total });
     });
     if (items.length === 0) { uiAlert("目前沒有勾選任何項目可以匯出。"); return; }
 
@@ -2931,9 +2932,10 @@ function downloadPDF() {
     items.forEach((it, i) => {
         totalPre += it.pre;
         totalOrig += it.total;
+        let typeTag = it.type ? `<span style="display:inline-block; margin-left:6px; padding:1px 7px; border-radius:20px; font-size:10px; font-weight:800; background:#F0C64B; color:#1D1D1F; vertical-align:middle;">${it.type}</span>` : '';
         tb.innerHTML += `<tr style="page-break-inside: avoid; font-size: 12px;">
             <td style="padding: 6px; text-align: center; border-bottom: 1px solid #E5E5EA;">${i + 1}</td>
-            <td style="padding: 6px; text-align: left; border-bottom: 1px solid #E5E5EA; font-weight: 700;">${it.name}</td>
+            <td style="padding: 6px; text-align: left; border-bottom: 1px solid #E5E5EA; font-weight: 700;">${it.name}${typeTag}</td>
             <td style="padding: 6px; text-align: right; border-bottom: 1px solid #E5E5EA;">$ ${it.pre.toLocaleString()}</td>
             <td style="padding: 6px; text-align: right; border-bottom: 1px solid #E5E5EA;">$ ${Math.round(it.tax).toLocaleString()}</td>
             <td style="padding: 6px; text-align: right; border-bottom: 1px solid #E5E5EA; font-weight: 800;">$ ${it.total.toLocaleString()}</td>
