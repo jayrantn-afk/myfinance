@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.07</title>
+    <title>杰冉宇宙營收表 V3.08</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -145,13 +145,15 @@
         .proj-name-cell { display: flex; align-items: center; gap: 4px; width: 100%; height: 100%; padding: 0 6px; box-sizing: border-box; }
         .proj-name-cell input { flex: 1; min-width: 0; width: auto !important; padding: 0 !important; }
         /* V2.33：結清／付夥伴改成永遠可見、可直接點擊切換的雙狀態小標籤，不用再看整行變灰或往右找打勾框 */
-        .settled-badge, .partner-badge {
+        /* V3.08：三個狀態(完/收/分)統一收斂成同一組小標籤放在案名旁邊，不用整排變色，掃這三個字就好 */
+        .settled-badge, .partner-badge, .done-badge {
             flex-shrink: 0; cursor: pointer; user-select: none;
             font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 50px; white-space: nowrap;
             color: var(--light); background: rgba(0,0,0,0.06); transition: all 0.15s;
         }
-        .settled-badge:hover, .partner-badge:hover { filter: brightness(0.95); }
-        .settled-badge.active { color: #00A651; background: rgba(0,166,81,0.16); }
+        .settled-badge:hover, .partner-badge:hover, .done-badge:hover { filter: brightness(0.95); }
+        .done-badge.active { color: #00A651; background: rgba(0,166,81,0.16); }
+        .settled-badge.active { color: #B8860B; background: rgba(245,158,11,0.18); }
         .partner-badge.active { color: #8E24C9; background: rgba(191,90,242,0.18); }
 
         /* V2.83：案件明細新增「指派」欄位，魏/杰兩顆小按鈕，點下去會發光標示這案子是誰的 */
@@ -178,18 +180,8 @@
         td input[type="checkbox"] { width: 16px !important; height: 16px !important; cursor: pointer; accent-color: var(--primary); margin: auto; display: block; }
         td input:not([type="checkbox"]), td select { border: none; width: 100%; height: 100%; text-align: center; font-size: 13px; background: transparent; outline: none; font-weight: 600; color: var(--text-main); cursor: pointer; font-family: inherit; transition: color 0.3s; box-sizing: border-box; }
         
-        /* V3.07：結清(收款完成)改用明顯的琥珀色整排標示，跟「完」(製作完成)的綠色分開，兩件事各自獨立追蹤 */
-        tr.is-settled td { background: rgba(245, 158, 11, 0.16) !important; }
-        tr.is-settled td:first-child { box-shadow: inset 4px 0 0 0 #F59E0B; }
-        tr.is-settled input:not(.settled-badge):not(.partner-badge):not([type="checkbox"]), tr.is-settled select { color: var(--light); }
-
-        /* V3.05：結案(製/完)按到「完」時，整排要明顯標示出來，方便對案子 */
-        tr.is-done-flag td { background: rgba(16, 185, 129, 0.16) !important; }
-        tr.is-done-flag td:first-child { box-shadow: inset 4px 0 0 0 #10B981; }
-
-        /* V3.07：製作完成 + 收款也結清了 → 兩個都達成，換成第三種顏色(藍)，一眼看出「全部搞定」 */
-        tr.is-done-flag.is-settled td { background: rgba(59, 130, 246, 0.18) !important; }
-        tr.is-done-flag.is-settled td:first-child { box-shadow: inset 4px 0 0 0 #3B82F6; }
+        /* V3.08：拿掉整排變色（完/收/分改看案名旁邊那組標籤就好），只保留文字淡化這種輕微提示 */
+        tr.is-settled input:not(.settled-badge):not(.partner-badge):not(.done-badge):not([type="checkbox"]), tr.is-settled select { color: var(--light); }
         
         input:focus::selection { background: rgba(var(--primary-rgb), 0.2); }
         td input[type="text"]:focus, td select:focus { cursor: text; color: var(--primary); font-weight: 800; }
@@ -874,7 +866,7 @@
                 <div class="table-scroll" id="input-view">
                     <!-- 🚨 隱藏 付款、尾款、未收金額 -->
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th class="amt-col" style="width:80px">公司金額</th><th class="amt-col" style="width:80px">老闆金額</th><th class="amt-col" style="width:80px">夥伴金額</th><th style="width:55px">結案</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th class="amt-col" style="width:80px">公司金額</th><th class="amt-col" style="width:80px">老闆金額</th><th class="amt-col" style="width:80px">夥伴金額</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -3057,7 +3049,7 @@ function createRow(r) {
             // V2.22：類型欄位（c===4）用自動配色標籤取代純文字，一眼分辨影片/圖片/動畫等類型
             if (c === 4) colorizeTypeSelect(td.querySelector('select'));
         } else if (c===3) {
-            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="點擊切換結清狀態">結清</span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="點擊切換是否已付夥伴">夥伴</span></div>`;
+            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="點擊切換是否製作完成">完</span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="點擊切換是否已收款">收</span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="點擊切換是否已分潤給夥伴">分</span></div>`;
         } else if (c===20) {
             // V2.34：備註欄縮窄，改用滑鼠懸浮顯示完整內容，不用整欄撐寬佔空間
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" title="${val.replace(/"/g,'&quot;')}" oninput="this.title=this.value; calc(${r},${c})">`;
@@ -3084,20 +3076,6 @@ function createRow(r) {
         }
 
         if ([17, 18, 19].includes(c)) td.classList.add('amt-col');
-
-        // V2.91：在「夥伴金額」欄位右邊、備註左邊插入「結案」欄。資料存在獨立的第 24 欄，
-        // 製/完互斥(一次只能選一個)，新案件預設「製」(製作中)
-        if (c === 19) {
-            let doneVal = saved[24] || '製';
-            let doneTd = document.createElement('td');
-            doneTd.className = 'calc-cell';
-            doneTd.innerHTML = `<input type="hidden" id="r${r}c24" value="${doneVal}">
-                <div style="display:flex; gap:4px; justify-content:center;">
-                    <span class="assign-badge ${doneVal === '製' ? 'active-wei' : ''}" id="r${r}c24badgeZhi" onclick="toggleDoneFlag(${r}, '製')" title="製作中">製</span>
-                    <span class="assign-badge ${doneVal === '完' ? 'active-chiu' : ''}" id="r${r}c24badgeWan" onclick="toggleDoneFlag(${r}, '完')" title="已完成">完</span>
-                </div>`;
-            tr.appendChild(doneTd);
-        }
     }
     
     let delTd = document.createElement('td');
@@ -3637,17 +3615,11 @@ function toggleAssign(r, who) {
 }
 window.toggleAssign = toggleAssign;
 
-// V2.91：結案燈號(製/完)，兩者互斥，點哪個就切到哪個狀態，這是管理表狀態同步的唯一依據
-function toggleDoneFlag(r, val) {
+// V3.08：一鍵切換「完成」狀態，跟結清/付夥伴同一套邏輯，收斂成同一組標籤
+function toggleDoneFlag(r) {
     const hidden = document.getElementById(`r${r}c24`);
     if (!hidden) return;
-    hidden.value = val;
-    const zhiBadge = document.getElementById(`r${r}c24badgeZhi`);
-    const wanBadge = document.getElementById(`r${r}c24badgeWan`);
-    if (zhiBadge) zhiBadge.classList.toggle('active-wei', val === '製');
-    if (wanBadge) wanBadge.classList.toggle('active-chiu', val === '完');
-    const row = document.getElementById(`r${r}`);
-    if (row) row.classList.toggle('is-done-flag', val === '完');
+    hidden.value = (hidden.value === '完') ? '製' : '完';
     calc(r, 24, true);
 }
 window.toggleDoneFlag = toggleDoneFlag;
@@ -3829,15 +3801,17 @@ function calc(r, c, save=true) {
     if (row) { 
         let isFree = (String(g(9)).trim() === '0'); 
         isSettled = (net > 0 && rem <= 0) || isFree;
+        row.classList.remove('is-settled', 'is-done-flag'); // V3.08：不再用整排變色，改看案名旁邊的標籤組
         if (isSettled) row.classList.add('is-settled'); 
-        else row.classList.remove('is-settled'); 
     }
 
-    // V2.33：結清、付夥伴兩個標籤都永遠可見，用 active 樣式切換灰/彩色，不再用顯示/隱藏
+    // V2.33：結清、付夥伴、完成 三個標籤都永遠可見，用 active 樣式切換灰/彩色，不再用顯示/隱藏
     let badge = document.getElementById(`r${r}c3badge`);
     if (badge) badge.classList.toggle('active', isSettled);
     let partnerBadge = document.getElementById(`r${r}c21badge`);
     if (partnerBadge) partnerBadge.classList.toggle('active', g(21) === true);
+    let doneBadge = document.getElementById(`r${r}c24badge`);
+    if (doneBadge) doneBadge.classList.toggle('active', g(24) === '完');
     
     if(save) {
         let existingRow = getRowData(r); // 先取得現有資料，避免蓋掉沒有對應輸入框的背景欄位(例如第23欄的管理表連結)
