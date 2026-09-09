@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.12</title>
+    <title>杰冉宇宙營收表 V3.18</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -170,6 +170,11 @@
         /* V2.91：公司/老闆/夥伴金額三欄可收合，收合時直接隱藏整欄 */
         #mainTable.amounts-hidden .amt-col { display: none; }
         #toggleAmountsBtn.active { background: #1D1D1F; color: #FFF; }
+
+        /* V3.18：完成+結清+分潤三顆燈都亮了，代表案子整個結束了，整排(含三顆燈本身)降低彩度變灰階，
+           顏色還在、只是變淡，一眼就能分辨哪些已經徹底結案封存 */
+        tr.is-all-done td { filter: saturate(0.3) brightness(0.98); }
+
         #settleTable { min-width: 100%; table-layout: fixed; }
         #invoiceTable { min-width: 1200px; table-layout: fixed; }
 
@@ -864,7 +869,7 @@
                         <button id="toggleAmountsBtn" class="month-btn" onclick="toggleAmountColumns()" title="收合/展開公司、老闆、夥伴金額欄" style="flex-shrink:0;"><i class="fas fa-eye-slash"></i> 分潤金額</button>
                         <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; padding:0 6px; font-size:11px; font-weight:700; color:var(--light);">
                             <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;"></span>完成</span>
-                            <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>收款</span>
+                            <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>結清</span>
                             <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#8E24C9;display:inline-block;"></span>分潤</span>
                         </div>
                     </div>
@@ -3027,13 +3032,15 @@ function setRole(r, el) { window.curRole = r; document.querySelectorAll('.role-b
 let dragSrcRow = null;
 let fStart = null, fCur = null, fCol = null;
 
+// V3.13：判斷第21欄(付夥伴)是否為勾選狀態，資料可能存成布林值或字串
+function g21Checked(saved) { return saved[21] === true || saved[21] === 'true'; }
+
 function createRow(r) {
     let tr = document.createElement('tr'); tr.id = `r${r}`;
     tr.addEventListener('dragstart', handleDragStart); tr.addEventListener('dragover', handleDragOver); tr.addEventListener('dragleave', handleDragLeave); tr.addEventListener('drop', handleDrop); tr.addEventListener('dragend', handleDragEnd);
     let hTd = document.createElement('td'); hTd.innerHTML = `<div class="drag-handle" onmousedown="this.closest('tr').setAttribute('draggable','true')" onmouseup="this.closest('tr').setAttribute('draggable','false')" onmouseleave="this.closest('tr').closest('tr').setAttribute('draggable','false')">⋮⋮</div>`;
     tr.appendChild(hTd);
     let saved = getRowData(r);
-    if (saved[24] === '完') tr.classList.add('is-done-flag');
     
     for(let c=0; c<22; c++) {
         let td = document.createElement('td'), val = saved[c] || '';
@@ -3808,17 +3815,22 @@ function calc(r, c, save=true) {
     if (row) { 
         let isFree = (String(g(9)).trim() === '0'); 
         isSettled = (net > 0 && rem <= 0) || isFree;
-        row.classList.remove('is-settled', 'is-done-flag'); // V3.08：不再用整排變色，改看案名旁邊的標籤組
+        row.classList.remove('is-settled'); 
         if (isSettled) row.classList.add('is-settled'); 
     }
 
-    // V2.33：結清、付夥伴、完成 三個標籤都永遠可見，用 active 樣式切換灰/彩色，不再用顯示/隱藏
+    // V3.08：完成、結清、付夥伴 三個圓點標籤，用 active 樣式切換灰/彩色
     let badge = document.getElementById(`r${r}c3badge`);
     if (badge) badge.classList.toggle('active', isSettled);
     let partnerBadge = document.getElementById(`r${r}c21badge`);
-    if (partnerBadge) partnerBadge.classList.toggle('active', g(21) === true);
+    let isPartnerPaid = g(21) === true;
+    if (partnerBadge) partnerBadge.classList.toggle('active', isPartnerPaid);
     let doneBadge = document.getElementById(`r${r}c24badge`);
-    if (doneBadge) doneBadge.classList.toggle('active', g(24) === '完');
+    let isDone = g(24) === '完';
+    if (doneBadge) doneBadge.classList.toggle('active', isDone);
+
+    // V3.18：三顆燈都亮了(完成+結清+分潤)，代表這筆案子整個結束了，整排(含三顆燈)降低彩度變灰階，方便一眼看出已結案的
+    if (row) row.classList.toggle('is-all-done', isSettled && isPartnerPaid && isDone);
     
     if(save) {
         let existingRow = getRowData(r); // 先取得現有資料，避免蓋掉沒有對應輸入框的背景欄位(例如第23欄的管理表連結)
