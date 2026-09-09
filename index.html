@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.09</title>
+    <title>杰冉宇宙營收表 V3.11</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -146,15 +146,16 @@
         .proj-name-cell input { flex: 1; min-width: 0; width: auto !important; padding: 0 !important; }
         /* V2.33：結清／付夥伴改成永遠可見、可直接點擊切換的雙狀態小標籤，不用再看整行變灰或往右找打勾框 */
         /* V3.08：三個狀態(完/收/分)統一收斂成同一組小標籤放在案名旁邊，不用整排變色，掃這三個字就好 */
+        /* V3.11：文字標籤改成實心圓點——平常是淺灰空心圈幾乎不佔注意力，點亮後是飽和色+光暈，比文字醒目很多 */
         .settled-badge, .partner-badge, .done-badge {
             flex-shrink: 0; cursor: pointer; user-select: none;
-            font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 50px; white-space: nowrap;
-            color: var(--light); background: rgba(0,0,0,0.06); transition: all 0.15s;
+            width: 13px; height: 13px; border-radius: 50%; padding: 0;
+            border: 2px solid rgba(0,0,0,0.15); background: transparent; transition: all 0.15s;
         }
-        .settled-badge:hover, .partner-badge:hover, .done-badge:hover { filter: brightness(0.95); }
-        .done-badge.active { color: #00A651; background: rgba(0,166,81,0.16); }
-        .settled-badge.active { color: #B8860B; background: rgba(245,158,11,0.18); }
-        .partner-badge.active { color: #8E24C9; background: rgba(191,90,242,0.18); }
+        .settled-badge:hover, .partner-badge:hover, .done-badge:hover { transform: scale(1.2); }
+        .done-badge.active { background: #10B981; border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.25); }
+        .settled-badge.active { background: #F59E0B; border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.25); }
+        .partner-badge.active { background: #8E24C9; border-color: #8E24C9; box-shadow: 0 0 0 3px rgba(142,36,201,0.25); }
 
         /* V2.83：案件明細新增「指派」欄位，魏/杰兩顆小按鈕，點下去會發光標示這案子是誰的 */
         .assign-badge {
@@ -861,6 +862,11 @@
                             <button class="month-btn" onclick="setMonthFilter('12', this)">12月</button>
                         </div>
                         <button id="toggleAmountsBtn" class="month-btn" onclick="toggleAmountColumns()" title="收合/展開公司、老闆、夥伴金額欄" style="flex-shrink:0;"><i class="fas fa-eye-slash"></i> 分潤金額</button>
+                        <div style="display:flex; align-items:center; gap:12px; flex-shrink:0; padding:0 6px; font-size:11px; font-weight:700; color:var(--light);">
+                            <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;"></span>完成</span>
+                            <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>收款</span>
+                            <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#8E24C9;display:inline-block;"></span>分潤</span>
+                        </div>
                     </div>
                 </div>
                 <div class="table-scroll" id="input-view">
@@ -2698,7 +2704,7 @@ async function downloadQuotationPDF() {
         image: { type: 'png' },
         html2canvas: { scale: 4, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['css'], avoid: ['tr', '#qt-export-terms-section'] }
     };
     html2pdf().set(opt).from(el).save().then(() => {
         el.style.display = 'none';
@@ -3049,7 +3055,7 @@ function createRow(r) {
             // V2.22：類型欄位（c===4）用自動配色標籤取代純文字，一眼分辨影片/圖片/動畫等類型
             if (c === 4) colorizeTypeSelect(td.querySelector('select'));
         } else if (c===3) {
-            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="點擊切換是否製作完成">完</span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="點擊切換是否已收款">收</span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="點擊切換是否已分潤給夥伴">分</span></div>`;
+            td.innerHTML = `<div class="proj-name-cell"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="綠：製作完成"></span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="黃：已收款"></span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="紫：已分潤夥伴"></span></div>`;
         } else if (c===20) {
             // V2.34：備註欄縮窄，改用滑鼠懸浮顯示完整內容，不用整欄撐寬佔空間
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" title="${val.replace(/"/g,'&quot;')}" oninput="this.title=this.value; calc(${r},${c})">`;
