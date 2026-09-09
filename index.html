@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.21</title>
+    <title>杰冉宇宙營收表 V3.24</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -157,12 +157,33 @@
         .settled-badge.active { background: #F59E0B; border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.25); }
         .partner-badge.active { background: #8E24C9; border-color: #8E24C9; box-shadow: 0 0 0 3px rgba(142,36,201,0.25); }
 
-        /* V3.20：合約下拉選單，放在案名最左邊，可以直接選、也可以新增/刪除合約 */
-        .contract-select {
-            flex-shrink: 0; width: 20px; border: none; background: transparent; font-size: 10px;
-            color: rgba(0,0,0,0.25); cursor: pointer; padding: 0; appearance: none; text-align: center;
+        /* V3.20：合約按鈕，放在案名最左邊，點下去彈出自訂樣式的浮動選單(不是醜醜的原生下拉選單) */
+        /* V3.23：改成軟性膠囊風格，選中時深色實心+陰影，仿照現代設計系統的分段控制項 */
+        .contract-trigger {
+            flex-shrink: 0; width: 22px; height: 20px; border-radius: 7px; border: none;
+            background: rgba(0,0,0,0.05); font-size: 10px; font-weight: 800;
+            color: rgba(0,0,0,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
         }
-        .contract-select.has-value { color: #FF9500; font-weight: 800; }
+        .contract-trigger:hover { background: rgba(0,0,0,0.1); transform: scale(1.05); }
+        .contract-trigger.has-value { color: #fff; background: #1D1D1F; box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+
+        .contract-dd-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 9px 12px; border-radius: 11px; cursor: pointer; font-size: 13px; font-weight: 700;
+            color: #3A3A3C; transition: all 0.12s;
+        }
+        .contract-dd-item:hover { background: rgba(0,0,0,0.05); }
+        .contract-dd-item.active { background: #1D1D1F; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .contract-dd-item .cdd-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .contract-dd-item .cdd-del { opacity: 0; color: rgba(255,255,255,0.6); font-size: 11px; transition: opacity 0.12s; }
+        .contract-dd-item:hover .cdd-del, .contract-dd-item.active .cdd-del { opacity: 1; }
+        .contract-dd-item:not(.active) .cdd-del { color: rgba(0,0,0,0.25); }
+        .contract-dd-item.cdd-add { color: #007AFF; }
+        .contract-dd-item.cdd-add:hover { background: rgba(0,122,255,0.08); }
+        .contract-dd-item.cdd-remove { color: #D32F2F; }
+        .contract-dd-item.cdd-remove:hover { background: rgba(211,47,47,0.08); }
+        .contract-dd-divider { height: 1px; background: rgba(0,0,0,0.06); margin: 4px 6px; }
 
         /* V2.83：案件明細新增「指派」欄位，魏/杰兩顆小按鈕，點下去會發光標示這案子是誰的 */
         .assign-badge {
@@ -634,6 +655,7 @@
 
 <!-- 主表客戶專用下拉選單 -->
 <div id="mainVipDropdown" class="db-custom-menu" style="display:none; position:fixed; z-index:99999; width: 200px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); padding: 8px; flex-direction: column; gap: 4px; max-height: 250px; overflow-y: auto;"></div>
+<div id="contractDropdown" style="display:none; position:fixed; z-index:99999; width: 210px; background: rgba(250,250,252,0.97); backdrop-filter: blur(25px); border: 1px solid rgba(0,0,0,0.06); border-radius: 16px; box-shadow: 0 20px 45px rgba(0,0,0,0.14); padding: 6px; flex-direction: column; gap: 3px; max-height: 280px; overflow-y: auto;"></div>
 
 <div id="pdf-loading-overlay">
     <h2 style="color: var(--primary); font-weight: 900; font-size: 28px; margin-bottom: 10px;">⏳ 正在為您產生對帳單...</h2>
@@ -1457,6 +1479,11 @@ document.addEventListener('click', function(e) {
     if (!e.target.closest('#mainVipDropdown') && (!e.target.id || !e.target.id.includes('c2') || !e.target.id.startsWith('r'))) {
         let dd = document.getElementById('mainVipDropdown');
         if(dd) dd.style.display = 'none';
+    }
+
+    if (!e.target.closest('#contractDropdown') && !e.target.closest('.contract-trigger')) {
+        let cdd = document.getElementById('contractDropdown');
+        if (cdd) cdd.style.display = 'none';
     }
 });
 
@@ -3088,7 +3115,7 @@ function createRow(r) {
             // V2.22：類型欄位（c===4）用自動配色標籤取代純文字，一眼分辨影片/圖片/動畫等類型
             if (c === 4) colorizeTypeSelect(td.querySelector('select'));
         } else if (c===3) {
-            td.innerHTML = `<div class="proj-name-cell"><select id="r${r}c25" class="contract-select" onchange="handleContractChange(${r})" title="所屬合約包">${buildContractOptionsHtml(saved[25] || '')}</select><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><input type="hidden" id="r${r}c26" value="${saved[26] || ''}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="綠：製作完成"></span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="黃：已收款"></span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="紫：已分潤夥伴"></span></div>`;
+            td.innerHTML = `<div class="proj-name-cell"><div class="contract-trigger ${saved[25] ? 'has-value' : ''}" id="r${r}c25trigger" onclick="event.stopPropagation(); openContractMenu(this, ${r})" title="所屬合約包"><i class="fas fa-link"></i></div><input type="hidden" id="r${r}c25" value="${saved[25] || ''}"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><input type="hidden" id="r${r}c26" value="${saved[26] || ''}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="綠：製作完成"></span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="黃：已收款"></span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="紫：已分潤夥伴"></span></div>`;
         } else if (c===20) {
             // V2.34：備註欄縮窄，改用滑鼠懸浮顯示完整內容，不用整欄撐寬佔空間
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" title="${val.replace(/"/g,'&quot;')}" oninput="this.title=this.value; calc(${r},${c})">`;
@@ -3915,14 +3942,13 @@ window.colorizeTypeSelect = colorizeTypeSelect;
 // 沒填合約名稱就恢復預設黑字，不特別上色
 function colorizeProjName(r) {
     const nameInput = document.getElementById(`r${r}c3`);
-    const contractSel = document.getElementById(`r${r}c25`);
-    if (!nameInput || !contractSel) return;
-    let v = (contractSel.value || '').trim();
-    contractSel.classList.toggle('has-value', !!v);
+    const contractHidden = document.getElementById(`r${r}c25`);
+    const trigger = document.getElementById(`r${r}c25trigger`);
+    if (!nameInput || !contractHidden) return;
+    let v = (contractHidden.value || '').trim();
+    if (trigger) trigger.classList.toggle('has-value', !!v);
     if (!v) { nameInput.style.color = ''; nameInput.style.fontWeight = ''; return; }
-    let hash = 0;
-    for (let i = 0; i < v.length; i++) hash = (hash * 31 + v.charCodeAt(i)) >>> 0;
-    let c = TYPE_COLOR_PALETTE[hash % TYPE_COLOR_PALETTE.length];
+    let c = contractColorFor(v);
     nameInput.style.color = c.fg;
     nameInput.style.fontWeight = '800';
 }
@@ -3934,14 +3960,16 @@ function getContracts() {
 }
 function saveContracts(obj) { localStorage.setItem('vB_Contracts', JSON.stringify(obj)); }
 
-function buildContractOptionsHtml(selectedVal) {
-    const contracts = getContracts();
-    const names = Object.keys(contracts);
-    let html = `<option value="" ${!selectedVal ? 'selected' : ''}>—</option>`;
-    names.forEach(n => { html += `<option value="${n.replace(/"/g,'&quot;')}" ${selectedVal === n ? 'selected' : ''}>${n}</option>`; });
-    html += `<option value="__ADD__">+</option>`;
-    if (names.length > 0) html += `<option value="__DEL__">−</option>`;
-    return html;
+// V3.22：折扣改用台灣習慣「打幾折」寫法——輸入 9 代表九折(90%)，輸入 0 或空白代表原價(不打折)，
+// 不要再用西式的「90代表9折」，內部計算還是換算成百分比存
+function discountInputToPercent(val) {
+    const n = parseFloat(val);
+    if (isNaN(n) || n <= 0) return 100; // 0 或空白 = 原價
+    return n * 10;
+}
+function percentToDiscountInput(percent) {
+    if (percent >= 100) return 0; // 原價顯示成 0
+    return +(percent / 10).toFixed(2);
 }
 
 // 依照 calc() 用的同一套公式，重新算稅金/含稅總額/未收金額/公司老闆夥伴金額(用在批次套用折扣、DOM 不一定存在的情況)
@@ -3966,64 +3994,123 @@ function recalcRowValues(d) {
     return d;
 }
 
-// V3.20：案名旁邊的合約下拉選單被改動時觸發——選了合約(第一次)記住目前未稅額當原價，再照折扣算新未稅額；
-// 選回「—」取消合約則還原成原價；選「+新增合約」「−刪除合約」則管理合約登記表本身
-async function handleContractChange(r) {
-    const sel = document.getElementById(`r${r}c25`);
-    if (!sel) return;
-    const d = getRowData(r);
-
-    if (sel.value === '__ADD__') {
-        const name = await uiPrompt("新增合約名稱：");
-        if (!name || !name.trim()) { sel.innerHTML = buildContractOptionsHtml(d[25] || ''); return; }
-        const discountStr = await uiPrompt(`「${name.trim()}」的折扣是幾折？(輸入 90 代表打9折，100代表不打折)`, "100");
-        const discount = parseFloat(discountStr);
-        if (isNaN(discount) || discount <= 0 || discount > 100) {
-            await uiAlert("折扣請輸入 1~100 之間的數字");
-            sel.innerHTML = buildContractOptionsHtml(d[25] || '');
-            return;
-        }
-        let contracts = getContracts();
-        contracts[name.trim()] = { discount };
-        saveContracts(contracts);
-        applyContractToRow(r, name.trim());
-        initTable();
-        return;
-    }
-
-    if (sel.value === '__DEL__') {
-        const contracts = getContracts();
-        const names = Object.keys(contracts);
-        if (names.length === 0) { await uiAlert("目前沒有任何合約可以刪除"); sel.innerHTML = buildContractOptionsHtml(d[25] || ''); return; }
-        const target = await uiPrompt(`輸入要刪除的合約名稱(目前有：${names.join('、')})：`);
-        if (target && contracts[target.trim()]) {
-            if (!(await uiConfirm(`確定要刪除合約「${target.trim()}」嗎？已經套用這個合約折扣的案子，金額不會被還原，只是不再屬於任何合約。`, "刪除合約確認"))) {
-                sel.innerHTML = buildContractOptionsHtml(d[25] || '');
-                return;
-            }
-            delete contracts[target.trim()];
-            saveContracts(contracts);
-            initTable(); // 重新整理，讓其他列的下拉選單也一併移除這個已刪除的合約
-        } else {
-            sel.innerHTML = buildContractOptionsHtml(d[25] || '');
-        }
-        return;
-    }
-
-    applyContractToRow(r, sel.value);
+// V3.23：合約自訂浮動選單(取代醜醜的原生下拉選單)，跟客戶欄位那個浮動選單同一套定位方式
+// V3.24：合約專屬色盤，統一走暗色調(暗灰、暗綠、暗藍...)，不用鮮豔色
+const CONTRACT_COLOR_PALETTE = ['#3B5B6B', '#3F5D3A', '#4B4B6E', '#5A4A3A', '#3E5C76', '#5C4B57', '#454545', '#5B3A47'];
+function contractColorFor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+    return { fg: CONTRACT_COLOR_PALETTE[hash % CONTRACT_COLOR_PALETTE.length] };
 }
-window.handleContractChange = handleContractChange;
+
+function openContractMenu(el, r) {
+    currentMainRow = r;
+    let rect = el.getBoundingClientRect();
+    let dd = document.getElementById('contractDropdown');
+    dd.style.top = (rect.bottom + 6) + 'px';
+    dd.style.left = rect.left + 'px';
+    dd.style.display = 'flex';
+    window.contractDeleteMode = false;
+    renderContractMenu(r);
+}
+window.openContractMenu = openContractMenu;
+
+// V3.24：底部改成「新增合約」(左)、「刪除合約」(右)並排；按下刪除會切換成「刪除模式」，
+// 這時清單裡每個合約都會亮出紅色✕，點哪個就刪哪個，不用再靠滑鼠懸浮才看得到
+function renderContractMenu(r) {
+    const dd = document.getElementById('contractDropdown');
+    const d = getRowData(r);
+    const curVal = d[25] || '';
+    const contracts = getContracts();
+    const names = Object.keys(contracts);
+    const deleteMode = !!window.contractDeleteMode;
+
+    let html = deleteMode
+        ? `<div style="padding:6px 10px 2px 10px; font-size:11px; font-weight:800; color:#D32F2F;">點選要刪除的合約</div>`
+        : `<div class="contract-dd-item ${!curVal ? 'active' : ''}" onclick="selectContractFromMenu(${r}, '')">— 無合約</div>`;
+
+    if (names.length === 0) {
+        html += `<div style="padding:10px 12px; font-size:12px; color:rgba(0,0,0,0.35);">目前沒有合約</div>`;
+    } else {
+        names.forEach(n => {
+            const c = contractColorFor(n);
+            const isActive = !deleteMode && curVal === n;
+            const clickAction = deleteMode ? `quickDeleteContract('${n.replace(/'/g, "\\'")}', ${r})` : `selectContractFromMenu(${r}, '${n.replace(/'/g, "\\'")}')`;
+            html += `<div class="contract-dd-item ${isActive ? 'active' : ''}" onclick="${clickAction}">
+                <span style="display:flex; align-items:center; gap:8px; overflow:hidden;"><span class="cdd-dot" style="background:${c.fg}"></span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${n}</span></span>
+                ${deleteMode ? `<i class="fas fa-times" style="color:#D32F2F;"></i>` : ''}
+            </div>`;
+        });
+    }
+
+    html += `<div class="contract-dd-divider"></div>`;
+    if (deleteMode) {
+        html += `<div class="contract-dd-item" style="justify-content:center; color:rgba(0,0,0,0.4);" onclick="window.contractDeleteMode=false; renderContractMenu(${r})"><i class="fas fa-arrow-left" style="margin-right:6px;"></i> 返回</div>`;
+    } else {
+        html += `<div style="display:flex; gap:4px;">
+            <div class="contract-dd-item cdd-add" style="flex:1; justify-content:center;" onclick="promptNewContractFromMenu(${r})"><i class="fas fa-plus" style="margin-right:6px;"></i> 新增</div>
+            <div class="contract-dd-item cdd-remove" style="flex:1; justify-content:center;" onclick="window.contractDeleteMode=true; renderContractMenu(${r})"><i class="fas fa-minus" style="margin-right:6px;"></i> 刪除</div>
+        </div>`;
+    }
+    dd.innerHTML = html;
+}
+
+function closeContractMenu() { document.getElementById('contractDropdown').style.display = 'none'; }
+
+function selectContractFromMenu(r, name) {
+    applyContractToRow(r, name);
+    closeContractMenu();
+}
+window.selectContractFromMenu = selectContractFromMenu;
+
+async function promptNewContractFromMenu(r) {
+    const name = await uiPrompt("新增合約名稱：");
+    if (!name || !name.trim()) return;
+    let contracts = getContracts();
+    contracts[name.trim()] = { discount: 100 }; // 預設原價(不打折)，折扣去「合約」分頁再設定
+    saveContracts(contracts);
+    applyContractToRow(r, name.trim());
+    initTable();
+    closeContractMenu();
+}
+window.promptNewContractFromMenu = promptNewContractFromMenu;
+
+async function quickDeleteContract(name, r) {
+    if (!(await uiConfirm(`確定要刪除合約「${name}」嗎？已經套用這個合約折扣的案子，金額不會被還原，只是不再屬於任何合約。`, "刪除合約確認"))) return;
+    let contracts = getContracts();
+    delete contracts[name];
+    saveContracts(contracts);
+    // 順手清掉所有案子對這個已刪除合約的歸屬(金額不還原)
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    yList.forEach(year => {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let i = 0; i < rc; i++) {
+            const raw = localStorage.getItem(`d_${year}_${i}`);
+            if (!raw) continue;
+            let dd; try { dd = JSON.parse(raw); } catch (e) { continue; }
+            if (dd[25] !== name) continue;
+            dd[25] = ''; dd[26] = '';
+            localStorage.setItem(`d_${year}_${i}`, JSON.stringify(dd));
+        }
+    });
+    clearRowCache();
+    initTable();
+    if (typeof r === 'number') renderContractMenu(r);
+}
+window.quickDeleteContract = quickDeleteContract;
 
 // 把合約(或取消合約)套用到單一列：這一列此刻在畫面上看得到，直接改 DOM 上的未稅額、透過 calc() 走一般存檔流程
 function applyContractToRow(r, contractName) {
     const netInput = document.getElementById(`r${r}c9`);
     const origInput = document.getElementById(`r${r}c26`);
-    if (!netInput || !origInput) return;
+    const contractInput = document.getElementById(`r${r}c25`);
+    if (!netInput || !origInput || !contractInput) return;
 
     if (!contractName) {
         // 取消合約：如果記錄過原價，還原回原價
         if (origInput.value) netInput.value = origInput.value;
         origInput.value = '';
+        contractInput.value = '';
         calc(r, 9, true);
         return;
     }
@@ -4033,6 +4120,7 @@ function applyContractToRow(r, contractName) {
     // 第一次套用合約，把目前的未稅額記住當作原價；如果已經有記錄過(表示換過合約)，沿用原本記住的原價，不會越換越少
     let originalPrice = origInput.value ? parseFloat(origInput.value) : (parseFloat(netInput.value) || 0);
     origInput.value = String(originalPrice);
+    contractInput.value = contractName;
     netInput.value = String(Math.round(originalPrice * discount / 100));
     calc(r, 9, true);
 }
@@ -4052,7 +4140,7 @@ function renderContractPage() {
         listEl.innerHTML = names.map(n => `
             <div onclick="selectContract('${n.replace(/'/g, "\\'")}')" style="padding:10px 12px; border-radius:10px; cursor:pointer; margin-bottom:6px; ${n === currentContractSelected ? 'background:var(--primary); color:#fff;' : 'background:#F5F5F7;'}">
                 <div style="font-weight:800; font-size:13px;">${n}</div>
-                <div style="font-size:11px; opacity:0.75;">目前折扣：${contracts[n].discount}</div>
+                <div style="font-size:11px; opacity:0.75;">${contracts[n].discount >= 100 ? '原價' : `打 ${percentToDiscountInput(contracts[n].discount)} 折`}</div>
             </div>
         `).join('');
     }
@@ -4092,8 +4180,8 @@ function renderContractDetail(name) {
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
             <h3 style="font-size:18px; font-weight:900;">${name}<span style="font-size:12px; font-weight:700; color:var(--light); margin-left:8px;">共 ${rows.length} 筆</span></h3>
             <div style="display:flex; align-items:center; gap:8px;">
-                <label style="font-size:13px; font-weight:700; color:var(--light);">折扣(輸入90代表打9折)：</label>
-                <input type="number" id="contract-discount-input" value="${discount}" style="width:70px; padding:8px; border-radius:8px; border:1px solid var(--card-border); text-align:center; font-weight:800;" min="1" max="100">
+                <label style="font-size:13px; font-weight:700; color:var(--light);">打幾折(0代表原價)：</label>
+                <input type="number" id="contract-discount-input" value="${percentToDiscountInput(discount)}" style="width:70px; padding:8px; border-radius:8px; border:1px solid var(--card-border); text-align:center; font-weight:800;" min="0" max="10" step="0.1">
                 <button onclick="applyContractDiscount('${name.replace(/'/g, "\\'")}')" style="background:#1D1D1F; color:#fff; padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; border:none;">套用折扣</button>
                 <button onclick="deleteContractFromPage('${name.replace(/'/g, "\\'")}')" style="background:rgba(255,59,48,0.1); color:#D32F2F; padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; border:none;">刪除此合約</button>
             </div>
@@ -4130,9 +4218,11 @@ window.renderContractDetail = renderContractDetail;
 // 並依照 calc() 同一套公式重新算稅金/含稅總額/分潤金額，直接寫回 localStorage
 async function applyContractDiscount(name) {
     const input = document.getElementById('contract-discount-input');
-    const discount = parseFloat(input.value);
-    if (isNaN(discount) || discount <= 0 || discount > 100) { await uiAlert("折扣請輸入 1~100 之間的數字"); return; }
-    if (!(await uiConfirm(`確定要把「${name}」底下所有案子的折扣改成 ${discount}(即打${(discount / 10).toFixed(1)}折)嗎？\n\n會直接改動未稅額、稅金、含稅總額、公司/老闆/夥伴金額，跟營收表是同一份資料，改了就會同步。`, "套用折扣確認"))) return;
+    const rawVal = parseFloat(input.value);
+    if (isNaN(rawVal) || rawVal < 0 || rawVal > 10) { await uiAlert("請輸入 0~10 之間的數字(0代表原價，9代表九折)"); return; }
+    const discount = discountInputToPercent(rawVal);
+    const displayText = discount >= 100 ? '原價(不打折)' : `打 ${percentToDiscountInput(discount)} 折`;
+    if (!(await uiConfirm(`確定要把「${name}」底下所有案子的折扣改成 ${displayText} 嗎？\n\n會直接改動未稅額、稅金、含稅總額、公司/老闆/夥伴金額，跟營收表是同一份資料，改了就會同步。`, "套用折扣確認"))) return;
 
     let contracts = getContracts();
     contracts[name] = { discount };
