@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.27</title>
+    <title>杰冉宇宙營收表 V3.3</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -3801,7 +3801,7 @@ function calc(r, c, save=true) {
         let vRaw = g(1).trim();
         let firstChar = vRaw.charAt(0); // 不強制轉大寫，大寫小寫各自獨立對照
 
-        if (firstChar && /[A-Za-z]/.test(firstChar)) {
+        if (firstChar && /[A-Za-z]/.test(firstChar) && firstChar !== 'Z' && firstChar !== 'z') {
             
             // V3.30 修正：雲端對照表(管理表那邊手動設定過的)有最高優先權，不會再被下面「掃現有列去猜」的舊邏輯蓋掉。
             // 只有雲端沒有明確設定這個字母時，才退回舊的猜法(先查寫死清單，再掃現有列)
