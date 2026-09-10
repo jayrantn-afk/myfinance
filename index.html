@@ -4157,7 +4157,9 @@ function applyContractToRow(r, contractName) {
     const contracts = getContracts();
     const discount = (contracts[contractName] || {}).discount ?? 100;
     // 第一次套用合約，把目前的未稅額記住當作原價；如果已經有記錄過(表示換過合約)，沿用原本記住的原價，不會越換越少
-    let originalPrice = origInput.value ? parseFloat(origInput.value) : (parseFloat(netInput.value) || 0);
+    // V3.33 修正：原本只判斷「欄位是否有值」，字串"0"也算有值，導致殘留的0會蓋掉你實際打的金額。
+    // 改成判斷「是不是大於0的有效數字」，不是才退回去讀你目前畫面上打的未稅額
+    let originalPrice = (origInput.value && parseFloat(origInput.value) > 0) ? parseFloat(origInput.value) : (parseFloat(netInput.value) || 0);
     origInput.value = String(originalPrice);
     contractInput.value = contractName;
     netInput.value = String(Math.round(originalPrice * discount / 100));
