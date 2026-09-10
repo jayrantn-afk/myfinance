@@ -3963,10 +3963,20 @@ function colorizeProjName(r) {
     if (!nameInput || !contractHidden) return;
     let v = (contractHidden.value || '').trim();
     if (trigger) trigger.classList.toggle('has-value', !!v);
-    if (!v) { nameInput.style.color = ''; nameInput.style.fontWeight = ''; return; }
+    if (!v) {
+        nameInput.style.color = ''; nameInput.style.fontWeight = '';
+        if (trigger) { trigger.style.background = ''; trigger.style.boxShadow = ''; }
+        return;
+    }
     let c = contractColorFor(v);
     nameInput.style.color = c.fg;
     nameInput.style.fontWeight = '800';
+    // V3.34 修正：觸發按鈕本身也要用這份合約自己的顏色，不能整組合約都套死黑色，不然分不出來是哪一份合約
+    if (trigger) {
+        trigger.style.background = c.fg;
+        trigger.style.borderColor = c.fg;
+        trigger.style.boxShadow = `0 3px 10px ${c.fg}66`;
+    }
 }
 window.colorizeProjName = colorizeProjName;
 
