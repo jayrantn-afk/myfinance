@@ -4249,6 +4249,7 @@ function renderContractDetail(name) {
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="renameContract('${name.replace(/'/g, "\\'")}')" style="background:rgba(0,0,0,0.05); color:var(--text-main); padding:9px 16px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; border:none;">改名稱</button>
                     <button onclick="deleteContractFromPage('${name.replace(/'/g, "\\'")}')" style="background:rgba(255,59,48,0.1); color:#D32F2F; padding:9px 16px; border-radius:10px; font-weight:800; font-size:13px; cursor:pointer; border:none;">刪除此合約</button>
                 </div>
             </div>
@@ -4299,6 +4300,41 @@ window.renderContractDetail = renderContractDetail;
 
 // 套用折扣：跨所有年度找出屬於這份合約的每一筆，用「原價」重新算未稅額(不會越折越少)，
 // 並依照 calc() 同一套公式重新算稅金/含稅總額/分潤金額，直接寫回 localStorage
+// V3.37：改合約名稱——同步更新登記表本身、跨所有年度引用這個合約的每一筆案子、以及目前選取狀態
+async function renameContract(oldName) {
+    const newName = await uiPrompt("輸入新的合約名稱：", oldName);
+    if (!newName || !newName.trim() || newName.trim() === oldName) return;
+    const trimmed = newName.trim();
+
+    let contracts = getContracts();
+    if (contracts[trimmed]) { await uiAlert("已經有一個同名的合約了，請換一個名稱。"); return; }
+    if (!contracts[oldName]) return;
+
+    contracts[trimmed] = contracts[oldName];
+    delete contracts[oldName];
+    saveContracts(contracts);
+
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    yList.forEach(year => {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let r = 0; r < rc; r++) {
+            const raw = localStorage.getItem(`d_${year}_${r}`);
+            if (!raw) continue;
+            let d; try { d = JSON.parse(raw); } catch (e) { continue; }
+            if (d[25] !== oldName) continue;
+            d[25] = trimmed;
+            localStorage.setItem(`d_${year}_${r}`, JSON.stringify(d));
+        }
+    });
+
+    currentContractSelected = trimmed;
+    clearRowCache();
+    initTable();
+    renderContractPage();
+    await uiAlert(`合約已改名為「${trimmed}」`);
+}
+window.renameContract = renameContract;
+
 // V3.35：合約頁面直接點色塊改顏色，存回登記表，馬上重畫整頁(含左邊清單跟案名旁邊的觸發按鈕)
 function changeContractColor(name, color) {
     let contracts = getContracts();
