@@ -4717,14 +4717,35 @@ window.onload = () => {
             return;
         }
 
+        // V3.39：先建立一份「編號已經在哪些位置出現過」的索引，等一下決定要不要新建時可以查
+        let idExistsElsewhere = new Map(); // idRaw -> Set(docId)
+        existingMap.forEach((data, docId) => {
+            if (!data.id) return;
+            if (!idExistsElsewhere.has(data.id)) idExistsElsewhere.set(data.id, new Set());
+            idExistsElsewhere.get(data.id).add(docId);
+        });
+
         // V2.91 修正：整套日期猜測邏輯拿掉，改用「結案」欄(製/完)當唯一依據，不用再猜。
         // 完 → 強制管理表狀態變已完成；製 → 如果管理表現在是已完成，改回尚未進行(代表重新開工)；
         // 其餘情況(製，但管理表本來就不是已完成)不去動狀態，保留管理表自己在跑的細節狀態(製作中/審核中等)。
         // 製作人只有在「從沒被指派過、沒有工時」時才會套用指派欄，避免蓋掉手動指派+已經動工的專案。
         let finalStatusByDocId = new Map(); // 記錄「這次同步完之後，管理表這份文件真正的最終狀態」，避免下面回拉燈號時看到修改前的舊資料
         let rawStatusSamples = []; // 診斷用：把「結案燈號是製、但原始狀態字串長什麼樣子」直接記下來給你看，不用再猜
+        let skippedDuplicateCreate = 0; // V3.39：這個編號已經存在別的位置，所以沒有另外新建一份的筆數
         let writeOps = entries.map(e => {
             const existing = existingMap.get(e.docId);
+
+            // V3.39 修正(防呆從源頭擋掉，而不是每次事後偵測)：
+            // 如果這個位置本來就沒有文件(要新建)，但這個編號其實已經存在「別的位置」了，
+            // 就不要在這裡另外新建一份重複的，讓下面的「保險比對」機制去修正原本那份就好。
+            if (!existing) {
+                const others = idExistsElsewhere.get(e.idRaw);
+                if (others && others.size > 0 && !others.has(e.docId)) {
+                    skippedDuplicateCreate++;
+                    return null;
+                }
+            }
+
             const doneFlag = (e.d[24] || '製') === '完';
             const payload = {
                 category: e.category, zone: e.zone, id: e.idRaw, client: e.client, name: e.name,
@@ -4750,7 +4771,7 @@ window.onload = () => {
             }
             finalStatusByDocId.set(e.docId, payload.status || (existing ? existing.status : null));
             return { docId: e.docId, payload };
-        });
+        }).filter(op => op !== null);
 
         let createdOrUpdated = 0, writeFailCount = 0;
         for (let i = 0; i < writeOps.length; i += 450) {
@@ -4890,7 +4911,7 @@ window.onload = () => {
             }
         }
 
-        let resultMsg = `✅ 已經整理完成\n\n新建立或更新了 ${createdOrUpdated} 筆\n順手校正了 ${strayFixed} 筆位置不對的資料\n從管理表同步回「已完成」狀態 ${pulledDoneCount} 筆\n刪除了管理表裡多出來的 ${deletedCount} 筆\n有 ${skipped.length} 筆營收表資料沒填齊，先跳過沒處理`;
+        let resultMsg = `✅ 已經整理完成\n\n新建立或更新了 ${createdOrUpdated} 筆\n順手校正了 ${strayFixed} 筆位置不對的資料\n擋下 ${skippedDuplicateCreate} 筆原本會變成重複的建立\n從管理表同步回「已完成」狀態 ${pulledDoneCount} 筆\n刪除了管理表裡多出來的 ${deletedCount} 筆\n有 ${skipped.length} 筆營收表資料沒填齊，先跳過沒處理`;
         if (rawStatusSamples.length > 0) {
             resultMsg += `\n\n有 ${rawStatusSamples.length} 筆案子的狀態看起來怪怪的，建議自己去管理表確認一下：\n`;
             resultMsg += rawStatusSamples.map(s => `・${s.client}－${s.idRaw}`).join('\n');
