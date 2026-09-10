@@ -4054,8 +4054,9 @@ function renderContractMenu(r) {
             const c = contractColorFor(n);
             const isActive = !deleteMode && curVal === n;
             const clickAction = deleteMode ? `quickDeleteContract('${n.replace(/'/g, "\\'")}', ${r})` : `selectContractFromMenu(${r}, '${n.replace(/'/g, "\\'")}')`;
-            html += `<div class="contract-dd-item ${isActive ? 'active' : ''}" onclick="${clickAction}">
-                <span style="display:flex; align-items:center; gap:8px; overflow:hidden;"><span class="cdd-dot" style="background:${c.fg}"></span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${n}</span></span>
+            const activeStyle = isActive ? ` style="background:${c.fg}22; box-shadow: inset 0 0 0 1.5px ${c.fg}; color:${c.fg};"` : '';
+            html += `<div class="contract-dd-item${isActive ? ' active' : ''}"${activeStyle} onclick="${clickAction}">
+                <span style="display:flex; align-items:center; gap:8px; overflow:hidden;"><span class="cdd-dot" style="background:${c.fg}"></span><span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:${isActive ? 900 : 700};">${n}</span></span>
                 ${deleteMode ? `<i class="fas fa-times" style="color:#D32F2F;"></i>` : ''}
             </div>`;
         });
