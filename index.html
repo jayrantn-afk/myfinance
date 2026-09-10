@@ -3726,8 +3726,10 @@ function computeNextIdForPrefix(prefix, currentRow) {
     return prefix + String(maxNum + 1).padStart(pad, '0');
 }
 
-// V2.75：編號欄位失焦時，檢查這個完整編號是否在其他年度/其他列已經用過(撞號提醒，不會擋你儲存)
-function checkIdDuplicate(r) {
+// V3.40 修正：原本這裡呼叫的 showToast() 這個檔案根本沒有這個函式，警告從來沒有真的跳出來過，
+// 難怪撞號一直抓不到。這次改用真的存在的 uiAlert，而且不再只是「提醒」——直接清空這格重複的編號，
+// 逼你重新輸入，不會讓重複的編號真的被存進去。
+async function checkIdDuplicate(r) {
     const input = document.getElementById(`r${r}c1`);
     if (!input) return;
     const val = input.value.trim();
@@ -3740,7 +3742,10 @@ function checkIdDuplicate(r) {
             let d;
             try { d = JSON.parse(localStorage.getItem(`d_${year}_${i}`)) || {}; } catch(e) { continue; }
             if ((d[1] || '').trim() === val) {
-                showToast(`⚠️ 編號 ${val} 在 ${year}年 已經用過(${d[2] || '未填客戶'} - ${d[3] || '未填案名'})，請確認是否打錯`, "error");
+                await uiAlert(`編號「${val}」在 ${year}年 已經被用過了(${d[2] || '未填客戶'} - ${d[3] || '未填案名'})，這格已經幫你清空，請改用別的編號。`, "編號重複，不能使用");
+                input.value = '';
+                calc(r, 1, true); // 把清空後的結果真的存回去，不會留著重複的編號
+                input.focus();
                 return;
             }
         }
