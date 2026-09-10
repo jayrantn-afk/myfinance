@@ -4723,6 +4723,7 @@ window.onload = () => {
                 strayOp = 0;
             }
         };
+        let strayFixedDocIds = new Set(); // V3.31 修正：記住這次同步「保險機制」救回來、寫入過的文件位置，避免下面判斷可刪除清單時，把剛救回來的當成垃圾誤刪
         for (const e of entries) {
             // 第一層：編號+客戶都對得上
             const key = `${e.idRaw}__${e.client}`;
@@ -4734,6 +4735,7 @@ window.onload = () => {
                 const data = existingMap.get(docId);
                 const doneFlag = (e.d[24] || '製') === '完';
                 saveLinkedDocId(e.year, e.row, docId); // 找到真正的位置了，永久記住，以後直接用這個，不再用算的
+                strayFixedDocIds.add(docId);
 
                 // 以營收表為準，把客戶名稱等基本資料也一併校正回來(不是只改狀態) —— 這正是打字不一致的根源
                 const strayPayload = {
@@ -4774,9 +4776,12 @@ window.onload = () => {
 
         // Step 4：找出「可能多餘」的候選(直接用剛剛已經抓下來的 existingMap，不用再連線查詢) —— 
         // 一樣是用上面那個「從沒被指派過、沒有工時」的判斷；只要有一項不符合，就直接跳過、更不會刪除
+        // V3.31 修正：strayFixedDocIds(這次同步剛被保險機制救回來、寫入正確資料的位置)一律排除，
+        // 不然會用「還沒套用保險機制之前」的舊快照去判斷，把剛救回來的資料當垃圾刪掉
         let candidates = [];
         existingMap.forEach((data, docId) => {
             if (expectedDocIds.has(docId)) return;
+            if (strayFixedDocIds.has(docId)) return;
             if (isUntouchedAutoStub(data)) {
                 candidates.push({ docId, client: data.client || '', name: data.name || '', pid: data.id || '' });
             }
