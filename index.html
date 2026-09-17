@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.4</title>
+    <title>杰冉宇宙營收表 V3.5</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -622,6 +622,11 @@
         .viewport { width: 100% !important; }
         .slider-container { width: 900% !important; }
         .page-content { width: calc(100% / 9) !important; content-visibility: auto; contain-intrinsic-size: 1000px 800px; }
+        #qt-discount-final::-webkit-outer-spin-button,
+        #qt-discount-final::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
     </style>
 </head>
 <body onclick="document.getElementById('yMenu').style.display='none'">
@@ -1306,8 +1311,8 @@
                         </label>
                         <div id="qt-orig-line" style="display:none; text-decoration: line-through; color: var(--light); margin-top: 6px;">原價：$ <span id="qt-orig-total">0</span></div>
                         <label style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px;">
-                            <span>優惠後金額（選填，直接打最終要收的金額）：$</span>
-                            <input type="number" id="qt-discount-final" placeholder="留空=不打折" oninput="calcQuotationTotal()" style="width:110px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:6px; padding:5px 8px; outline:none;">
+                            <span>優惠後金額：$</span>
+                            <input type="number" id="qt-discount-final" min="0" oninput="if(this.value<0)this.value=0; calcQuotationTotal()" style="width:110px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:6px; padding:5px 8px; outline:none; -moz-appearance: textfield;" onwheel="this.blur()">
                         </label>
                         <div id="qt-total-label" style="font-size: 20px; font-weight: 900; color: #1D1D1F; margin-top: 6px;">總價（含稅）：$ <span id="qt-total" style="color: #C89B2C;">0</span></div>
                     </div>
