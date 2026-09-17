@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.3</title>
+    <title>杰冉宇宙營收表 V3.4</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1303,6 +1303,11 @@
                         <label style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px; cursor: pointer;">
                             <span>營業稅 5%：$ <span id="qt-tax">0</span></span>
                             <input type="checkbox" id="qt-include-tax" checked onchange="calcQuotationTotal()" style="accent-color: #1D1D1F; cursor: pointer;">
+                        </label>
+                        <div id="qt-orig-line" style="display:none; text-decoration: line-through; color: var(--light); margin-top: 6px;">原價：$ <span id="qt-orig-total">0</span></div>
+                        <label style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+                            <span>優惠後金額（選填，直接打最終要收的金額）：$</span>
+                            <input type="number" id="qt-discount-final" placeholder="留空=不打折" oninput="calcQuotationTotal()" style="width:110px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:6px; padding:5px 8px; outline:none;">
                         </label>
                         <div id="qt-total-label" style="font-size: 20px; font-weight: 900; color: #1D1D1F; margin-top: 6px;">總價（含稅）：$ <span id="qt-total" style="color: #C89B2C;">0</span></div>
                     </div>
@@ -2662,16 +2667,28 @@ function calcQuotationTotal() {
     let subtotal = qtItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
     let includeTax = document.getElementById('qt-include-tax') ? document.getElementById('qt-include-tax').checked : true;
     let tax = includeTax ? Math.round(subtotal * 0.05) : 0;
-    let total = subtotal + tax;
+    let originalTotal = subtotal + tax;
+
+    // 優惠後金額：直接打最終要收的金額(不用換算打幾折)。留空或打的數字比原價大/無效，就當作沒打折
+    let discountFinalEl = document.getElementById('qt-discount-final');
+    let discountFinalVal = discountFinalEl ? parseFloat(discountFinalEl.value) : NaN;
+    let hasDiscount = !isNaN(discountFinalVal) && discountFinalVal > 0 && discountFinalVal < originalTotal;
+    let total = hasDiscount ? discountFinalVal : originalTotal;
+    let discountAmount = hasDiscount ? (originalTotal - discountFinalVal) : 0;
+
     let subtotalEl = document.getElementById('qt-subtotal');
     let taxEl = document.getElementById('qt-tax');
     let totalEl = document.getElementById('qt-total');
     let totalLabelEl = document.getElementById('qt-total-label');
+    let origLineEl = document.getElementById('qt-orig-line');
+    let origTotalEl = document.getElementById('qt-orig-total');
     if (subtotalEl) subtotalEl.innerText = subtotal.toLocaleString();
     if (taxEl) taxEl.innerText = tax.toLocaleString();
     if (totalEl) totalEl.innerText = total.toLocaleString();
     if (totalLabelEl) totalLabelEl.firstChild.textContent = includeTax ? '總價（含稅）：$ ' : '總價（未稅）：$ ';
-    return { subtotal, tax, total, includeTax };
+    if (origLineEl) origLineEl.style.display = hasDiscount ? 'block' : 'none';
+    if (origTotalEl) origTotalEl.innerText = originalTotal.toLocaleString();
+    return { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount };
 }
 window.calcQuotationTotal = calcQuotationTotal;
 
@@ -2681,7 +2698,7 @@ async function downloadQuotationPDF() {
     let validItems = qtItems.filter(it => it.name.trim() !== '' || parseFloat(it.amount) > 0);
     if (validItems.length === 0) { await uiAlert("請至少填一項服務項目再匯出。"); return; }
 
-    let { subtotal, tax, total, includeTax } = calcQuotationTotal();
+    let { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount } = calcQuotationTotal();
 
     let today = new Date();
     let dateStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
@@ -2721,10 +2738,15 @@ async function downloadQuotationPDF() {
 
     // 小計／稅金／總價（未勾選營業稅時，不顯示稅金列，標籤改為未稅）
     let taxRowHtml = includeTax ? `<tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F;">營業稅 5%</td><td style="padding: 4px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F;">${tax.toLocaleString()}</td></tr>` : '';
+    let discountRowsHtml = hasDiscount ? `
+        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F; text-decoration: line-through;">原價合計</td><td style="padding: 4px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F; text-decoration: line-through; color: #999;">${originalTotal.toLocaleString()}</td></tr>
+        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F;">優惠折扣</td><td style="padding: 4px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F; color: #D32F2F;">－${discountAmount.toLocaleString()}</td></tr>
+    ` : '';
     let totalLabel = includeTax ? '總價（含稅）' : '總價（未稅）';
     document.getElementById('qt-export-totals').innerHTML = `
         <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 8px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F;">未稅小計</td><td style="padding: 8px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F;">${subtotal.toLocaleString()}</td></tr>
         ${taxRowHtml}
+        ${discountRowsHtml}
         <tr style="page-break-inside: avoid; background: #F0C64B;"><td colspan="4" style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px; border: 1px solid #1D1D1F;">${totalLabel}</td><td style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px; border: 1px solid #1D1D1F;">${total.toLocaleString()}</td></tr>
     `;
 
