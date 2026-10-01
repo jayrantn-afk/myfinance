@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.41</title>
+    <title>杰冉宇宙營收表 V3.50</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -590,6 +590,89 @@
         #qt-discount-final::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
+        }
+
+        /* ============ V3.50 報價單改版 ============ */
+        .qt-page { padding: 0 !important; }
+        .qt-toolbar { background: #1D1D1F; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+        .qt-toolbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .qt-toolbar h2 { margin: 0; color: #FFF; font-weight: 900; font-size: 19px; white-space: nowrap; }
+        .qt-status-chip { font-size: 11px; font-weight: 800; padding: 5px 11px; border-radius: 50px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; }
+        .qt-status-chip.dirty { background: rgba(240,198,75,0.18); color: #F0C64B; }
+        .qt-toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .qt-btn { border: none; padding: 9px 16px; border-radius: 50px; font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap; font-family: inherit; transition: background 0.15s, transform 0.15s; }
+        .qt-btn.ghost { background: rgba(255,255,255,0.07); color: #FFF; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+        .qt-btn.ghost:hover { background: rgba(255,255,255,0.16); }
+        .qt-btn.gold { background: #F0C64B; color: #1D1D1F; }
+        .qt-btn.gold:hover { transform: translateY(-1px); }
+        .qt-btn:focus-visible { outline: 2px solid #F0C64B; outline-offset: 2px; }
+
+        #quote-import-menu { display: none; position: absolute; top: 115%; right: 0; width: 340px; background: #FFF; border-radius: 14px; box-shadow: 0 18px 45px rgba(0,0,0,0.25); padding: 8px; z-index: 999; }
+        #quote-import-search { width: 100%; height: 36px; box-sizing: border-box; border-radius: 9px; border: 1px solid var(--card-border); padding: 0 12px; font-size: 13px; font-weight: 700; outline: none; font-family: inherit; margin-bottom: 6px; }
+        #quote-import-search:focus { border-color: #1D1D1F; }
+        #quote-import-list { max-height: 340px; overflow-y: auto; }
+        .qt-import-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+        .qt-import-row:hover { background: rgba(0,0,0,0.04); }
+        .qt-import-row.current { background: rgba(240,198,75,0.16); }
+        .qt-import-del { color: #D32F2F; font-weight: 900; font-size: 13px; padding: 4px 6px; flex-shrink: 0; border-radius: 6px; }
+        .qt-import-del:hover { background: rgba(211,47,47,0.1); }
+
+        .qt-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(440px, 1fr) minmax(360px, 1fr); }
+        .qt-editor { overflow-y: auto; padding: 20px 24px 40px; background: #F6F7F9; }
+        .qt-preview-pane { overflow-y: auto; background: #DCDFE4; padding: 18px 20px 40px; border-left: 1px solid var(--card-border); }
+        .qt-preview-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 800; color: #5E6470; margin: 0 auto 12px; }
+        #qt-preview-scaler { position: relative; margin: 0 auto; }
+        #qt-preview-paper { position: absolute; top: 0; left: 0; transform-origin: top left; box-shadow: 0 12px 34px rgba(0,0,0,0.16); }
+
+        .qt-section { background: #FFF; border: 1px solid var(--card-border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+        .qt-section-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .qt-section-title { font-size: 14px; font-weight: 900; color: #1D1D1F; display: flex; align-items: center; gap: 8px; margin: 0; }
+        .qt-section-title::before { content: ''; width: 4px; height: 15px; background: #F0C64B; display: inline-block; border-radius: 2px; }
+        .qt-section-hint { font-size: 11px; color: var(--light); font-weight: 600; }
+        .qt-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .qt-field > label { font-size: 11px; font-weight: 800; color: #6E6E73; }
+        .qt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .qt-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .qt-span-2 { grid-column: span 2; }
+        .qt-span-all { grid-column: 1 / -1; }
+        .qt-inline { display: flex; gap: 6px; align-items: center; }
+        .qt-mini-btn { border: 1px solid var(--card-border); background: #FFF; color: #1D1D1F; padding: 6px 12px; border-radius: 50px; font-weight: 800; font-size: 12px; cursor: pointer; white-space: nowrap; font-family: inherit; }
+        .qt-mini-btn:hover { background: #F4F5F7; }
+        .qt-mini-btn.dark { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; }
+        .qt-mini-btn.dark:hover { background: #333; }
+        .qt-icon-btn { width: 30px; height: 30px; flex-shrink: 0; border: 1px solid var(--card-border); background: #FFF; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #6E6E73; font-family: inherit; }
+        .qt-icon-btn:hover { background: #F4F5F7; color: #1D1D1F; }
+        .qt-icon-btn.danger:hover { background: rgba(211,47,47,0.08); color: #D32F2F; }
+        .qt-icon-btn:disabled { opacity: 0.3; cursor: default; }
+
+        .qt-item-card { background: #FFF; margin-bottom: 8px; }
+        .qt-item-row { display: flex; gap: 8px; align-items: center; }
+        .qt-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .qt-items-empty { text-align: center; color: var(--light); font-size: 13px; font-weight: 700; padding: 20px; border: 1px dashed var(--card-border); border-radius: 10px; margin-bottom: 8px; }
+
+        .qt-sum-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; color: #6E6E73; font-weight: 700; }
+        .qt-sum-row b { color: #1D1D1F; font-weight: 800; }
+        .qt-sum-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--card-border); }
+        .qt-sum-total span:first-child { font-size: 14px; font-weight: 900; color: #1D1D1F; }
+        .qt-sum-total span:last-child { font-size: 26px; font-weight: 900; color: #C89B2C; }
+
+        .qt-doc { width: 794px; box-sizing: border-box; padding: 34px 36px; background: #FFF; color: #1D1D1F; font-family: 'Inter', -apple-system, 'PingFang TC', 'Microsoft JhengHei', sans-serif; font-variant-numeric: tabular-nums; }
+        .qt-doc table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .qt-doc th { position: static !important; background: #F0C64B !important; color: #1D1D1F !important; font-size: 12px !important; font-weight: 800 !important; text-transform: none !important; letter-spacing: 0 !important; backdrop-filter: none !important; padding: 7px 8px !important; border: 1px solid #1D1D1F !important; z-index: auto !important; }
+        .qt-doc td { height: auto !important; font-size: 12px; border: 1px solid #1D1D1F; padding: 7px 8px; vertical-align: top; transition: none; }
+        .qt-doc tr:hover td { background: transparent !important; box-shadow: none !important; }
+        .qt-doc td.qt-yellow, .qt-doc tr:hover td.qt-yellow { background: #F0C64B !important; }
+
+        #qt-toast { position: fixed; left: 50%; bottom: 36px; transform: translate(-50%, 20px); background: #1D1D1F; color: #FFF; padding: 11px 20px; border-radius: 50px; font-size: 13px; font-weight: 800; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 100001; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+        #qt-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+        @media (max-width: 1250px) {
+            .qt-body { display: block; overflow-y: auto; }
+            .qt-editor, .qt-preview-pane { overflow: visible; }
+            .qt-preview-pane { border-left: none; border-top: 1px solid var(--card-border); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .qt-btn, #qt-toast { transition: none; }
         }
     </style>
 </head>
@@ -1215,108 +1298,122 @@
             </div>
         </div>
         <div class="page-content">
-            <div class="white-card" style="padding: 0; overflow-y: auto; display: block;">
-                <div style="background: #1D1D1F; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                    <h2 style="margin: 0; font-weight: 900; color: #FFF; display: flex; align-items: center; gap: 10px;">📃 報價單</h2>
-                    <div style="display:flex; gap:10px; align-items:center;">
+            <div class="white-card qt-page">
+                <div class="qt-toolbar">
+                    <div class="qt-toolbar-left">
+                        <h2>📃 報價單</h2>
+                        <span id="qt-status-chip" class="qt-status-chip">新報價單</span>
+                    </div>
+                    <div class="qt-toolbar-right">
+                        <button class="qt-btn ghost" onclick="newQuotation()">＋ 新報價單</button>
                         <div style="position:relative;">
-                            <button onclick="toggleQuoteImportMenu(event)" style="background: transparent; color: #F0C64B; border: 2px solid #F0C64B; padding: 9px 20px; border-radius: 50px; font-weight: 900; font-size: 13px; cursor: pointer;">📂 匯入舊報價單</button>
-                            <div id="quote-import-menu" style="display:none; position:absolute; top:110%; right:0; width:300px; max-height:340px; overflow-y:auto; background:#FFF; border-radius:14px; box-shadow:0 15px 40px rgba(0,0,0,0.2); padding:8px; z-index:999;"></div>
-                        </div>
-                        <button onclick="downloadQuotationPDF()" style="background: #F0C64B; color: #1D1D1F; border: none; padding: 10px 22px; border-radius: 50px; font-weight: 900; font-size: 13px; cursor: pointer;">📥 匯出報價單 PDF</button>
-                    </div>
-                </div>
-
-                <div style="padding: 24px 30px;">
-                    <input type="text" id="qt-title" placeholder="案件標題" class="qt-input" style="width: 100%; height: 44px; font-size: 15px; font-weight: 800; margin-bottom: 10px;">
-                    <input type="text" id="qt-subtitle" placeholder="副標（選填）" class="qt-input" style="width: 100%; height: 38px; margin-bottom: 10px;">
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px;">
-                        <input type="text" id="qt-client" placeholder="客戶名稱" class="qt-input">
-                        <input type="text" id="qt-validity" placeholder="報價效期" class="qt-input">
-                        <input type="text" id="qt-window" placeholder="案件窗口" class="qt-input">
-                        <input type="text" id="qt-days" placeholder="製作天數" class="qt-input">
-                    </div>
-
-                    <h3 style="font-size: 13px; color: #1D1D1F; margin-bottom: 10px; font-weight: 900; display: flex; align-items: center; gap: 6px;"><span style="width: 4px; height: 14px; background: #F0C64B; display: inline-block;"></span>服務項目</h3>
-                    <div id="qt-items-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
-                    <button onclick="addQuotationItem()" style="background: #FFF; border: 2px solid #1D1D1F; color: #1D1D1F; padding: 7px 18px; border-radius: 50px; font-weight: 800; font-size: 12px; cursor: pointer;">+ 新增項目</button>
-
-                    <div style="text-align: right; margin-top: 20px; font-size: 13px; color: var(--mid); border-top: 1px solid var(--card-border); padding-top: 14px;">
-                        <div>未稅小計：$ <span id="qt-subtotal">0</span></div>
-                        <label style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px; cursor: pointer;">
-                            <span>營業稅 5%：$ <span id="qt-tax">0</span></span>
-                            <input type="checkbox" id="qt-include-tax" checked onchange="calcQuotationTotal()" style="accent-color: #1D1D1F; cursor: pointer;">
-                        </label>
-                        <div id="qt-orig-line" style="display:none; text-decoration: line-through; color: var(--light); margin-top: 6px;">原價：$ <span id="qt-orig-total">0</span></div>
-                        <label style="display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px;">
-                            <span>優惠後金額：$</span>
-                            <input type="number" id="qt-discount-final" min="0" oninput="if(this.value<0)this.value=0; calcQuotationTotal()" style="width:110px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:6px; padding:5px 8px; outline:none; -moz-appearance: textfield;" onwheel="this.blur()">
-                        </label>
-                        <div id="qt-total-label" style="font-size: 20px; font-weight: 900; color: #1D1D1F; margin-top: 6px;">總價（含稅）：$ <span id="qt-total" style="color: #C89B2C;">0</span></div>
-                    </div>
-
-                    <h3 style="font-size: 13px; color: #1D1D1F; margin: 22px 0 10px 0; font-weight: 900; display: flex; align-items: center; gap: 6px;"><span style="width: 4px; height: 14px; background: #F0C64B; display: inline-block;"></span>合作與交付說明（選填，有填才會印出來；每行算一點，可以列兩點以上）</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <textarea id="qt-term-basis" placeholder="製作基準（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
-                        <textarea id="qt-term-revision" placeholder="修改次數（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
-                        <textarea id="qt-term-addon" placeholder="追加項目（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
-                        <textarea id="qt-term-payment" placeholder="付款方式（可分行列多點）" class="qt-input" rows="3" style="height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
-                        <textarea id="qt-term-exclude" placeholder="不含項目（可分行列多點）" class="qt-input" rows="3" style="grid-column: 1 / -1; height: auto; resize: vertical; padding-top: 8px; padding-bottom: 8px;"></textarea>
-                    </div>
-                </div>
-
-                <div id="qt-export-content" style="display: none; background: #FFF; color: #1D1D1F; font-family: 'Inter', sans-serif; padding: 30px; box-sizing: border-box;">
-                    <div style="background: #1D1D1F; color: #FFF; padding: 16px 20px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 20px; margin-bottom: 20px;">
-                        <div style="font-size: 20px; font-weight: 900; letter-spacing: 1px; white-space: nowrap;">JAYRAN 杰冉影像工作室</div>
-                        <div style="font-size: 15px; font-weight: 700; letter-spacing: 3px; white-space: nowrap;">QUOTATION</div>
-                    </div>
-                    <div>
-                        <h1 id="qt-export-title" style="font-size: 19px; margin: 0 0 4px 0; font-weight: 900;"></h1>
-                        <div id="qt-export-subtitle" style="font-size: 12px; color: #8E8E93; margin-bottom: 16px;"></div>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 40px; margin-bottom: 16px; font-size: 12px;">
-                            <div><span style="color: #8E8E93;">報價單號</span><br><span id="qt-export-no" style="font-weight: 700;"></span></div>
-                            <div><span style="color: #8E8E93;">報價日期</span><br><span id="qt-export-date" style="font-weight: 700;"></span></div>
-                            <div><span style="color: #8E8E93;">客戶名稱</span><br><span id="qt-export-client" style="font-weight: 700;"></span></div>
-                            <div><span style="color: #8E8E93;">報價效期</span><br><span id="qt-export-validity" style="font-weight: 700;"></span></div>
-                            <div id="qt-export-window-cell" style="display: none;"><span style="color: #8E8E93;">案件窗口</span><br><span id="qt-export-window" style="font-weight: 700;"></span></div>
-                            <div id="qt-export-days-cell" style="display: none;"><span style="color: #8E8E93;">製作天數</span><br><span id="qt-export-days" style="font-weight: 700;"></span></div>
-                        </div>
-
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; border: 1px solid #1D1D1F;">
-                            <colgroup><col style="width: 34px;"><col style="width: 22%;"><col><col style="width: 60px;"><col style="width: 80px;"></colgroup>
-                            <thead>
-                                <tr style="background: #F0C64B;">
-                                    <th style="padding: 6px; text-align: center; font-weight: 800; border: 1px solid #1D1D1F;">項次</th>
-                                    <th style="padding: 6px; text-align: left; font-weight: 800; border: 1px solid #1D1D1F;">服務項目</th>
-                                    <th style="padding: 6px; text-align: left; font-weight: 800; border: 1px solid #1D1D1F;">製作內容</th>
-                                    <th style="padding: 6px; text-align: center; font-weight: 800; border: 1px solid #1D1D1F;">規格／數量</th>
-                                    <th style="padding: 6px; text-align: right; font-weight: 800; border: 1px solid #1D1D1F;">金額（NTD）</th>
-                                </tr>
-                            </thead>
-                            <tbody id="qt-export-tb"></tbody>
-                            <tfoot id="qt-export-totals"></tfoot>
-                        </table>
-
-                        <div style="height: 6px;"></div>
-                        <div id="qt-export-terms-section" style="display: none; margin-top: 20px; page-break-inside: avoid; break-inside: avoid;">
-                            <div style="background: #1D1D1F; color: #FFF; font-weight: 800; padding: 8px 14px; font-size: 13px;">合作與交付說明</div>
-                            <table id="qt-export-terms-table" style="width: 100%; border-collapse: collapse; font-size: 12px; border: 1px solid #1D1D1F; border-top: none; page-break-inside: avoid; break-inside: avoid;"></table>
-                        </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; font-size: 12px; page-break-inside: avoid;">
-                            <div>
-                                <div style="font-weight: 700; margin-bottom: 14px;">客戶確認</div>
-                                <div>簽章：＿＿＿＿＿＿＿＿＿＿＿＿</div>
-                                <div style="margin-top: 10px;">日期：＿＿＿＿＿＿＿＿＿＿＿＿</div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 14px;">
-                                <div style="font-weight: 700;">報價單位</div>
-                                <div style="font-weight:900; font-size:12px;">JAYRAN 杰冉影像工作室</div>
+                            <button class="qt-btn ghost" onclick="toggleQuoteImportMenu(event)">📂 匯入舊報價單</button>
+                            <div id="quote-import-menu">
+                                <input type="text" id="quote-import-search" placeholder="🔍 搜尋標題、客戶、單號" autocomplete="off" oninput="renderQuoteImportMenu()">
+                                <div id="quote-import-list"></div>
                             </div>
                         </div>
+                        <button class="qt-btn ghost" onclick="saveQuotationAsNew()" title="複製目前內容，存成另一份新的報價單">📄 另存新份</button>
+                        <button class="qt-btn ghost" onclick="manualSaveQuotation()">💾 儲存</button>
+                        <button class="qt-btn gold" onclick="downloadQuotationPDF(this)">📥 匯出 PDF</button>
                     </div>
                 </div>
+
+                <div class="qt-body">
+                    <div class="qt-editor">
+
+                        <div class="qt-section">
+                            <div class="qt-section-head"><h3 class="qt-section-title">基本資料</h3></div>
+                            <div class="qt-field" style="margin-bottom:10px;">
+                                <label for="qt-title">案件標題</label>
+                                <input type="text" id="qt-title" placeholder="例如：品牌形象影片製作" class="qt-input" style="height:44px; font-size:15px; font-weight:800;" oninput="onQtFormChange()">
+                            </div>
+                            <div class="qt-field" style="margin-bottom:10px;">
+                                <label for="qt-subtitle">副標（選填）</label>
+                                <input type="text" id="qt-subtitle" placeholder="例如：30 秒形象影片 ＋ 15 秒剪輯版" class="qt-input" oninput="onQtFormChange()">
+                            </div>
+                            <div class="qt-grid-2">
+                                <div class="qt-field">
+                                    <label for="qt-client">客戶名稱</label>
+                                    <input type="text" id="qt-client" list="qt-client-list" placeholder="輸入或從常用客戶選" class="qt-input" autocomplete="off" oninput="onQtFormChange()">
+                                    <datalist id="qt-client-list"></datalist>
+                                </div>
+                                <div class="qt-field">
+                                    <label for="qt-validity">報價效期</label>
+                                    <input type="text" id="qt-validity" placeholder="例如：報價日起 30 天內" class="qt-input" oninput="onQtFormChange()">
+                                </div>
+                                <div class="qt-field">
+                                    <label for="qt-window">案件窗口（選填）</label>
+                                    <input type="text" id="qt-window" placeholder="對方聯絡人" class="qt-input" oninput="onQtFormChange()">
+                                </div>
+                                <div class="qt-field">
+                                    <label for="qt-days">製作天數（選填）</label>
+                                    <input type="text" id="qt-days" placeholder="例如：14 個工作天" class="qt-input" oninput="onQtFormChange()">
+                                </div>
+                                <div class="qt-field">
+                                    <label for="qt-no">報價單號</label>
+                                    <div class="qt-inline">
+                                        <input type="text" id="qt-no" class="qt-input" oninput="onQtFormChange()">
+                                        <button class="qt-icon-btn" onclick="regenerateQuoteNo()" title="依報價日期重新產生單號">↻</button>
+                                    </div>
+                                </div>
+                                <div class="qt-field">
+                                    <label for="qt-date">報價日期</label>
+                                    <input type="date" id="qt-date" class="qt-input" onchange="onQtFormChange()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="qt-section">
+                            <div class="qt-section-head">
+                                <h3 class="qt-section-title">服務項目</h3>
+                                <span class="qt-section-hint">只填名稱或只填金額的項目也會印出來，全空的會自動略過</span>
+                            </div>
+                            <div id="qt-items-list"></div>
+                            <button class="qt-mini-btn dark" onclick="addQuotationItem()">＋ 新增項目</button>
+                        </div>
+
+                        <div class="qt-section">
+                            <div class="qt-section-head"><h3 class="qt-section-title">金額</h3></div>
+                            <div class="qt-sum-row"><span>未稅小計</span><b>$ <span id="qt-subtotal">0</span></b></div>
+                            <label class="qt-sum-row" style="cursor:pointer;">
+                                <span style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="qt-include-tax" checked onchange="onQtFormChange()" style="accent-color:#1D1D1F; width:16px; height:16px; cursor:pointer;">加收營業稅 5%</span>
+                                <b>$ <span id="qt-tax">0</span></b>
+                            </label>
+                            <div class="qt-sum-row">
+                                <span>優惠後金額（選填，填了就以這個為總價）</span>
+                                <input type="number" id="qt-discount-final" min="0" placeholder="不填＝原價" oninput="if(this.value<0)this.value=0; onQtFormChange()" onwheel="this.blur()" style="width:130px; height:34px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:8px; padding:0 10px; outline:none; font-family:inherit; -moz-appearance:textfield;">
+                            </div>
+                            <div id="qt-orig-line" class="qt-sum-row" style="display:none;"><span>原價</span><b style="text-decoration:line-through; color:var(--light);">$ <span id="qt-orig-total">0</span></b></div>
+                            <div class="qt-sum-total"><span id="qt-total-label">總價（含稅）</span><span>$ <span id="qt-total">0</span></span></div>
+                        </div>
+
+                        <div class="qt-section">
+                            <div class="qt-section-head">
+                                <h3 class="qt-section-title">合作與交付說明</h3>
+                                <div class="qt-inline">
+                                    <button class="qt-mini-btn" onclick="applyDefaultTermsClick()">套用預設條款</button>
+                                    <button class="qt-mini-btn" onclick="saveDefaultTerms()">存成預設條款</button>
+                                </div>
+                            </div>
+                            <div class="qt-section-hint" style="margin:-4px 0 10px;">有填才會印出來；每一行算一點，可以列很多點。存成預設之後，按「新報價單」會自動帶入。</div>
+                            <div class="qt-grid-2">
+                                <div class="qt-field"><label for="qt-term-basis">製作基準</label><textarea id="qt-term-basis" class="qt-input" rows="3" style="height:auto; resize:vertical; padding:8px 12px;" oninput="onQtFormChange()"></textarea></div>
+                                <div class="qt-field"><label for="qt-term-revision">修改次數</label><textarea id="qt-term-revision" class="qt-input" rows="3" style="height:auto; resize:vertical; padding:8px 12px;" oninput="onQtFormChange()"></textarea></div>
+                                <div class="qt-field"><label for="qt-term-addon">追加項目</label><textarea id="qt-term-addon" class="qt-input" rows="3" style="height:auto; resize:vertical; padding:8px 12px;" oninput="onQtFormChange()"></textarea></div>
+                                <div class="qt-field"><label for="qt-term-payment">付款方式</label><textarea id="qt-term-payment" class="qt-input" rows="3" style="height:auto; resize:vertical; padding:8px 12px;" oninput="onQtFormChange()"></textarea></div>
+                                <div class="qt-field qt-span-all"><label for="qt-term-exclude">不含項目</label><textarea id="qt-term-exclude" class="qt-input" rows="3" style="height:auto; resize:vertical; padding:8px 12px;" oninput="onQtFormChange()"></textarea></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="qt-preview-pane" id="qt-preview-pane">
+                        <div class="qt-preview-head" id="qt-preview-head"><span>即時預覽（跟匯出的 PDF 一樣）</span><span id="qt-preview-scale"></span></div>
+                        <div id="qt-preview-scaler"><div id="qt-preview-paper" class="qt-doc"></div></div>
+                    </div>
+                </div>
+
+                <div id="qt-export-content" class="qt-doc" style="display:none;"></div>
             </div>
         </div>
 
@@ -1620,7 +1717,7 @@ function switchSlide(idx, el) {
         if(idx === 4) filterInvoiceTable();
         if(idx === 5) renderDashboard(); 
         if(idx === 6) renderStatement();
-        if(idx === 7) renderQtItems();
+        if(idx === 7) renderQuotationPage();
         if(idx === 8) renderContractPage();
     }, 100);
 }
@@ -2546,305 +2643,607 @@ async function downloadStatementPDF() {
 }
 window.downloadStatementPDF = downloadStatementPDF;
 
+// ================= V3.50 報價單（改版） =================
+// 左邊編輯、右邊即時預覽；預覽跟匯出的 PDF 用同一份版型，看到什麼就印出什麼。
+// 存檔資料放在 localStorage 'vB_SavedQuotes'（vB_ 開頭，搬家至 Firebase 時會一起備份）。
+
 let qtItems = [
     { name: '', desc: '', spec: '', amount: '' },
     { name: '', desc: '', spec: '', amount: '' },
     { name: '', desc: '', spec: '', amount: '' }
 ];
-let currentEditingQuoteId = null; // V3.41 新增：目前畫面上這份報價單，如果是從舊報價單載入的，記住它的 id，下次儲存直接覆蓋這一筆，不會另外多存一份
+let currentEditingQuoteId = null;
+let qtDirty = false;
+let qtPreviewTimer = null;
 
+const QT_TERM_FIELDS = [
+    ['termBasis', 'qt-term-basis', '製作基準'],
+    ['termRevision', 'qt-term-revision', '修改次數'],
+    ['termAddon', 'qt-term-addon', '追加項目'],
+    ['termPayment', 'qt-term-payment', '付款方式'],
+    ['termExclude', 'qt-term-exclude', '不含項目']
+];
+
+function qtEsc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function qtTodayISO() {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}
+function qtFormatDate(iso) {
+    return iso ? String(iso).replace(/-/g, '/') : '';
+}
+function qtVal(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+function qtSet(id, v) { const el = document.getElementById(id); if (el) el.value = v == null ? '' : v; }
+
+function qtToast(msg) {
+    let t = document.getElementById('qt-toast');
+    if (!t) { t = document.createElement('div'); t.id = 'qt-toast'; document.body.appendChild(t); }
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ---------- 存檔清單 ----------
+function getSavedQuotes() {
+    try { return JSON.parse(localStorage.getItem('vB_SavedQuotes')) || []; } catch (e) { return []; }
+}
+function saveSavedQuotes(list) { localStorage.setItem('vB_SavedQuotes', JSON.stringify(list)); }
+
+function generateQuoteNo(dateISO) {
+    const ymd = String(dateISO || qtTodayISO()).replace(/-/g, '');
+    const prefix = `JAYRAN-${ymd}-`;
+    let max = 0;
+    getSavedQuotes().forEach(q => {
+        if (q.id === currentEditingQuoteId) return;
+        if (q.no && q.no.startsWith(prefix)) {
+            const n = parseInt(q.no.slice(prefix.length), 10);
+            if (!isNaN(n) && n > max) max = n;
+        }
+    });
+    return prefix + String(max + 1).padStart(2, '0');
+}
+function regenerateQuoteNo() {
+    qtSet('qt-no', generateQuoteNo(qtVal('qt-date') || qtTodayISO()));
+    onQtFormChange();
+}
+window.regenerateQuoteNo = regenerateQuoteNo;
+
+// ---------- 表單狀態 ----------
+function collectQuotationFormState() {
+    const state = {
+        title: qtVal('qt-title'),
+        subtitle: qtVal('qt-subtitle'),
+        client: qtVal('qt-client'),
+        validity: qtVal('qt-validity'),
+        windowPerson: qtVal('qt-window'),
+        days: qtVal('qt-days'),
+        no: qtVal('qt-no'),
+        date: qtVal('qt-date'),
+        includeTax: document.getElementById('qt-include-tax') ? document.getElementById('qt-include-tax').checked : true,
+        discountFinal: qtVal('qt-discount-final'),
+        items: JSON.parse(JSON.stringify(qtItems))
+    };
+    QT_TERM_FIELDS.forEach(([key, id]) => { state[key] = qtVal(id); });
+    return state;
+}
+
+function fillQuotationForm(q) {
+    qtSet('qt-title', q.title);
+    qtSet('qt-subtitle', q.subtitle);
+    qtSet('qt-client', q.client);
+    qtSet('qt-validity', q.validity);
+    qtSet('qt-window', q.windowPerson);
+    qtSet('qt-days', q.days);
+    qtSet('qt-no', q.no);
+    qtSet('qt-date', q.date);
+    document.getElementById('qt-include-tax').checked = q.includeTax !== false;
+    qtSet('qt-discount-final', q.discountFinal);
+    QT_TERM_FIELDS.forEach(([key, id]) => qtSet(id, q[key]));
+    qtItems = (q.items && q.items.length > 0)
+        ? JSON.parse(JSON.stringify(q.items)).map(it => ({ name: it.name || '', desc: it.desc || '', spec: it.spec || '', amount: it.amount == null ? '' : it.amount }))
+        : [{ name: '', desc: '', spec: '', amount: '' }];
+}
+
+function calcQuotationTotalsFromState(state) {
+    const subtotal = (state.items || []).reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+    const includeTax = state.includeTax !== false;
+    const tax = includeTax ? Math.round(subtotal * 0.05) : 0;
+    const originalTotal = subtotal + tax;
+    const discountFinalVal = parseFloat(state.discountFinal);
+    const hasDiscount = !isNaN(discountFinalVal) && discountFinalVal > 0 && discountFinalVal < originalTotal;
+    const total = hasDiscount ? discountFinalVal : originalTotal;
+    const discountAmount = hasDiscount ? (originalTotal - discountFinalVal) : 0;
+    return { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount };
+}
+
+function calcQuotationTotal() {
+    const t = calcQuotationTotalsFromState(collectQuotationFormState());
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+    setText('qt-subtotal', t.subtotal.toLocaleString());
+    setText('qt-tax', t.tax.toLocaleString());
+    setText('qt-total', t.total.toLocaleString());
+    setText('qt-total-label', t.includeTax ? '總價（含稅）' : '總價（未稅）');
+    setText('qt-orig-total', t.originalTotal.toLocaleString());
+    const origLine = document.getElementById('qt-orig-line');
+    if (origLine) origLine.style.display = t.hasDiscount ? 'flex' : 'none';
+    return t;
+}
+window.calcQuotationTotal = calcQuotationTotal;
+
+function updateQtStatusChip() {
+    const chip = document.getElementById('qt-status-chip');
+    if (!chip) return;
+    let text;
+    if (currentEditingQuoteId) {
+        const q = getSavedQuotes().find(x => x.id === currentEditingQuoteId);
+        text = q ? `已存檔・${q.savedAt}` : '編輯中';
+    } else {
+        text = '新報價單・尚未存檔';
+    }
+    if (qtDirty) text += '・有修改還沒存';
+    chip.textContent = text;
+    chip.classList.toggle('dirty', qtDirty);
+}
+
+function markQtDirty(v) {
+    qtDirty = v;
+    updateQtStatusChip();
+}
+
+function onQtFormChange() {
+    markQtDirty(true);
+    refreshQtPreview();
+}
+window.onQtFormChange = onQtFormChange;
+
+// ---------- 服務項目 ----------
 function renderQtItems() {
-    let container = document.getElementById('qt-items-list');
+    const container = document.getElementById('qt-items-list');
     if (!container) return;
-    container.innerHTML = qtItems.map((item, i) => `
-        <div class="qt-item-card">
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <div class="qt-item-num">${i + 1}</div>
-                <input type="text" value="${item.name}" placeholder="服務項目" oninput="updateQtItem(${i}, 'name', this.value)" class="qt-input" style="flex: 2; height: 34px;">
-                <input type="text" value="${item.spec}" placeholder="規格/數量" oninput="updateQtItem(${i}, 'spec', this.value)" class="qt-input" style="flex: 1; height: 34px;">
-                <input type="number" value="${item.amount}" placeholder="金額" oninput="updateQtItem(${i}, 'amount', this.value)" class="qt-input" style="width: 100px; height: 34px; font-weight: 800; color: #C89B2C; flex-shrink: 0;">
-                <span onclick="deleteQtItem(${i})" title="刪除" style="cursor: pointer; color: #D32F2F; font-weight: 900; flex-shrink: 0; padding: 0 4px;">✕</span>
+    if (qtItems.length === 0) {
+        container.innerHTML = `<div class="qt-items-empty">還沒有服務項目，按下面「＋ 新增項目」開始填</div>`;
+    } else {
+        const last = qtItems.length - 1;
+        container.innerHTML = qtItems.map((item, i) => `
+            <div class="qt-item-card">
+                <div class="qt-item-row">
+                    <div class="qt-item-num">${i + 1}</div>
+                    <input type="text" value="${qtEsc(item.name)}" placeholder="服務項目" oninput="updateQtItem(${i}, 'name', this.value)" class="qt-input" style="flex: 2; height: 34px; font-weight: 700;">
+                    <input type="text" value="${qtEsc(item.spec)}" placeholder="規格／數量" oninput="updateQtItem(${i}, 'spec', this.value)" class="qt-input" style="flex: 1; height: 34px;">
+                    <input type="number" value="${qtEsc(item.amount)}" placeholder="金額" oninput="updateQtItem(${i}, 'amount', this.value)" onwheel="this.blur()" class="qt-input" style="width: 110px; height: 34px; font-weight: 800; color: #C89B2C; flex-shrink: 0; text-align: right;">
+                    <div class="qt-item-actions">
+                        <button class="qt-icon-btn" onclick="moveQtItem(${i}, -1)" title="往上移" ${i === 0 ? 'disabled' : ''}>↑</button>
+                        <button class="qt-icon-btn" onclick="moveQtItem(${i}, 1)" title="往下移" ${i === last ? 'disabled' : ''}>↓</button>
+                        <button class="qt-icon-btn" onclick="duplicateQtItem(${i})" title="複製這一項">⧉</button>
+                        <button class="qt-icon-btn danger" onclick="deleteQtItem(${i})" title="刪除這一項">✕</button>
+                    </div>
+                </div>
+                <textarea placeholder="製作內容說明（可以換行）" oninput="updateQtItem(${i}, 'desc', this.value)" class="qt-input" rows="2" style="width: 100%; height: auto; margin-top: 6px; padding: 8px 12px; resize: vertical; line-height: 1.5;">${qtEsc(item.desc)}</textarea>
             </div>
-            <textarea placeholder="製作內容說明" oninput="updateQtItem(${i}, 'desc', this.value)" class="qt-input" style="width: 100%; height: 34px; margin-top: 6px; padding: 8px 12px; resize: vertical; line-height: 1.4;">${item.desc}</textarea>
-        </div>
-    `).join('');
-    calcQuotationTotal();
+        `).join('');
+    }
+    refreshQtPreview();
 }
 window.renderQtItems = renderQtItems;
 
 function addQuotationItem() {
     qtItems.push({ name: '', desc: '', spec: '', amount: '' });
+    markQtDirty(true);
     renderQtItems();
+    const inputs = document.querySelectorAll('#qt-items-list .qt-item-card:last-child input');
+    if (inputs[0]) inputs[0].focus();
 }
 window.addQuotationItem = addQuotationItem;
 
 function deleteQtItem(i) {
     qtItems.splice(i, 1);
+    markQtDirty(true);
     renderQtItems();
 }
 window.deleteQtItem = deleteQtItem;
 
+function moveQtItem(i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= qtItems.length) return;
+    [qtItems[i], qtItems[j]] = [qtItems[j], qtItems[i]];
+    markQtDirty(true);
+    renderQtItems();
+}
+window.moveQtItem = moveQtItem;
+
+function duplicateQtItem(i) {
+    qtItems.splice(i + 1, 0, JSON.parse(JSON.stringify(qtItems[i])));
+    markQtDirty(true);
+    renderQtItems();
+}
+window.duplicateQtItem = duplicateQtItem;
+
 function updateQtItem(i, field, value) {
+    if (!qtItems[i]) return;
     qtItems[i][field] = value;
-    if (field === 'amount') calcQuotationTotal();
+    onQtFormChange();
 }
 window.updateQtItem = updateQtItem;
 
-function calcQuotationTotal() {
-    let subtotal = qtItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-    let includeTax = document.getElementById('qt-include-tax') ? document.getElementById('qt-include-tax').checked : true;
-    let tax = includeTax ? Math.round(subtotal * 0.05) : 0;
-    let originalTotal = subtotal + tax;
-
-    let discountFinalEl = document.getElementById('qt-discount-final');
-    let discountFinalVal = discountFinalEl ? parseFloat(discountFinalEl.value) : NaN;
-    let hasDiscount = !isNaN(discountFinalVal) && discountFinalVal > 0 && discountFinalVal < originalTotal;
-    let total = hasDiscount ? discountFinalVal : originalTotal;
-    let discountAmount = hasDiscount ? (originalTotal - discountFinalVal) : 0;
-
-    let subtotalEl = document.getElementById('qt-subtotal');
-    let taxEl = document.getElementById('qt-tax');
-    let totalEl = document.getElementById('qt-total');
-    let totalLabelEl = document.getElementById('qt-total-label');
-    let origLineEl = document.getElementById('qt-orig-line');
-    let origTotalEl = document.getElementById('qt-orig-total');
-    if (subtotalEl) subtotalEl.innerText = subtotal.toLocaleString();
-    if (taxEl) taxEl.innerText = tax.toLocaleString();
-    if (totalEl) totalEl.innerText = total.toLocaleString();
-    if (totalLabelEl) totalLabelEl.firstChild.textContent = includeTax ? '總價（含稅）：$ ' : '總價（未稅）：$ ';
-    if (origLineEl) origLineEl.style.display = hasDiscount ? 'block' : 'none';
-    if (origTotalEl) origTotalEl.innerText = originalTotal.toLocaleString();
-    return { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount };
-}
-window.calcQuotationTotal = calcQuotationTotal;
-
-// V3.41 新增：把畫面上目前這份報價單的所有欄位收集成一個物件，方便存檔或匯出時使用
-function collectQuotationFormState() {
-    return {
-        title: document.getElementById('qt-title').value,
-        subtitle: document.getElementById('qt-subtitle').value,
-        client: document.getElementById('qt-client').value,
-        validity: document.getElementById('qt-validity').value,
-        windowPerson: document.getElementById('qt-window').value,
-        days: document.getElementById('qt-days').value,
-        includeTax: document.getElementById('qt-include-tax').checked,
-        discountFinal: document.getElementById('qt-discount-final').value,
-        termBasis: document.getElementById('qt-term-basis').value,
-        termRevision: document.getElementById('qt-term-revision').value,
-        termAddon: document.getElementById('qt-term-addon').value,
-        termPayment: document.getElementById('qt-term-payment').value,
-        termExclude: document.getElementById('qt-term-exclude').value,
-        items: JSON.parse(JSON.stringify(qtItems))
-    };
+// ---------- 客戶自動完成 ----------
+function populateQtClientList() {
+    const dl = document.getElementById('qt-client-list');
+    if (!dl) return;
+    const names = new Set();
+    (vipClients || []).forEach(c => c && names.add(c));
+    Object.keys(invoiceVips || {}).forEach(k => {
+        if (invoiceVips[k] && invoiceVips[k].full) names.add(invoiceVips[k].full);
+    });
+    getSavedQuotes().forEach(q => { if (q.client && q.client.trim()) names.add(q.client.trim()); });
+    dl.innerHTML = Array.from(names).sort((a, b) => a.localeCompare(b, 'zh-Hant')).map(n => `<option value="${qtEsc(n)}"></option>`).join('');
 }
 
-// V3.41 新增：報價單存檔清單（全域，跟哪一年無關），每一筆存一份完整的表單內容
-function getSavedQuotes() {
-    try { return JSON.parse(localStorage.getItem('vB_SavedQuotes')) || []; } catch(e) { return []; }
+// ---------- 預設條款 ----------
+function termsAreEmpty() {
+    return QT_TERM_FIELDS.every(([, id]) => !qtVal(id).trim());
 }
-function saveSavedQuotes(list) { localStorage.setItem('vB_SavedQuotes', JSON.stringify(list)); }
+function saveDefaultTerms() {
+    const obj = {};
+    QT_TERM_FIELDS.forEach(([key, id]) => { obj[key] = qtVal(id); });
+    if (Object.values(obj).every(v => !String(v).trim())) { uiAlert("條款都是空的，先填一些內容再存成預設。"); return; }
+    localStorage.setItem('vB_QuoteDefaultTerms', JSON.stringify(obj));
+    qtToast('已存成預設條款');
+}
+window.saveDefaultTerms = saveDefaultTerms;
 
-// V3.41 新增：儲存目前這份報價單。如果是從舊報價單載入來修改的(currentEditingQuoteId 有值)，直接覆蓋原本那筆；
-// 如果是全新的一份，新增一筆存進去。存檔時機：按「匯出報價單 PDF」時順便自動存檔，不用你額外多按一個按鈕。
+function getDefaultTerms() {
+    try { return JSON.parse(localStorage.getItem('vB_QuoteDefaultTerms')); } catch (e) { return null; }
+}
+function applyDefaultTerms() {
+    const obj = getDefaultTerms();
+    if (!obj) return false;
+    QT_TERM_FIELDS.forEach(([key, id]) => qtSet(id, obj[key] || ''));
+    return true;
+}
+async function applyDefaultTermsClick() {
+    if (!getDefaultTerms()) { await uiAlert("還沒有存過預設條款。先把條款填好，按「存成預設條款」，之後就能一鍵套用。"); return; }
+    if (!termsAreEmpty() && !(await uiConfirm("目前填的條款會被預設條款蓋掉，確定要套用嗎？", "套用預設條款"))) return;
+    applyDefaultTerms();
+    onQtFormChange();
+    qtToast('已套用預設條款');
+}
+window.applyDefaultTermsClick = applyDefaultTermsClick;
+
+// ---------- 版型（預覽跟 PDF 共用） ----------
+function qtFormatTerm(val) {
+    const lines = String(val).split('\n').map(s => s.trim()).filter(s => s);
+    if (lines.length === 0) return '';
+    if (lines.length === 1) return qtEsc(lines[0]);
+    return lines.map(l => `<div style="margin-bottom:3px;">● ${qtEsc(l)}</div>`).join('');
+}
+
+function buildQuoteDocHTML(state, t, opts = {}) {
+    const e = qtEsc;
+    const preview = !!opts.preview;
+    const ph = (txt) => preview ? `<span style="color:#C7C7CC;">${txt}</span>` : '－';
+    const items = (state.items || []).filter(it => String(it.name || '').trim() !== '' || parseFloat(it.amount) > 0);
+    const cell = 'border:1px solid #1D1D1F; padding:7px 8px; vertical-align:top;';
+
+    const metaCell = (label, val) => `<div><div style="color:#8E8E93; font-size:11px; margin-bottom:2px;">${label}</div><div style="font-weight:700; font-size:12.5px;">${val}</div></div>`;
+    let meta = metaCell('報價單號', state.no ? e(state.no) : ph('（單號）'))
+        + metaCell('報價日期', state.date ? e(qtFormatDate(state.date)) : ph('（日期）'))
+        + metaCell('客戶名稱', String(state.client || '').trim() ? e(state.client.trim()) : ph('（客戶名稱）'))
+        + metaCell('報價效期', String(state.validity || '').trim() ? e(state.validity.trim()) : ph('（報價效期）'));
+    if (String(state.windowPerson || '').trim()) meta += metaCell('案件窗口', e(state.windowPerson.trim()));
+    if (String(state.days || '').trim()) meta += metaCell('製作天數', e(state.days.trim()));
+
+    const title = String(state.title || '').trim() ? e(state.title.trim()) : ph('（案件標題）');
+    const subtitle = String(state.subtitle || '').trim() ? `<div style="font-size:12px; color:#8E8E93; margin-top:4px;">${e(state.subtitle.trim())}</div>` : '';
+
+    const rowsHtml = items.length
+        ? items.map((it, i) => `<tr style="page-break-inside:avoid;">
+            <td style="${cell} text-align:center;">${i + 1}</td>
+            <td style="${cell} text-align:left; font-weight:700;">${e(it.name)}</td>
+            <td style="${cell} text-align:left; color:#475467; line-height:1.55;">${e(it.desc || '').replace(/\n/g, '<br>')}</td>
+            <td style="${cell} text-align:center;">${e(it.spec || '')}</td>
+            <td style="${cell} text-align:right; font-weight:800; white-space:nowrap;">${(parseFloat(it.amount) || 0).toLocaleString()}</td>
+        </tr>`).join('')
+        : `<tr><td colspan="5" style="${cell} text-align:center; color:#C7C7CC; padding:22px;">${preview ? '左邊填了服務項目，這裡就會出現' : ''}</td></tr>`;
+
+    const lab = `${cell} text-align:right; color:#667085;`;
+    const val = `${cell} text-align:right; font-weight:700; white-space:nowrap;`;
+    let foot = `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">未稅小計</td><td style="${val}">${t.subtotal.toLocaleString()}</td></tr>`;
+    if (t.includeTax) foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">營業稅 5%</td><td style="${val}">${t.tax.toLocaleString()}</td></tr>`;
+    if (t.hasDiscount) {
+        foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">原價合計</td><td style="${val} text-decoration:line-through; color:#999;">${t.originalTotal.toLocaleString()}</td></tr>`;
+        foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠折扣</td><td style="${val} color:#D32F2F;">－${t.discountAmount.toLocaleString()}</td></tr>`;
+    }
+    foot += `<tr style="page-break-inside:avoid;">
+        <td colspan="4" class="qt-yellow" style="${cell} text-align:right; font-weight:900; font-size:14px;">${t.includeTax ? '總價（含稅）' : '總價（未稅）'}</td>
+        <td class="qt-yellow" style="${cell} text-align:right; font-weight:900; font-size:14px; white-space:nowrap;">NT$ ${t.total.toLocaleString()}</td>
+    </tr>`;
+
+    const terms = QT_TERM_FIELDS.map(([key, , label]) => [label, state[key]]).filter(([, v]) => String(v || '').trim());
+    const termsHtml = terms.length ? `
+        <div class="qt-terms-block" style="margin-top:22px; page-break-inside:avoid; break-inside:avoid;">
+            <div style="background:#1D1D1F; color:#FFF; font-weight:800; padding:8px 14px; font-size:13px;">合作與交付說明</div>
+            <table style="page-break-inside:avoid; break-inside:avoid;">
+                <colgroup><col style="width:96px;"><col></colgroup>
+                <tbody>${terms.map(([label, v]) => `<tr style="page-break-inside:avoid;">
+                    <td class="qt-yellow" style="${cell} font-weight:800; text-align:left;">${label}</td>
+                    <td style="${cell} text-align:left; color:#475467; line-height:1.6;">${qtFormatTerm(v)}</td>
+                </tr>`).join('')}</tbody>
+            </table>
+        </div>` : '';
+
+    return `
+        <div style="background:#1D1D1F; color:#FFF; padding:16px 20px; display:flex; justify-content:space-between; align-items:baseline; gap:20px; margin-bottom:22px;">
+            <div style="font-size:20px; font-weight:900; letter-spacing:1px; white-space:nowrap;">JAYRAN 杰冉影像工作室</div>
+            <div style="font-size:15px; font-weight:700; letter-spacing:3px; white-space:nowrap;">QUOTATION</div>
+        </div>
+        <div style="margin-bottom:18px;">
+            <div style="font-size:20px; font-weight:900; line-height:1.3;">${title}</div>
+            ${subtitle}
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px 40px; margin-bottom:18px;">${meta}</div>
+        <table style="border:1px solid #1D1D1F;">
+            <colgroup><col style="width:40px;"><col style="width:24%;"><col><col style="width:80px;"><col style="width:96px;"></colgroup>
+            <thead><tr>
+                <th style="text-align:center;">項次</th>
+                <th style="text-align:left;">服務項目</th>
+                <th style="text-align:left;">製作內容</th>
+                <th style="text-align:center;">規格／數量</th>
+                <th style="text-align:right;">金額（NTD）</th>
+            </tr></thead>
+            <tbody>${rowsHtml}</tbody>
+            <tfoot>${foot}</tfoot>
+        </table>
+        ${termsHtml}
+        <div class="qt-sign-block" style="display:flex; justify-content:space-between; align-items:center; margin-top:32px; font-size:12px; page-break-inside:avoid; break-inside:avoid;">
+            <div>
+                <div style="font-weight:700; margin-bottom:14px;">客戶確認</div>
+                <div>簽章：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+                <div style="margin-top:10px;">日期：＿＿＿＿＿＿＿＿＿＿＿＿</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:14px;">
+                <div style="font-weight:700;">報價單位</div>
+                <div style="font-weight:900; font-size:12px;">JAYRAN 杰冉影像工作室</div>
+            </div>
+        </div>
+    `;
+}
+
+// ---------- 即時預覽 ----------
+function refreshQtPreview() {
+    clearTimeout(qtPreviewTimer);
+    qtPreviewTimer = setTimeout(() => {
+        const t = calcQuotationTotal();
+        const paper = document.getElementById('qt-preview-paper');
+        if (!paper) return;
+        paper.innerHTML = buildQuoteDocHTML(collectQuotationFormState(), t, { preview: true });
+        fitQtPreview();
+    }, 60);
+}
+
+function fitQtPreview() {
+    const pane = document.getElementById('qt-preview-pane');
+    const scaler = document.getElementById('qt-preview-scaler');
+    const paper = document.getElementById('qt-preview-paper');
+    const head = document.getElementById('qt-preview-head');
+    const scaleLabel = document.getElementById('qt-preview-scale');
+    if (!pane || !scaler || !paper) return;
+    const avail = pane.clientWidth - 40;
+    if (avail <= 0) return;
+    const s = Math.min(1, avail / 794);
+    paper.style.transform = `scale(${s})`;
+    scaler.style.width = (794 * s) + 'px';
+    scaler.style.height = (paper.offsetHeight * s) + 'px';
+    if (head) head.style.width = (794 * s) + 'px';
+    if (scaleLabel) scaleLabel.textContent = `${Math.round(s * 100)}%`;
+}
+
+function setupQtPreviewObserver() {
+    const pane = document.getElementById('qt-preview-pane');
+    if (!pane || window._qtResizeObs || typeof ResizeObserver === 'undefined') return;
+    window._qtResizeObs = new ResizeObserver(() => fitQtPreview());
+    window._qtResizeObs.observe(pane);
+}
+
+// ---------- 頁面進入點 ----------
+function renderQuotationPage() {
+    if (!window.qtInitialized) {
+        window.qtInitialized = true;
+        if (!qtVal('qt-date')) qtSet('qt-date', qtTodayISO());
+        if (!qtVal('qt-no')) qtSet('qt-no', generateQuoteNo(qtVal('qt-date')));
+        if (termsAreEmpty()) applyDefaultTerms();
+        setupQtPreviewObserver();
+    }
+    populateQtClientList();
+    renderQtItems();
+    updateQtStatusChip();
+}
+window.renderQuotationPage = renderQuotationPage;
+
+// ---------- 新增／儲存／另存 ----------
+async function newQuotation() {
+    if (qtDirty && !(await uiConfirm("目前這份報價單有修改還沒存，開新的會把這些修改丟掉。確定要開新的嗎？", "開新報價單"))) return;
+    currentEditingQuoteId = null;
+    fillQuotationForm({ includeTax: true, items: [] });
+    qtItems = [
+        { name: '', desc: '', spec: '', amount: '' },
+        { name: '', desc: '', spec: '', amount: '' },
+        { name: '', desc: '', spec: '', amount: '' }
+    ];
+    qtSet('qt-date', qtTodayISO());
+    qtSet('qt-no', generateQuoteNo(qtTodayISO()));
+    applyDefaultTerms();
+    markQtDirty(false);
+    renderQtItems();
+    const titleEl = document.getElementById('qt-title');
+    if (titleEl) titleEl.focus();
+}
+window.newQuotation = newQuotation;
+
+// 存目前這份：從舊報價單載入的會直接覆蓋原本那筆；全新的會新增一筆。回傳 true 代表有存成功
 function saveCurrentQuotationSnapshot() {
     const state = collectQuotationFormState();
-    if (!state.title || !state.title.trim()) return; // 沒填標題就不存，避免存一堆空白項目
+    if (!state.title || !state.title.trim()) return false;
+    if (!state.date) { state.date = qtTodayISO(); qtSet('qt-date', state.date); }
+    if (!state.no || !state.no.trim()) { state.no = generateQuoteNo(state.date); qtSet('qt-no', state.no); }
+
     let list = getSavedQuotes();
     const now = new Date();
     const savedAtLabel = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-    if (currentEditingQuoteId) {
-        const idx = list.findIndex(q => q.id === currentEditingQuoteId);
+    try {
+        const idx = currentEditingQuoteId ? list.findIndex(q => q.id === currentEditingQuoteId) : -1;
         if (idx !== -1) {
             list[idx] = { ...state, id: currentEditingQuoteId, savedAt: savedAtLabel };
-            saveSavedQuotes(list);
-            return;
+            const [cur] = list.splice(idx, 1);
+            list.unshift(cur);
+        } else {
+            const newId = 'q_' + Date.now();
+            list.unshift({ ...state, id: newId, savedAt: savedAtLabel });
+            if (list.length > 100) list = list.slice(0, 100);
+            currentEditingQuoteId = newId;
         }
+        saveSavedQuotes(list);
+    } catch (e) {
+        console.error(e);
+        uiAlert("儲存失敗，瀏覽器空間可能滿了。可以到「匯入舊報價單」刪掉幾份不用的再試一次。");
+        return false;
     }
-    const newId = 'q_' + Date.now();
-    list.unshift({ ...state, id: newId, savedAt: savedAtLabel });
-    if (list.length > 100) list = list.slice(0, 100); // 最多保留 100 份，避免無限長大
-    saveSavedQuotes(list);
-    currentEditingQuoteId = newId;
+    markQtDirty(false);
+    populateQtClientList();
+    return true;
 }
 
-// V3.41 新增：點「匯入舊報價單」，列出所有存過的報價單(標題+存檔時間)，可以點選載入、也可以個別刪除
+async function manualSaveQuotation() {
+    if (!qtVal('qt-title').trim()) { await uiAlert("先填「案件標題」才能儲存，之後要從清單找回來也是看標題。"); document.getElementById('qt-title').focus(); return; }
+    if (saveCurrentQuotationSnapshot()) qtToast('已儲存');
+}
+window.manualSaveQuotation = manualSaveQuotation;
+
+async function saveQuotationAsNew() {
+    if (!qtVal('qt-title').trim()) { await uiAlert("先填「案件標題」才能另存。"); document.getElementById('qt-title').focus(); return; }
+    currentEditingQuoteId = null;
+    qtSet('qt-date', qtTodayISO());
+    qtSet('qt-no', generateQuoteNo(qtTodayISO()));
+    if (saveCurrentQuotationSnapshot()) {
+        refreshQtPreview();
+        qtToast(`已另存成新的一份：${qtVal('qt-no')}`);
+    }
+}
+window.saveQuotationAsNew = saveQuotationAsNew;
+
+// ---------- 匯入舊報價單 ----------
 function toggleQuoteImportMenu(e) {
     e.stopPropagation();
     const menu = document.getElementById('quote-import-menu');
-    const isOpen = menu.style.display === 'block';
-    if (isOpen) { menu.style.display = 'none'; return; }
+    if (menu.style.display === 'block') { menu.style.display = 'none'; return; }
+    const search = document.getElementById('quote-import-search');
+    if (search) search.value = '';
     renderQuoteImportMenu();
     menu.style.display = 'block';
+    if (search) setTimeout(() => search.focus(), 30);
 }
 window.toggleQuoteImportMenu = toggleQuoteImportMenu;
 
 function renderQuoteImportMenu() {
-    const menu = document.getElementById('quote-import-menu');
-    const list = getSavedQuotes();
-    if (list.length === 0) {
-        menu.innerHTML = `<div style="padding:20px; text-align:center; color:var(--light); font-size:12px; font-weight:700;">目前沒有存過的報價單<br>(第一次按「匯出報價單 PDF」之後，就會自動存一份在這裡)</div>`;
+    const listEl = document.getElementById('quote-import-list');
+    if (!listEl) return;
+    const all = getSavedQuotes();
+    if (all.length === 0) {
+        listEl.innerHTML = `<div style="padding:20px; text-align:center; color:var(--light); font-size:12px; font-weight:700; line-height:1.6;">還沒有存過報價單<br>按「儲存」或「匯出 PDF」之後，就會出現在這裡</div>`;
         return;
     }
-    menu.innerHTML = list.map(q => `
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border-radius:10px; cursor:pointer; transition:background 0.12s;" onmouseover="this.style.background='rgba(0,0,0,0.04)'" onmouseout="this.style.background='transparent'">
-            <div onclick="loadSavedQuotation('${q.id}')" style="min-width:0; flex:1;">
-                <div style="font-weight:800; font-size:13px; color:#1D1D1F; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${q.title || '(未命名)'}</div>
-                <div style="font-size:11px; color:var(--light); margin-top:2px;">${q.client ? q.client + ' · ' : ''}${q.savedAt}</div>
+    const kw = qtVal('quote-import-search').trim().toLowerCase();
+    const list = kw ? all.filter(q => [q.title, q.client, q.no].some(v => String(v || '').toLowerCase().includes(kw))) : all;
+    if (list.length === 0) {
+        listEl.innerHTML = `<div style="padding:20px; text-align:center; color:var(--light); font-size:12px; font-weight:700;">找不到符合「${qtEsc(kw)}」的報價單</div>`;
+        return;
+    }
+    listEl.innerHTML = list.map(q => {
+        const total = calcQuotationTotalsFromState(q).total;
+        const sub = [q.client, q.no || '', q.savedAt].filter(Boolean).map(qtEsc).join('　');
+        return `
+        <div class="qt-import-row ${q.id === currentEditingQuoteId ? 'current' : ''}" onclick="loadSavedQuotation('${q.id}')">
+            <div style="min-width:0; flex:1;">
+                <div style="display:flex; justify-content:space-between; gap:8px;">
+                    <span style="font-weight:800; font-size:13px; color:#1D1D1F; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${qtEsc(q.title || '(未命名)')}</span>
+                    <span style="font-weight:800; font-size:12px; color:#C89B2C; flex-shrink:0;">$ ${total.toLocaleString()}</span>
+                </div>
+                <div style="font-size:11px; color:var(--light); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sub}</div>
             </div>
-            <span onclick="deleteSavedQuotation('${q.id}')" title="刪除這份存檔" style="color:#D32F2F; font-weight:900; font-size:14px; padding:4px; flex-shrink:0;">✕</span>
-        </div>
-    `).join('');
+            <span class="qt-import-del" onclick="deleteSavedQuotation('${q.id}', event)" title="刪除這份存檔">✕</span>
+        </div>`;
+    }).join('');
 }
 window.renderQuoteImportMenu = renderQuoteImportMenu;
 
-// V3.41 新增：把選中的舊報價單內容，整份載回表單，讓你可以直接修改
-function loadSavedQuotation(id) {
-    const list = getSavedQuotes();
-    const q = list.find(x => x.id === id);
+async function loadSavedQuotation(id) {
+    const q = getSavedQuotes().find(x => x.id === id);
     if (!q) return;
-
-    document.getElementById('qt-title').value = q.title || '';
-    document.getElementById('qt-subtitle').value = q.subtitle || '';
-    document.getElementById('qt-client').value = q.client || '';
-    document.getElementById('qt-validity').value = q.validity || '';
-    document.getElementById('qt-window').value = q.windowPerson || '';
-    document.getElementById('qt-days').value = q.days || '';
-    document.getElementById('qt-include-tax').checked = q.includeTax !== false;
-    document.getElementById('qt-discount-final').value = q.discountFinal || '';
-    document.getElementById('qt-term-basis').value = q.termBasis || '';
-    document.getElementById('qt-term-revision').value = q.termRevision || '';
-    document.getElementById('qt-term-addon').value = q.termAddon || '';
-    document.getElementById('qt-term-payment').value = q.termPayment || '';
-    document.getElementById('qt-term-exclude').value = q.termExclude || '';
-    qtItems = q.items && q.items.length > 0 ? JSON.parse(JSON.stringify(q.items)) : [{ name: '', desc: '', spec: '', amount: '' }];
-    currentEditingQuoteId = q.id;
-
-    renderQtItems();
     document.getElementById('quote-import-menu').style.display = 'none';
+    if (qtDirty && id !== currentEditingQuoteId && !(await uiConfirm("目前這份報價單有修改還沒存，載入別份會把這些修改丟掉。確定要載入嗎？", "載入舊報價單"))) return;
+
+    const fallbackDate = q.savedAt ? q.savedAt.split(' ')[0].replace(/\//g, '-') : qtTodayISO();
+    fillQuotationForm({ ...q, date: q.date || fallbackDate });
+    currentEditingQuoteId = q.id;
+    if (!qtVal('qt-no')) qtSet('qt-no', generateQuoteNo(qtVal('qt-date')));
+    markQtDirty(false);
+    renderQtItems();
+    qtToast(`已載入：${q.title || '(未命名)'}`);
 }
 window.loadSavedQuotation = loadSavedQuotation;
 
-async function deleteSavedQuotation(id) {
-    event.stopPropagation();
-    if (!(await uiConfirm("確定要刪除這份存檔的報價單嗎？此動作無法復原。", "刪除報價單存檔"))) return;
-    let list = getSavedQuotes();
-    list = list.filter(q => q.id !== id);
-    saveSavedQuotes(list);
-    if (currentEditingQuoteId === id) currentEditingQuoteId = null;
+async function deleteSavedQuotation(id, ev) {
+    if (ev) ev.stopPropagation();
+    const q = getSavedQuotes().find(x => x.id === id);
+    if (!(await uiConfirm(`確定要刪除「${q ? (q.title || '(未命名)') : '這份'}」的存檔嗎？刪掉就找不回來了。`, "刪除報價單存檔"))) return;
+    saveSavedQuotes(getSavedQuotes().filter(x => x.id !== id));
+    if (currentEditingQuoteId === id) { currentEditingQuoteId = null; markQtDirty(true); }
     renderQuoteImportMenu();
+    document.getElementById('quote-import-menu').style.display = 'block';
 }
 window.deleteSavedQuotation = deleteSavedQuotation;
 
-async function downloadQuotationPDF() {
-    let title = document.getElementById('qt-title').value.trim();
-    if (!title) { await uiAlert("請先填「案件標題」再匯出喔！"); return; }
-    let validItems = qtItems.filter(it => it.name.trim() !== '' || parseFloat(it.amount) > 0);
+// ---------- 匯出 PDF ----------
+async function downloadQuotationPDF(btn) {
+    const state = collectQuotationFormState();
+    if (!state.title.trim()) { await uiAlert("請先填「案件標題」再匯出。"); document.getElementById('qt-title').focus(); return; }
+    const validItems = state.items.filter(it => String(it.name || '').trim() !== '' || parseFloat(it.amount) > 0);
     if (validItems.length === 0) { await uiAlert("請至少填一項服務項目再匯出。"); return; }
 
-    let { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount } = calcQuotationTotal();
-
-    let today = new Date();
-    let dateStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
-    let docNo = `JAYRAN-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}-01`;
-
-    document.getElementById('qt-export-title').innerText = title;
-    document.getElementById('qt-export-subtitle').innerText = document.getElementById('qt-subtitle').value.trim();
-    document.getElementById('qt-export-no').innerText = docNo;
-    document.getElementById('qt-export-date').innerText = dateStr;
-    document.getElementById('qt-export-client').innerText = document.getElementById('qt-client').value.trim() || '－';
-    document.getElementById('qt-export-validity').innerText = document.getElementById('qt-validity').value.trim() || '－';
-
-    let win = document.getElementById('qt-window').value.trim();
-    let windowCell = document.getElementById('qt-export-window-cell');
-    if (win) { windowCell.style.display = 'block'; document.getElementById('qt-export-window').innerText = win; }
-    else windowCell.style.display = 'none';
-
-    let days = document.getElementById('qt-days').value.trim();
-    let daysCell = document.getElementById('qt-export-days-cell');
-    if (days) { daysCell.style.display = 'block'; document.getElementById('qt-export-days').innerText = days; }
-    else daysCell.style.display = 'none';
-
-    let tb = document.getElementById('qt-export-tb');
-    tb.innerHTML = '';
-    validItems.forEach((it, i) => {
-        let amt = parseFloat(it.amount) || 0;
-        tb.innerHTML += `<tr style="page-break-inside: avoid;">
-            <td style="padding: 8px 6px; text-align: center; border: 1px solid #1D1D1F; vertical-align: top;">${i + 1}</td>
-            <td style="padding: 8px 6px; text-align: left; border: 1px solid #1D1D1F; font-weight: 700; vertical-align: top;">${it.name}</td>
-            <td style="padding: 8px 6px; text-align: left; border: 1px solid #1D1D1F; color: #475467; vertical-align: top;">${(it.desc || '').replace(/\n/g, '<br>')}</td>
-            <td style="padding: 8px 6px; text-align: center; border: 1px solid #1D1D1F; vertical-align: top;">${it.spec || ''}</td>
-            <td style="padding: 8px 6px; text-align: right; border: 1px solid #1D1D1F; font-weight: 800; vertical-align: top; white-space: nowrap;">${amt.toLocaleString()}</td>
-        </tr>`;
-    });
-
-    let taxRowHtml = includeTax ? `<tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F;">營業稅 5%</td><td style="padding: 4px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F;">${tax.toLocaleString()}</td></tr>` : '';
-    let discountRowsHtml = hasDiscount ? `
-        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F; text-decoration: line-through;">原價合計</td><td style="padding: 4px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F; text-decoration: line-through; color: #999;">${originalTotal.toLocaleString()}</td></tr>
-        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 4px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F;">優惠折扣</td><td style="padding: 4px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F; color: #D32F2F;">－${discountAmount.toLocaleString()}</td></tr>
-    ` : '';
-    let totalLabel = includeTax ? '總價（含稅）' : '總價（未稅）';
-    document.getElementById('qt-export-totals').innerHTML = `
-        <tr style="page-break-inside: avoid;"><td colspan="4" style="padding: 8px 6px; text-align: right; color: #667085; border: 1px solid #1D1D1F;">未稅小計</td><td style="padding: 8px 6px; text-align: right; font-weight: 700; border: 1px solid #1D1D1F;">${subtotal.toLocaleString()}</td></tr>
-        ${taxRowHtml}
-        ${discountRowsHtml}
-        <tr style="page-break-inside: avoid; background: #F0C64B;"><td colspan="4" style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px; border: 1px solid #1D1D1F;">${totalLabel}</td><td style="padding: 8px 6px; text-align: right; font-weight: 900; font-size: 14px; border: 1px solid #1D1D1F;">${total.toLocaleString()}</td></tr>
-    `;
-
-    function formatTermValue(val) {
-        const lines = String(val).split('\n').map(s => s.trim()).filter(s => s);
-        if (lines.length === 0) return '';
-        if (lines.length === 1) return escapeHtmlTerm(lines[0]);
-        return lines.map(l => `<div style="margin-bottom:3px;">● ${escapeHtmlTerm(l)}</div>`).join('');
-    }
-    function escapeHtmlTerm(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-    let termsMap = [
-        ['製作基準', document.getElementById('qt-term-basis').value.trim()],
-        ['修改次數', document.getElementById('qt-term-revision').value.trim()],
-        ['追加項目', document.getElementById('qt-term-addon').value.trim()],
-        ['付款方式', document.getElementById('qt-term-payment').value.trim()],
-        ['不含項目', document.getElementById('qt-term-exclude').value.trim()]
-    ].filter(([label, val]) => val !== '');
-
-    let termsSection = document.getElementById('qt-export-terms-section');
-    let termsTable = document.getElementById('qt-export-terms-table');
-    if (termsMap.length > 0) {
-        termsSection.style.display = 'block';
-        termsTable.innerHTML = termsMap.map(([label, val]) => `
-            <tr style="page-break-inside: avoid;">
-                <td style="background: #F0C64B; font-weight: 800; padding: 8px 12px; width: 90px; border-bottom: 1px solid #FFF; vertical-align: top; text-align: left;">${label}</td>
-                <td style="padding: 8px 12px; border-bottom: 1px solid #E5E5EA; color: #475467; text-align: left;">${formatTermValue(val)}</td>
-            </tr>
-        `).join('');
-    } else {
-        termsSection.style.display = 'none';
-    }
-
-    // V3.41 新增：匯出的同時，把這份報價單存檔起來，之後才能從「匯入舊報價單」找回來修改
+    // 匯出同時自動存檔，之後可以從「匯入舊報價單」找回來
     saveCurrentQuotationSnapshot();
+    const finalState = collectQuotationFormState();
+    const totals = calcQuotationTotalsFromState(finalState);
 
-    const btn = event ? event.target : null;
-    let originalText = btn ? btn.innerHTML : null;
+    const el = document.getElementById('qt-export-content');
+    el.innerHTML = buildQuoteDocHTML(finalState, totals, { preview: false });
+
+    const originalText = btn ? btn.innerHTML : null;
     if (btn) { btn.innerHTML = "⏳ 正在處理..."; btn.style.pointerEvents = 'none'; btn.style.opacity = '0.7'; }
+    const restore = () => {
+        el.style.display = 'none';
+        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+    };
 
-    let el = document.getElementById('qt-export-content');
     el.style.display = 'block';
-    let opt = {
+    const safeTitle = finalState.title.trim().replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '_');
+    const opt = {
         margin: [0.3, 0.35, 0.3, 0.35],
-        filename: `${title.replace(/\s+/g,'_')}_報價單.pdf`,
+        filename: `${safeTitle}_報價單.pdf`,
         image: { type: 'png' },
         html2canvas: { scale: 4, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css'], avoid: ['tr', '#qt-export-terms-section'] }
+        pagebreak: { mode: ['css'], avoid: ['tr', '.qt-terms-block', '.qt-sign-block'] }
     };
     html2pdf().set(opt).from(el).save().then(() => {
-        el.style.display = 'none';
-        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+        restore();
+        qtToast('已匯出 PDF 並存檔');
     }).catch(err => {
         console.error(err);
-        el.style.display = 'none';
-        if (btn) { btn.innerHTML = originalText; btn.style.pointerEvents = 'auto'; btn.style.opacity = '1'; }
+        restore();
         alert("匯出 PDF 時發生錯誤。");
     });
 }
