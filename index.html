@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.50</title>
+    <title>杰冉宇宙營收表 V3.52</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -592,6 +592,21 @@
             margin: 0;
         }
 
+        /* ============ V3.51 合約折扣 ============ */
+        .contract-discount-box { flex: 1 1 100%; }
+        .contract-discount-field { display: flex; align-items: center; background: #FFF; border: 1px solid var(--card-border); border-radius: 8px; padding: 0 10px 0 4px; height: 38px; box-sizing: border-box; transition: border-color 0.15s, box-shadow 0.15s; }
+        .contract-discount-field:focus-within { border-color: #1D1D1F; box-shadow: 0 0 0 3px rgba(0,0,0,0.06); }
+        .contract-discount-field input { width: 64px; border: none; outline: none; text-align: right; font-size: 16px; font-weight: 900; font-family: inherit; background: transparent; color: var(--text-main); padding: 0 4px; }
+        .contract-discount-field input.invalid { color: #D32F2F; }
+        .contract-discount-field span { font-size: 13px; font-weight: 800; color: var(--mid); }
+        .contract-preset-chip { border: 1px solid var(--card-border); background: #FFF; color: var(--mid); padding: 5px 12px; border-radius: 50px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; }
+        .contract-preset-chip:hover { color: var(--text-main); border-color: rgba(0,0,0,0.2); }
+        .contract-preset-chip.active { box-shadow: inset 0 0 0 1.5px var(--cc); color: var(--cc); }
+        .contract-preset-chip.selected { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; box-shadow: none; }
+        #contract-discount-apply:disabled { opacity: 0.35; cursor: not-allowed; }
+        .contract-discount-preview { margin-top: 10px; font-size: 13px; color: var(--mid); font-weight: 600; min-height: 18px; }
+        .contract-discount-preview b { color: var(--text-main); font-weight: 900; }
+
         /* ============ V3.50 報價單改版 ============ */
         .qt-page { padding: 0 !important; }
         .qt-toolbar { background: #1D1D1F; padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
@@ -1074,6 +1089,11 @@
                                 <span style="font-size: 16px; color: var(--primary); font-weight: 800;">TWD</span>
                                 <span id="inv-top-total" style="font-size: 36px; font-weight: 900; color: #101828; line-height: 1;">0</span>
                             </div>
+                            <div id="inv-disc-breakdown" style="display: none; margin-top: 8px; font-size: 13px; color: #475467; font-weight: 700;">
+                                折後未稅 <span id="inv-disc-pre" style="color: #101828; font-weight: 900;">$ 0</span>
+                                <span style="color: #98A2B3; margin: 0 4px;">＋</span>
+                                稅金 <span id="inv-disc-tax" style="color: #101828; font-weight: 900;">$ 0</span>
+                            </div>
                             <div id="inv-discount-toggle" onclick="toggleDiscountPanel()" style="margin-top: 6px; font-size: 12px; color: var(--primary); font-weight: 700; cursor: pointer;">＋ 套用折扣</div>
                             <div id="inv-discount-panel" style="display: none; margin-top: 8px; align-items: center; justify-content: flex-end; gap: 6px; font-size: 13px; color: #667085; font-weight: 600;">
                                 套用 
@@ -1098,6 +1118,7 @@
                         <div id="quote-footer-box" style="background: #F9FAFB; border-top: 1px solid #E4E7EC; padding: 16px 20px; display: flex; justify-content: flex-end; gap: 24px; font-size: 14px; font-weight: 600; color: #475467;">
                             <div>未稅總計: <span id="inv-total-pre" style="font-weight: 800; color: #101828; margin-left: 8px;">$ 0</span></div>
                             <div id="inv-total-orig-line">含稅總計 (原價): <span id="inv-total-orig" style="font-weight: 800; color: var(--light); text-decoration: line-through; margin-left: 8px;">$ 0</span></div>
+                            <div id="inv-footer-disc-pre-line" style="display: none;">折後未稅: <span id="inv-footer-disc-pre" style="font-weight: 800; color: var(--primary); margin-left: 8px;">$ 0</span></div>
                         </div>
                     </div>
 
@@ -1139,6 +1160,8 @@
                                     <div>未稅總計：<span id="quote-export-pre" style="font-weight: 700; color: #1D1D1F;"></span></div>
                                     <div id="quote-export-discount-line" style="display: none; margin-top: 3px;">套用 <span id="quote-export-discount-val"></span> 折</div>
                                     <div id="quote-export-orig-line" style="display: none; margin-top: 3px; text-decoration: line-through;">原價（含稅）：<span id="quote-export-orig"></span></div>
+                                    <div id="quote-export-disc-pre-line" style="display: none; margin-top: 3px;">折後未稅：<span id="quote-export-disc-pre" style="font-weight: 700; color: #1D1D1F;"></span></div>
+                                    <div id="quote-export-disc-tax-line" style="display: none; margin-top: 3px;">折後稅金：<span id="quote-export-disc-tax" style="font-weight: 700; color: #1D1D1F;"></span></div>
                                     <div style="font-size: 17px; font-weight: 900; color: #1D1D1F; margin-top: 6px;">應付總額（含稅）：<span id="quote-export-total"></span></div>
                                 </div>
                             </div>
@@ -1385,6 +1408,8 @@
                                 <input type="number" id="qt-discount-final" min="0" placeholder="不填＝原價" oninput="if(this.value<0)this.value=0; onQtFormChange()" onwheel="this.blur()" style="width:130px; height:34px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:8px; padding:0 10px; outline:none; font-family:inherit; -moz-appearance:textfield;">
                             </div>
                             <div id="qt-orig-line" class="qt-sum-row" style="display:none;"><span>原價</span><b style="text-decoration:line-through; color:var(--light);">$ <span id="qt-orig-total">0</span></b></div>
+                            <div id="qt-disc-net-line" class="qt-sum-row" style="display:none;"><span>優惠後未稅</span><b>$ <span id="qt-disc-net">0</span></b></div>
+                            <div id="qt-disc-tax-line" class="qt-sum-row" style="display:none;"><span>優惠後營業稅 5%</span><b>$ <span id="qt-disc-tax">0</span></b></div>
                             <div class="qt-sum-total"><span id="qt-total-label">總價（含稅）</span><span>$ <span id="qt-total">0</span></span></div>
                         </div>
 
@@ -2756,7 +2781,10 @@ function calcQuotationTotalsFromState(state) {
     const hasDiscount = !isNaN(discountFinalVal) && discountFinalVal > 0 && discountFinalVal < originalTotal;
     const total = hasDiscount ? discountFinalVal : originalTotal;
     const discountAmount = hasDiscount ? (originalTotal - discountFinalVal) : 0;
-    return { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount };
+    // V3.52：優惠後金額是含稅價時，反推優惠後的未稅與稅金（未稅＝含稅÷1.05 四捨五入，稅金＝差額）
+    const discountedNet = hasDiscount ? (includeTax ? Math.round(total / 1.05) : total) : subtotal;
+    const discountedTax = hasDiscount ? (total - discountedNet) : tax;
+    return { subtotal, tax, total, includeTax, originalTotal, hasDiscount, discountAmount, discountedNet, discountedTax };
 }
 
 function calcQuotationTotal() {
@@ -2769,6 +2797,13 @@ function calcQuotationTotal() {
     setText('qt-orig-total', t.originalTotal.toLocaleString());
     const origLine = document.getElementById('qt-orig-line');
     if (origLine) origLine.style.display = t.hasDiscount ? 'flex' : 'none';
+    const showDiscBreakdown = t.hasDiscount && t.includeTax;
+    const dnl = document.getElementById('qt-disc-net-line');
+    const dtl = document.getElementById('qt-disc-tax-line');
+    if (dnl) dnl.style.display = showDiscBreakdown ? 'flex' : 'none';
+    if (dtl) dtl.style.display = showDiscBreakdown ? 'flex' : 'none';
+    setText('qt-disc-net', t.discountedNet.toLocaleString());
+    setText('qt-disc-tax', t.discountedTax.toLocaleString());
     return t;
 }
 window.calcQuotationTotal = calcQuotationTotal;
@@ -2955,6 +2990,10 @@ function buildQuoteDocHTML(state, t, opts = {}) {
     if (t.hasDiscount) {
         foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">原價合計</td><td style="${val} text-decoration:line-through; color:#999;">${t.originalTotal.toLocaleString()}</td></tr>`;
         foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠折扣</td><td style="${val} color:#D32F2F;">－${t.discountAmount.toLocaleString()}</td></tr>`;
+        if (t.includeTax) {
+            foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠後未稅</td><td style="${val}">${t.discountedNet.toLocaleString()}</td></tr>`;
+            foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠後營業稅 5%</td><td style="${val}">${t.discountedTax.toLocaleString()}</td></tr>`;
+        }
     }
     foot += `<tr style="page-break-inside:avoid;">
         <td colspan="4" class="qt-yellow" style="${cell} text-align:right; font-weight:900; font-size:14px;">${t.includeTax ? '總價（含稅）' : '總價（未稅）'}</td>
@@ -3423,6 +3462,21 @@ function calcQuoteTotal(el = null) {
     document.getElementById('inv-total-pre').innerText = `$ ${totalPre.toLocaleString()}`;
     if(document.getElementById('inv-total-orig')) document.getElementById('inv-total-orig').innerText = `$ ${totalAmt.toLocaleString()}`;
     document.getElementById('inv-top-total').innerText = finalAmt.toLocaleString();
+
+    // V3.52：打折後也要看得到未稅是多少（未稅照同一個折數打，稅金＝折後含稅－折後未稅）
+    let hasDisc = resolvedPercent !== 100;
+    let discPre = Math.round(totalPre * discount);
+    let discTax = finalAmt - discPre;
+    let bd = document.getElementById('inv-disc-breakdown');
+    if (bd) bd.style.display = hasDisc ? 'block' : 'none';
+    let discPreEl = document.getElementById('inv-disc-pre');
+    if (discPreEl) discPreEl.innerText = `$ ${discPre.toLocaleString()}`;
+    let discTaxEl = document.getElementById('inv-disc-tax');
+    if (discTaxEl) discTaxEl.innerText = `$ ${discTax.toLocaleString()}`;
+    let footLine = document.getElementById('inv-footer-disc-pre-line');
+    if (footLine) footLine.style.display = hasDisc ? 'block' : 'none';
+    let footVal = document.getElementById('inv-footer-disc-pre');
+    if (footVal) footVal.innerText = `$ ${discPre.toLocaleString()}`;
 }
 window.calcQuoteTotal = calcQuoteTotal; 
 
@@ -3503,6 +3557,11 @@ function downloadPDF() {
         discountLine.style.display = 'none';
         origLine.style.display = 'none';
     }
+    let discPreTotal = Math.round(totalPre * discount);
+    document.getElementById('quote-export-disc-pre-line').style.display = hasRealDiscount ? 'block' : 'none';
+    document.getElementById('quote-export-disc-tax-line').style.display = hasRealDiscount ? 'block' : 'none';
+    document.getElementById('quote-export-disc-pre').innerText = `$ ${discPreTotal.toLocaleString()}`;
+    document.getElementById('quote-export-disc-tax').innerText = `$ ${(finalTotal - discPreTotal).toLocaleString()}`;
     document.getElementById('quote-export-total').innerText = `$ ${finalTotal.toLocaleString()}`;
 
     btn.innerHTML = "⏳ 正在處理...";
@@ -4419,15 +4478,32 @@ function getContracts() {
 }
 function saveContracts(obj) { localStorage.setItem('vB_Contracts', JSON.stringify(obj)); }
 
+// V3.51：折扣輸入照台灣習慣解讀
+// 「9」或「9.2」→ 9折 / 92折（10 以下當成「幾折」）
+// 「92」「85」「95.5」→ 92折 / 85折 / 95.5折（11~99 當成百分比）
+// 「0」「10」「100」或空白 → 原價
+// 也接受「92折」「9.2折」「92%」這種帶字的寫法；超過 100 或亂打的回傳 null
 function discountInputToPercent(val) {
-    const n = parseFloat(val);
-    if (isNaN(n) || n <= 0) return 100;
-    return n * 10;
+    const cleaned = String(val == null ? '' : val).replace(/[折%％\s]/g, '').replace(/[０-９．]/g, ch => ch === '．' ? '.' : String.fromCharCode(ch.charCodeAt(0) - 0xFEE0));
+    if (cleaned === '') return 100;
+    const n = parseFloat(cleaned);
+    if (isNaN(n) || n < 0 || !/^\d*\.?\d*$/.test(cleaned)) return null;
+    if (n === 0) return 100;
+    let percent = n <= 10 ? n * 10 : n;
+    if (percent > 100) return null;
+    return Math.round(percent * 100) / 100;
 }
+// 存起來的百分比 → 輸入框要顯示的樣子：90 → "9"、92 → "92"、100 → ""
 function percentToDiscountInput(percent) {
-    if (percent >= 100) return 0;
-    return +(percent / 10).toFixed(2);
+    if (percent == null || percent >= 100) return '';
+    return (percent % 10 === 0) ? String(percent / 10) : String(+percent.toFixed(2));
 }
+// 百分比 → 給人看的文字：90 → "9 折"、92 → "92 折"、100 → "原價"
+function formatDiscountLabel(percent) {
+    if (percent == null || percent >= 100) return '原價';
+    return `${percentToDiscountInput(percent)} 折`;
+}
+window.formatDiscountLabel = formatDiscountLabel;
 
 function recalcRowValues(d) {
     let net = parseFloat(String(d[9] || '0').replace(/,/g, '')) || 0;
@@ -4614,7 +4690,7 @@ function renderContractPage() {
                 <span style="width:10px; height:10px; border-radius:50%; background:${c.fg}; flex-shrink:0;"></span>
                 <div style="min-width:0;">
                     <div style="font-weight:800; font-size:13px; color:${isActive ? c.fg : 'var(--text-main)'}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${n}</div>
-                    <div style="font-size:11px; color:var(--light); margin-top:1px;">${contracts[n].discount >= 100 ? '原價' : `打 ${percentToDiscountInput(contracts[n].discount)} 折`}</div>
+                    <div style="font-size:11px; color:var(--light); margin-top:1px;">${formatDiscountLabel(contracts[n].discount ?? 100)}</div>
                 </div>
             </div>`;
         }).join('');
@@ -4653,6 +4729,12 @@ function renderContractDetail(name) {
 
     const totalNet = rows.reduce((sum, { d }) => sum + (parseFloat(d[9]) || 0), 0);
     const totalGross = rows.reduce((sum, { d }) => sum + (parseFloat(d[11]) || 0), 0);
+    const totalOriginal = rows.reduce((sum, { d }) => sum + (parseFloat(d[26]) || parseFloat(d[9]) || 0), 0);
+    window._contractPreviewBase = { name, totalOriginal, currentPercent: discount, count: rows.length };
+    const safeName = name.replace(/'/g, "\\'");
+    const presetChips = [100, 95, 92, 90, 88, 85, 80].map(p =>
+        `<button class="contract-preset-chip ${p === discount ? 'active' : ''}" style="--cc:${curColor};" onclick="setContractDiscountPreset(${p})">${formatDiscountLabel(p)}</button>`
+    ).join('');
 
     const detailEl = document.getElementById('contract-detail');
     let html = `
@@ -4672,10 +4754,19 @@ function renderContractDetail(name) {
             </div>
 
             <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:18px; padding-top:18px; border-top:1px solid ${curColor}20;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <label style="font-size:12px; font-weight:800; color:var(--mid);">打幾折(0代表原價)</label>
-                    <input type="number" id="contract-discount-input" value="${percentToDiscountInput(discount)}" style="width:64px; padding:8px; border-radius:8px; border:1px solid var(--card-border); text-align:center; font-weight:800; background:#fff;" min="0" max="10" step="0.1">
-                    <button onclick="applyContractDiscount('${name.replace(/'/g, "\\'")}')" style="background:#1D1D1F; color:#fff; padding:8px 16px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; border:none;">套用折扣</button>
+                <div class="contract-discount-box">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <label for="contract-discount-input" style="font-size:12px; font-weight:800; color:var(--mid);">折扣</label>
+                        <div class="contract-discount-field">
+                            <input type="text" inputmode="decimal" id="contract-discount-input" value="${percentToDiscountInput(discount)}" placeholder="原價" autocomplete="off"
+                                oninput="updateContractDiscountPreview()" onkeydown="if(event.key==='Enter') applyContractDiscount('${safeName}')">
+                            <span>折</span>
+                        </div>
+                        <button id="contract-discount-apply" onclick="applyContractDiscount('${safeName}')" style="background:#1D1D1F; color:#fff; padding:9px 16px; border-radius:8px; font-weight:800; font-size:13px; cursor:pointer; border:none;">套用折扣</button>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">${presetChips}</div>
+                    <div id="contract-discount-preview" class="contract-discount-preview"></div>
+                    <div style="font-size:11px; color:var(--light); margin-top:6px;">打 9 或 90 都是九折，打 92 或 9.2 都是 92 折，空白或 0 就是原價</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <label style="font-size:12px; font-weight:800; color:var(--mid);">合約顏色</label>
@@ -4712,8 +4803,54 @@ function renderContractDetail(name) {
     }
     html += `</tbody></table>`;
     detailEl.innerHTML = html;
+    updateContractDiscountPreview();
 }
 window.renderContractDetail = renderContractDetail;
+
+function setContractDiscountPreset(percent) {
+    const input = document.getElementById('contract-discount-input');
+    if (!input) return;
+    input.value = percentToDiscountInput(percent);
+    updateContractDiscountPreview();
+    input.focus();
+}
+window.setContractDiscountPreset = setContractDiscountPreset;
+
+// 輸入的同時就算給你看：會變成幾折、原價合計多少、打完剩多少、少收多少
+function updateContractDiscountPreview() {
+    const input = document.getElementById('contract-discount-input');
+    const box = document.getElementById('contract-discount-preview');
+    const applyBtn = document.getElementById('contract-discount-apply');
+    const base = window._contractPreviewBase;
+    if (!input || !box || !base) return;
+    const percent = discountInputToPercent(input.value);
+
+    document.querySelectorAll('.contract-preset-chip').forEach(chip => {
+        const m = chip.getAttribute('onclick').match(/\((\d+(?:\.\d+)?)\)/);
+        chip.classList.toggle('selected', !!m && percent !== null && parseFloat(m[1]) === percent);
+    });
+
+    if (percent === null) {
+        input.classList.add('invalid');
+        box.innerHTML = `<span style="color:#D32F2F;">看不懂這個數字，請輸入像 9、92、9.5 這樣的折數</span>`;
+        if (applyBtn) applyBtn.disabled = true;
+        return;
+    }
+    input.classList.remove('invalid');
+    if (applyBtn) applyBtn.disabled = false;
+
+    if (base.count === 0) {
+        box.innerHTML = `會設成 <b>${formatDiscountLabel(percent)}</b>，之後加進這份合約的案子都會照這個折扣算`;
+        return;
+    }
+    const after = Math.round(base.totalOriginal * percent / 100);
+    const diff = base.totalOriginal - after;
+    const same = percent === base.currentPercent;
+    box.innerHTML = `<b>${formatDiscountLabel(percent)}</b>　原價未稅 $${base.totalOriginal.toLocaleString()} → 折後 <b>$${after.toLocaleString()}</b>`
+        + (diff > 0 ? `　<span style="color:#D32F2F;">少收 $${diff.toLocaleString()}</span>` : '')
+        + (same ? `　<span style="color:var(--light);">（跟目前一樣）</span>` : '');
+}
+window.updateContractDiscountPreview = updateContractDiscountPreview;
 
 async function renameContract(oldName) {
     const newName = await uiPrompt("輸入新的合約名稱：", oldName);
@@ -4761,14 +4898,13 @@ window.changeContractColor = changeContractColor;
 
 async function applyContractDiscount(name) {
     const input = document.getElementById('contract-discount-input');
-    const rawVal = parseFloat(input.value);
-    if (isNaN(rawVal) || rawVal < 0 || rawVal > 10) { await uiAlert("請輸入 0~10 之間的數字(0代表原價，9代表九折)"); return; }
-    const discount = discountInputToPercent(rawVal);
-    const displayText = discount >= 100 ? '原價(不打折)' : `打 ${percentToDiscountInput(discount)} 折`;
+    const discount = discountInputToPercent(input.value);
+    if (discount === null) { await uiAlert("看不懂這個折數。\n\n打 9 或 90 = 九折\n打 92 或 9.2 = 92 折\n空白或 0 = 原價"); input.focus(); return; }
+    const displayText = discount >= 100 ? '原價(不打折)' : `打 ${formatDiscountLabel(discount)}`;
     if (!(await uiConfirm(`確定要把「${name}」底下所有案子的折扣改成 ${displayText} 嗎？\n\n會直接改動未稅額、稅金、含稅總額、公司/老闆/夥伴金額，跟營收表是同一份資料，改了就會同步。`, "套用折扣確認"))) return;
 
     let contracts = getContracts();
-    contracts[name] = { discount };
+    contracts[name] = { ...(contracts[name] || {}), discount };
     saveContracts(contracts);
 
     const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
