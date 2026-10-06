@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.58</title>
+    <title>杰冉宇宙營收表 V3.59</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -699,6 +699,17 @@
         .st-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .st-btn-primary { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; }
         .st-btn-primary:hover:not(:disabled) { background: #333; }
+
+        /* ============ V3.59 合約頁分開列追加費用 ============ */
+        .ct-compare tr.is-addon td { color: #C96500; }
+        .ct-compare tr.is-addon td:first-child { color: #C96500; }
+        .ct-compare td small { display: block; font-size: 10px; color: var(--light); font-weight: 700; }
+        .ct-compare tr.is-after td { border-top: 2px solid rgba(0,0,0,0.12); }
+        .ct-table .ct-grp-addon { color: #C96500 !important; border-bottom-color: #E07B00 !important; }
+        .ct-table td.ct-addon-cell { color: #C96500; font-weight: 800; }
+        .ct-table td .muted, .ct-table td.muted { color: var(--light); }
+        .ct-addon-lines { margin-top: 4px; font-size: 11px; color: var(--mid); font-weight: 700; line-height: 1.6; }
+        .ct-addon-lines span { display: inline-block; font-size: 10px; font-weight: 900; color: #C96500; background: rgba(224,123,0,0.1); padding: 0 6px; border-radius: 4px; margin-right: 6px; }
 
         /* ============ V3.58 追加費用 ============ */
         .addon-chip { flex-shrink: 0; cursor: pointer; user-select: none; font-size: 11px; font-weight: 900; line-height: 1; height: 16px; min-width: 16px; padding: 0 5px; box-sizing: border-box; border-radius: 50px; display: inline-flex; align-items: center; justify-content: center; color: rgba(0,0,0,0.35); background: rgba(0,0,0,0.05); opacity: 0; transition: opacity 0.15s; }
@@ -5066,14 +5077,20 @@ function getContractRows(name) {
             let d; try { d = JSON.parse(raw); } catch (e) { continue; }
             if (d[25] !== name) continue;
             const hasInv = d[7] === true || d[7] === 'true';
-            const addon = addonSum(d);
+            // V3.59：案子本身（會打折）跟追加費用（不打折）分開算，畫面才能分開列
+            const parts = rowParts(d);
+            const addonItems = parts.slice(1);
+            const addon = addonItems.reduce((t, p) => t + p.pre, 0);
+            const addonGross = addonItems.reduce((t, p) => t + p.total, 0);
             const base = contractNum(d[9]);
+            const baseOrig = contractNum(d[26]) || base;
+            const baseOrigGross = baseOrig + (hasInv ? Math.round(baseOrig * 0.05) : 0);
             const after = base + addon;
-            const orig = (contractNum(d[26]) || base) + addon;
-            const origGross = orig + (hasInv ? Math.round(orig * 0.05) : 0);
-            const afterGross = contractNum(d[11]) || (after + (hasInv ? Math.round(after * 0.05) : 0));
+            const afterGross = contractNum(d[11]) || parts.reduce((t, p) => t + p.total, 0);
+            const baseGross = afterGross - addonGross;
             const unpaid = Math.max(0, contractNum(d[13]));
-            rows.push({ year, row: r, d, hasInv, orig, origGross, after, afterGross, unpaid });
+            rows.push({ year, row: r, d, hasInv, base, baseOrig, baseOrigGross, baseGross, addon, addonGross, addonItems,
+                orig: baseOrig + addon, origGross: baseOrigGross + addonGross, after, afterGross, unpaid });
         }
     });
     rows.sort((a, b) => a.year === b.year ? a.row - b.row : a.year.localeCompare(b.year));
@@ -5081,8 +5098,10 @@ function getContractRows(name) {
 }
 
 function summarizeContractRows(rows) {
-    const s = { count: rows.length, orig: 0, origGross: 0, after: 0, afterGross: 0, unpaid: 0 };
-    rows.forEach(x => { s.orig += x.orig; s.origGross += x.origGross; s.after += x.after; s.afterGross += x.afterGross; s.unpaid += x.unpaid; });
+    const keys = ['orig', 'origGross', 'after', 'afterGross', 'unpaid', 'base', 'baseOrig', 'baseOrigGross', 'baseGross', 'addon', 'addonGross'];
+    const s = { count: rows.length };
+    keys.forEach(k => { s[k] = 0; });
+    rows.forEach(x => keys.forEach(k => { s[k] += x[k] || 0; }));
     s.allPaid = rows.length > 0 && s.unpaid <= 0;
     return s;
 }
@@ -5195,25 +5214,28 @@ function renderContractDetail(name) {
     [...window._ctSel.keys].forEach(k => { if (!validKeys.has(k)) window._ctSel.keys.delete(k); });
     window._ctRowsCache = rows;
 
-    window._contractPreviewBase = { name, totalOriginal: sum.orig, currentPercent: discount, count: rows.length };
+    window._contractPreviewBase = { name, totalOriginal: sum.baseOrig, currentPercent: discount, count: rows.length };
     const presetChips = [100, 95, 92, 90, 88, 85, 80].map(p =>
         `<button class="contract-preset-chip ${p === discount ? 'active' : ''}" style="--cc:${curColor};" onclick="setContractDiscountPreset(${p})">${formatDiscountLabel(p)}</button>`
     ).join('');
 
-    // 右邊的大價格面板
+    // 右邊的大價格面板：大字是總共要收的含稅；下面把「案子本身／追加費用／合計／折扣少收」分開列
+    const hasAddon = sum.addon !== 0;
     let pricePanel = `
         <div class="ct-price-panel">
-            <div class="ct-price-label">${hasDiscount ? `折扣後含稅總額（${formatDiscountLabel(discount)}）` : '含稅總額'}</div>
+            <div class="ct-price-label">合計含稅${hasAddon ? '（含追加費用）' : ''}${hasDiscount ? `・案子打 ${formatDiscountLabel(discount)}` : ''}</div>
             <div class="ct-price-big">${$(sum.afterGross)}</div>
             <div class="ct-price-net">未稅 ${$(sum.after)}</div>`;
-    if (hasDiscount) {
+    if (hasDiscount || hasAddon) {
         pricePanel += `
             <table class="ct-compare">
                 <thead><tr><th></th><th>未稅</th><th>含稅</th></tr></thead>
                 <tbody>
-                    <tr class="is-before"><td>折扣前</td><td>${$(sum.orig)}</td><td>${$(sum.origGross)}</td></tr>
-                    <tr class="is-after"><td>折扣後</td><td>${$(sum.after)}</td><td>${$(sum.afterGross)}</td></tr>
-                    <tr class="is-diff"><td>少收</td><td>－${$(sum.orig - sum.after).slice(2)}</td><td>－${$(sum.origGross - sum.afterGross).slice(2)}</td></tr>
+                    ${hasDiscount ? `<tr class="is-before"><td>案子原價</td><td>${$(sum.baseOrig)}</td><td>${$(sum.baseOrigGross)}</td></tr>` : ''}
+                    <tr><td>${hasDiscount ? `案子折後` : '案子本身'}</td><td>${$(sum.base)}</td><td>${$(sum.baseGross)}</td></tr>
+                    ${hasAddon ? `<tr class="is-addon"><td>追加費用<small>不打折</small></td><td>＋${$(sum.addon).slice(2)}</td><td>＋${$(sum.addonGross).slice(2)}</td></tr>` : ''}
+                    <tr class="is-after"><td>合計</td><td>${$(sum.after)}</td><td>${$(sum.afterGross)}</td></tr>
+                    ${hasDiscount ? `<tr class="is-diff"><td>折扣少收</td><td>－${$(sum.baseOrig - sum.base).slice(2)}</td><td>－${$(sum.baseOrigGross - sum.baseGross).slice(2)}</td></tr>` : ''}
                 </tbody>
             </table>`;
     }
@@ -5277,33 +5299,40 @@ function renderContractDetail(name) {
             <thead>
                 <tr class="ct-group-row">
                     <th colspan="6"></th>
-                    <th colspan="2" class="ct-grp">折扣前</th>
-                    <th colspan="2" class="ct-grp ct-grp-after" style="--cc:${curColor};">折扣後</th>
+                    <th colspan="2" class="ct-grp">案子本身（未稅）</th>
+                    ${hasAddon ? `<th class="ct-grp ct-grp-addon">追加</th>` : ''}
+                    <th colspan="2" class="ct-grp ct-grp-after" style="--cc:${curColor};">合計</th>
                     <th></th>
                 </tr>
                 <tr>
                     <th style="width:44px; text-align:center;"><input type="checkbox" id="ct-sel-all" onchange="ctToggleAll(this.checked)" title="全選／全不選"></th>
                     <th style="width:40px;">序</th><th>年度</th><th>編號</th><th>客戶</th><th>案名</th>
-                    <th class="num">未稅</th><th class="num">含稅</th>
+                    <th class="num">原價</th><th class="num">${hasDiscount ? '折後' : '金額'}</th>
+                    ${hasAddon ? `<th class="num">未稅</th>` : ''}
                     <th class="num">未稅</th><th class="num">含稅</th>
                     <th class="num" style="padding-right:14px;">收款</th>
                 </tr>
             </thead>
             <tbody>`;
+    const colCount = hasAddon ? 12 : 11;
     if (rows.length === 0) {
-        html += `<tr><td colspan="11" style="text-align:center; color:var(--light); padding:48px 0;">目前沒有案子屬於這份合約，去案件明細表案名旁邊的下拉選單套用看看</td></tr>`;
+        html += `<tr><td colspan="${colCount}" style="text-align:center; color:var(--light); padding:48px 0;">目前沒有案子屬於這份合約，去案件明細表案名旁邊的下拉選單套用看看</td></tr>`;
     } else {
         rows.forEach((x, i) => {
             const k = keyOf(x);
+            const addonLines = x.addonItems.length
+                ? `<div class="ct-addon-lines">${x.addonItems.map(a => `<div><span>追加</span>${qtEsc(a.desc)}　$${a.pre.toLocaleString()}</div>`).join('')}</div>`
+                : '';
             html += `<tr class="ct-row" data-key="${k}" onclick="ctToggleRow(event, '${k}')">
                 <td style="text-align:center;"><input type="checkbox" class="ct-cb" onclick="event.stopPropagation()" onchange="ctToggleRow(null, '${k}')"></td>
                 <td style="color:var(--light); font-weight:700; text-align:center;">${i + 1}</td>
                 <td>${x.year}</td>
                 <td style="font-weight:700;">${qtEsc(x.d[1] || '')}</td>
                 <td>${qtEsc(x.d[2] || '')}</td>
-                <td style="font-weight:700; color:${curColor}; text-align:left;">${qtEsc(x.d[3] || '')}${x.hasInv ? '' : ' <span class="ct-noinv">免稅</span>'}</td>
-                <td class="num muted">${x.orig.toLocaleString()}</td>
-                <td class="num muted">${x.origGross.toLocaleString()}</td>
+                <td style="text-align:left;"><span style="font-weight:700; color:${curColor};">${qtEsc(x.d[3] || '')}</span>${x.hasInv ? '' : ' <span class="ct-noinv">免稅</span>'}${addonLines}</td>
+                <td class="num muted">${x.baseOrig.toLocaleString()}</td>
+                <td class="num">${x.base.toLocaleString()}</td>
+                ${hasAddon ? `<td class="num ct-addon-cell">${x.addon ? '＋' + x.addon.toLocaleString() : '<span class="muted">—</span>'}</td>` : ''}
                 <td class="num" style="font-weight:800;">${x.after.toLocaleString()}</td>
                 <td class="num" style="font-weight:800;">${x.afterGross.toLocaleString()}</td>
                 <td class="num" style="padding-right:14px;">${x.unpaid > 0 ? `<span style="color:#D32F2F; font-weight:800;">未收 ${x.unpaid.toLocaleString()}</span>` : '<span style="color:#1F8A3B; font-weight:800;">✓ 收齊</span>'}</td>
@@ -5314,8 +5343,9 @@ function renderContractDetail(name) {
     if (rows.length > 0) {
         html += `<tfoot><tr>
             <td colspan="6" style="text-align:right; font-weight:900;">合計</td>
-            <td class="num muted">${sum.orig.toLocaleString()}</td>
-            <td class="num muted">${sum.origGross.toLocaleString()}</td>
+            <td class="num muted">${sum.baseOrig.toLocaleString()}</td>
+            <td class="num" style="font-weight:800;">${sum.base.toLocaleString()}</td>
+            ${hasAddon ? `<td class="num ct-addon-cell" style="font-weight:900;">＋${sum.addon.toLocaleString()}</td>` : ''}
             <td class="num" style="font-weight:900;">${sum.after.toLocaleString()}</td>
             <td class="num" style="font-weight:900;">${sum.afterGross.toLocaleString()}</td>
             <td class="num" style="padding-right:14px; font-weight:900; color:${sum.unpaid > 0 ? '#D32F2F' : '#1F8A3B'};">${sum.unpaid > 0 ? '未收 ' + sum.unpaid.toLocaleString() : '✓ 收齊'}</td>
@@ -5334,10 +5364,10 @@ function ctUpdateSelUI() {
     const sel = window._ctSel;
     const rows = window._ctRowsCache || [];
     if (!sel) return;
-    let n = 0, net = 0, gross = 0;
+    let n = 0, net = 0, gross = 0, addon = 0;
     rows.forEach(x => {
         const on = sel.keys.has(`${x.year}_${x.row}`);
-        if (on) { n++; net += x.after; gross += x.afterGross; }
+        if (on) { n++; net += x.after; gross += x.afterGross; addon += x.addon; }
         const tr = document.querySelector(`#contract-detail tr.ct-row[data-key="${x.year}_${x.row}"]`);
         if (tr) { tr.classList.toggle('is-on', on); tr.querySelector('.ct-cb').checked = on; }
     });
@@ -5345,7 +5375,7 @@ function ctUpdateSelUI() {
     if (all) { all.checked = rows.length > 0 && n === rows.length; all.indeterminate = n > 0 && n < rows.length; }
     const info = document.getElementById('ct-bill-info');
     if (info) info.innerHTML = n
-        ? `要請款的案子：<b>${n}</b> 件　未稅 <b>$ ${Math.round(net).toLocaleString()}</b>　含稅 <b>$ ${Math.round(gross).toLocaleString()}</b>`
+        ? `要請款的案子：<b>${n}</b> 件　未稅 <b>$ ${Math.round(net).toLocaleString()}</b>${addon ? `<span style="color:#C96500;">（含追加 $${Math.round(addon).toLocaleString()}）</span>` : ''}　含稅 <b>$ ${Math.round(gross).toLocaleString()}</b>`
         : `<span style="color:var(--light);">勾選下面要請款的案子</span>`;
     const btn = document.getElementById('ct-bill-btn');
     if (btn) btn.disabled = n === 0;
@@ -5416,7 +5446,7 @@ function updateContractDiscountPreview() {
         return;
     }
     const after = Math.round(base.totalOriginal * percent / 100);
-    box.innerHTML = `套用後：未稅會變成 <b>$${after.toLocaleString()}</b>（原價未稅 $${base.totalOriginal.toLocaleString()}）`;
+    box.innerHTML = `套用後：案子本身未稅會變成 <b>$${after.toLocaleString()}</b>（原價 $${base.totalOriginal.toLocaleString()}，追加費用不打折）`;
 }
 window.updateContractDiscountPreview = updateContractDiscountPreview;
 
