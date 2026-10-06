@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.57</title>
+    <title>杰冉宇宙營收表 V3.58</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -700,6 +700,33 @@
         .st-btn-primary { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; }
         .st-btn-primary:hover:not(:disabled) { background: #333; }
 
+        /* ============ V3.58 追加費用 ============ */
+        .addon-chip { flex-shrink: 0; cursor: pointer; user-select: none; font-size: 11px; font-weight: 900; line-height: 1; height: 16px; min-width: 16px; padding: 0 5px; box-sizing: border-box; border-radius: 50px; display: inline-flex; align-items: center; justify-content: center; color: rgba(0,0,0,0.35); background: rgba(0,0,0,0.05); opacity: 0; transition: opacity 0.15s; }
+        tr:hover .addon-chip, .addon-chip:focus { opacity: 1; }
+        .addon-chip:hover { color: #C96500; background: rgba(201,101,0,0.12); }
+        .addon-chip.has { opacity: 1; color: #FFF; background: #E07B00; }
+        .addon-chip.has:hover { background: #C96500; color: #FFF; }
+        .addon-modal-content { max-width: 480px !important; text-align: left !important; }
+        .addon-presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 16px 0 14px; }
+        .addon-presets-label { font-size: 11px; font-weight: 800; color: var(--light); margin-right: 2px; }
+        .addon-presets button { border: 1px solid var(--card-border); background: #FFF; padding: 5px 11px; border-radius: 50px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: var(--text-main); }
+        .addon-presets button:hover { border-color: #E07B00; color: #C96500; }
+        .addon-head { display: grid; grid-template-columns: 1fr 120px 30px; gap: 8px; font-size: 11px; font-weight: 800; color: var(--light); margin-bottom: 6px; }
+        .addon-row { display: grid; grid-template-columns: 1fr 120px 30px; gap: 8px; margin-bottom: 8px; }
+        .addon-row input { height: 38px; border: 1px solid var(--card-border); border-radius: 9px; padding: 0 12px; font-size: 13px; font-weight: 700; outline: none; font-family: inherit; box-sizing: border-box; width: 100%; background: #FFF; }
+        .addon-row input[type="number"] { text-align: right; -moz-appearance: textfield; }
+        .addon-row input:focus { border-color: #E07B00; box-shadow: 0 0 0 3px rgba(224,123,0,0.12); }
+        .addon-row button { border: none; background: transparent; color: var(--light); font-weight: 900; cursor: pointer; border-radius: 8px; }
+        .addon-row button:hover { color: #D32F2F; background: rgba(211,47,47,0.08); }
+        .addon-add { border: 1px dashed var(--card-border); background: transparent; width: 100%; height: 36px; border-radius: 9px; font-size: 12px; font-weight: 800; color: var(--mid); cursor: pointer; font-family: inherit; }
+        .addon-add:hover { background: #F7F8FA; }
+        .addon-empty { font-size: 12px; color: var(--light); font-weight: 700; padding: 10px 0; }
+        .addon-sum { margin-top: 14px; font-size: 13px; font-weight: 800; color: var(--mid); }
+        .addon-sum b { color: #C96500; font-size: 16px; margin-left: 6px; }
+        .addon-sum span { display: block; font-size: 11px; color: var(--light); font-weight: 700; margin-top: 2px; }
+        .inv-addon-line { display: flex; align-items: center; padding: 0 20px 10px; font-size: 13px; font-weight: 600; color: #667085; margin-top: -4px; }
+        .inv-addon-tag { display: inline-block; font-size: 10px; font-weight: 900; color: #C96500; background: rgba(224,123,0,0.1); padding: 1px 7px; border-radius: 4px; margin-right: 6px; }
+
         /* ============ V3.57 合約 → 請款 ============ */
         .ct-bill-bar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; padding: 10px 14px 10px 16px; background: #FFF; border: 1px solid var(--card-border); border-radius: 12px; }
         .ct-bill-info { font-size: 13px; font-weight: 700; color: var(--mid); }
@@ -988,6 +1015,29 @@
     </div>
 </div>
 
+<div id="addon-modal" class="custom-modal">
+    <div class="custom-modal-content addon-modal-content">
+        <h3 style="margin:0; color:var(--text-main); font-weight:900; font-size:18px; text-align:left;">追加費用</h3>
+        <div id="addon-modal-sub" style="font-size:12px; color:var(--mid); font-weight:700; margin-top:4px; text-align:left;"></div>
+        <div class="addon-presets">
+            <span class="addon-presets-label">快速填入</span>
+            <button onclick="addonAddPreset('修改費')">修改費</button>
+            <button onclick="addonAddPreset('調整費')">調整費</button>
+            <button onclick="addonAddPreset('加急費')">加急費</button>
+            <button onclick="addonAddPreset('追加拍攝')">追加拍攝</button>
+            <button onclick="addonAddPreset('素材授權費')">素材授權費</button>
+        </div>
+        <div class="addon-head"><span>說明（客戶會在請款單上看到）</span><span>金額（未稅）</span><span></span></div>
+        <div id="addon-list"></div>
+        <button class="addon-add" onclick="addonAddRow('')">＋ 再加一筆</button>
+        <div class="addon-sum" id="addon-sum"></div>
+        <div class="custom-modal-actions" style="margin-top:18px;">
+            <button class="custom-modal-btn btn-cancel" onclick="closeAddonEditor()">取消</button>
+            <button class="custom-modal-btn btn-confirm" onclick="saveAddonEditor()">儲存</button>
+        </div>
+    </div>
+</div>
+
 <div id="backup-list-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 500px; width: 90%;">
         <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 10px;">📜 雲端版本備份</h3>
@@ -1095,7 +1145,7 @@
                 </div>
                 <div class="table-scroll" id="input-view">
                     <table id="mainTable">
-                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:180px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th class="amt-col" style="width:80px">公司金額</th><th class="amt-col" style="width:80px">老闆金額</th><th class="amt-col" style="width:80px">夥伴金額</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
+                        <thead><tr><th style="width:25px"></th><th style="width:70px">年月</th><th style="width:45px">編號</th><th style="width:80px">客戶</th><th style="width:210px">案件名稱</th><th style="width:70px">類型</th><th style="width:55px">指派</th><th style="width:80px">交件日</th><th style="display:none;">付款</th><th style="width:45px">發票</th><th style="width:50px">訂金</th><th style="width:80px">未稅額</th><th style="width:70px">稅金</th><th style="width:80px">含稅總額</th><th style="display:none;">尾款</th><th style="display:none;">未收金額</th><th style="width:65px">公司%</th><th style="width:65px">老闆%</th><th style="width:65px">夥伴%</th><th class="amt-col" style="width:80px">公司金額</th><th class="amt-col" style="width:80px">老闆金額</th><th class="amt-col" style="width:80px">夥伴金額</th><th style="width:60px">備註</th><th style="display:none;">付夥伴</th><th style="width:30px"></th></tr></thead>
                         <tbody id="tb"></tbody>
                     </table>
                 </div>
@@ -1838,6 +1888,33 @@ function setRowData(i, obj) {
 }
 function clearRowCache() { window.dCache = {}; }
 
+// V3.58 追加費用：存在每個案子的 d[27]，格式 [{ desc: '第3次修改費', amount: 3000 }, ...]（金額是未稅）
+// 案件的「未稅額」欄位（d[9]）維持是案子本身的價格；追加費用另外加上去，一起算稅金、含稅總額、分潤
+function addonNum(v) { const n = parseFloat(String(v == null ? '' : v).replace(/,/g, '')); return isNaN(n) ? 0 : n; }
+function addonList(d) {
+    return (d && Array.isArray(d[27])) ? d[27].filter(a => a && (String(a.desc || '').trim() !== '' || addonNum(a.amount) !== 0)) : [];
+}
+function addonSum(d) { return addonList(d).reduce((sum, a) => sum + addonNum(a.amount), 0); }
+function rowNet(d) { return addonNum(d[9]) + addonSum(d); }
+// 把一個案子拆成「本案」＋「每筆追加」，各自算稅；稅金加總會跟整筆的稅金對齊（避免四捨五入差 1 元）
+function rowParts(d) {
+    const inv = d[7] === true || d[7] === 'true';
+    const parts = [{ kind: 'base', pre: addonNum(d[9]) }].concat(addonList(d).map(a => ({ kind: 'addon', desc: String(a.desc || '').trim() || '追加費用', pre: addonNum(a.amount) })));
+    parts.forEach(p => { p.tax = inv ? Math.round(p.pre * 0.05) : 0; });
+    if (inv && parts.length > 1) {
+        const wantTax = Math.round(rowNet(d) * 0.05);
+        parts[parts.length - 1].tax += wantTax - parts.reduce((t, p) => t + p.tax, 0);
+    }
+    parts.forEach(p => { p.total = p.pre + p.tax; });
+    return parts;
+}
+function addonShort(n) {
+    const a = Math.abs(n);
+    if (a >= 10000) return (n / 10000).toFixed(a % 10000 === 0 ? 0 : 1) + '萬';
+    if (a >= 1000) return (n / 1000).toFixed(a % 1000 === 0 ? 0 : 1) + 'k';
+    return String(Math.round(n));
+}
+
 let chartPie = null; let chartBar = null;
 
 function migrateRitaToYiminjia() {
@@ -1910,7 +1987,7 @@ function showClientProjects(monthStr, clientName) {
         let rowMonthPad = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : null;
         let rowClient = d[2] ? d[2].trim() : "";
         
-        let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
+        let net = rowNet(d); 
         
         if (rowMonthPad === monthStr && rowClient === clientName && (net > 0 || d[3] || d[1])) {
             tb.innerHTML += `
@@ -1945,7 +2022,7 @@ function renderDashboard() {
 
     for(let i=0; i<count; i++) {
         let d = getRowData(i);
-        let net = parseFloat(String(d[9]).replace(/,/g,'')) || 0; 
+        let net = rowNet(d); 
         let gross = parseFloat(String(d[11]).replace(/,/g,'')) || 0; 
         let hasData = !!d[0] || !!d[1] || !!d[2] || !!d[3];
         
@@ -2209,9 +2286,9 @@ function stCollectRows() {
         if (!(d[1] || d[2] || d[3])) continue;
         const rawMonth = (d[0] || '').split('-')[1] || '';
         const month = rawMonth ? rawMonth.replace(/\D/g, '').padStart(2, '0') : '';
-        const net = stNum(d[9]);
+        const net = rowNet(d);
         const unpaid = Math.max(0, stNum(d[13]));
-        const isFree = String(d[9] == null ? '' : d[9]).trim() === '0';
+        const isFree = String(d[9] == null ? '' : d[9]).trim() === '0' && addonSum(d) === 0;
         const clientPaid = (net > 0 && unpaid <= 0) || isFree;
         const partnerPaid = d[21] === true || d[21] === 'true';
         const client = (d[2] || '').trim();
@@ -3461,7 +3538,7 @@ function updateMonthlyReport() {
         let d = getRowData(i);
         if (!d[0]) continue;
         let m = monthStats[d[0]] || { n:0, t:0, r:0, re:0, c1:0, c2:0, c3:0, ct:0 };
-        m.n += parseFloat(String(d[9]).replace(/,/g,'')) || 0;
+        m.n += rowNet(d);
         m.t += parseFloat(String(d[11]).replace(/,/g,'')) || 0;
         m.r += (parseFloat(String(d[8]).replace(/,/g,'')) || 0) + (parseFloat(String(d[12]).replace(/,/g,'')) || 0);
         m.re += parseFloat(String(d[13]).replace(/,/g,'')) || 0;
@@ -3555,19 +3632,32 @@ function runQuoteSearch() {
     resultBody.style.display = 'flex';
 
     invWrapper.innerHTML = results.map(d => {
-        let preTax = parseFloat(String(d[9]).replace(/,/g,''))||0;
-        let totalAmt = parseFloat(String(d[11]).replace(/,/g,''))||0;
-        let taxAmt = parseFloat(String(d[10] == null ? '' : d[10]).replace(/,/g,'')) || 0;
+        const parts = rowParts(d);
+        const basePart = parts[0];
+        const addons = parts.slice(1);
+        let preTax = parts.reduce((t, p) => t + p.pre, 0);
+        let totalAmt = parts.reduce((t, p) => t + p.total, 0);
+        let taxAmt = basePart.tax;
+        const addonHtml = addons.map(a => `
+            <div class="inv-addon-line">
+                <div style="width: 120px;"></div>
+                <div style="flex: 1; padding-left: 10px;"><span class="inv-addon-tag">追加</span>${qtEsc(a.desc)}</div>
+                <div style="width: 100px; text-align: right;">$ ${a.pre.toLocaleString()}</div>
+                <div style="width: 80px; text-align: right;">$ ${a.tax.toLocaleString()}</div>
+                <div style="width: 120px; text-align: right; font-weight: 800;">$ ${a.total.toLocaleString()}</div>
+            </div>`).join('');
         return `
-        <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${qtEsc(d[4] || '')}">
+        <div class="inv-item quote-data-row" style="border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${qtEsc(d[4] || '')}" data-parts="${qtEsc(JSON.stringify(parts))}">
+        <div style="display: flex; align-items: center; padding: 12px 20px;">
             <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
                 <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
             </div>
             <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${qtEsc(d[1]||'')}</div>
             <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;"><span class="inv-item-name-text">${qtEsc(d[3])}</span>${d[4] ? ` <span style="display:inline-block; margin-left:4px; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:800; background:#FEF3C7; color:#92400E; vertical-align:middle;">${qtEsc(d[4])}</span>` : ''}</div>
-            <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${preTax.toLocaleString()}</div>
+            <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${basePart.pre.toLocaleString()}</div>
             <div style="width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${taxAmt.toLocaleString()}</div>
-            <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${totalAmt.toLocaleString()}</div>
+            <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${basePart.total.toLocaleString()}</div>
+        </div>${addonHtml}
         </div>`;
     }).join('');
     if (results.length === 0) invWrapper.innerHTML = `<div style="padding:40px; text-align:center; color:var(--light); font-weight:700;">沒有找到案子</div>`;
@@ -3687,7 +3777,9 @@ function downloadPDF() {
         let pre = parseFloat(item.getAttribute('data-pre')) || 0;
         let total = parseFloat(item.getAttribute('data-total')) || 0;
         let type = item.getAttribute('data-type') || '';
-        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', type, pre, tax: total - pre, total });
+        let parts = [];
+        try { parts = JSON.parse(item.getAttribute('data-parts') || '[]'); } catch (e) {}
+        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', type, pre, tax: total - pre, total, parts });
     });
     if (items.length === 0) { uiAlert("目前沒有勾選任何項目可以匯出。"); return; }
 
@@ -3703,13 +3795,27 @@ function downloadPDF() {
         totalPre += it.pre;
         totalOrig += it.total;
         let typeTag = it.type ? `<span style="display:inline-block; margin-left:6px; padding:1px 7px; border-radius:20px; font-size:10px; font-weight:800; background:#F0C64B; color:#1D1D1F; vertical-align:middle;">${it.type}</span>` : '';
-        tb.innerHTML += `<tr style="page-break-inside: avoid; font-size: 12px;">
-            <td style="padding: 6px; text-align: center; border-bottom: 1px solid #E5E5EA;">${i + 1}</td>
-            <td style="padding: 6px; text-align: left; border-bottom: 1px solid #E5E5EA; font-weight: 700;">${it.name}${typeTag}</td>
-            <td style="padding: 6px; text-align: right; border-bottom: 1px solid #E5E5EA;">$ ${it.pre.toLocaleString()}</td>
-            <td style="padding: 6px; text-align: right; border-bottom: 1px solid #E5E5EA;">$ ${Math.round(it.tax).toLocaleString()}</td>
-            <td style="padding: 6px; text-align: right; border-bottom: 1px solid #E5E5EA; font-weight: 800;">$ ${it.total.toLocaleString()}</td>
+        const base = (it.parts && it.parts.length) ? it.parts[0] : { pre: it.pre, tax: it.tax, total: it.total };
+        const addons = (it.parts || []).slice(1);
+        const line = addons.length ? 'none' : '1px solid #E5E5EA';
+        let rowsHtml = `<tr style="page-break-inside: avoid; font-size: 12px;">
+            <td style="padding: 6px; text-align: center; border-bottom: ${line};">${i + 1}</td>
+            <td style="padding: 6px; text-align: left; border-bottom: ${line}; font-weight: 700;">${qtEsc(it.name)}${typeTag}</td>
+            <td style="padding: 6px; text-align: right; border-bottom: ${line};">$ ${base.pre.toLocaleString()}</td>
+            <td style="padding: 6px; text-align: right; border-bottom: ${line};">$ ${Math.round(base.tax).toLocaleString()}</td>
+            <td style="padding: 6px; text-align: right; border-bottom: ${line}; font-weight: 800;">$ ${base.total.toLocaleString()}</td>
         </tr>`;
+        addons.forEach((a, ai) => {
+            const bl = ai === addons.length - 1 ? '1px solid #E5E5EA' : 'none';
+            rowsHtml += `<tr style="page-break-inside: avoid; font-size: 11px; color: #475467;">
+                <td style="padding: 3px 6px; border-bottom: ${bl};"></td>
+                <td style="padding: 3px 6px 3px 18px; text-align: left; border-bottom: ${bl};">└ 追加：${qtEsc(a.desc)}</td>
+                <td style="padding: 3px 6px; text-align: right; border-bottom: ${bl};">$ ${a.pre.toLocaleString()}</td>
+                <td style="padding: 3px 6px; text-align: right; border-bottom: ${bl};">$ ${a.tax.toLocaleString()}</td>
+                <td style="padding: 3px 6px; text-align: right; border-bottom: ${bl}; font-weight: 700;">$ ${a.total.toLocaleString()}</td>
+            </tr>`;
+        });
+        tb.innerHTML += rowsHtml;
     });
     let finalTotal = Math.round(totalOrig * discount);
 
@@ -3820,7 +3926,7 @@ function createRow(r) {
             td.innerHTML = `<select id="r${r}c${c}" class="${c===4?'type-chip':''}" onchange="handleOptChange(${r},${c})"><option value="">--</option>${ops}<option value="__ADD__">+</option><option value="__DEL__">-</option></select>`;
             if (c === 4) colorizeTypeSelect(td.querySelector('select'));
         } else if (c===3) {
-            td.innerHTML = `<div class="proj-name-cell"><div class="contract-trigger ${saved[25] ? 'has-value' : ''}" id="r${r}c25trigger" onclick="event.stopPropagation(); openContractMenu(this, ${r})" title="所屬合約包"><i class="fas fa-link"></i></div><input type="hidden" id="r${r}c25" value="${saved[25] || ''}"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><input type="hidden" id="r${r}c26" value="${saved[26] || ''}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="綠：製作完成"></span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="黃：已收款"></span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="紫：已分潤夥伴"></span></div>`;
+            td.innerHTML = `<div class="proj-name-cell"><div class="contract-trigger ${saved[25] ? 'has-value' : ''}" id="r${r}c25trigger" onclick="event.stopPropagation(); openContractMenu(this, ${r})" title="所屬合約包"><i class="fas fa-link"></i></div><input type="hidden" id="r${r}c25" value="${saved[25] || ''}"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><span class="addon-chip" id="r${r}addon" onclick="event.stopPropagation(); openAddonEditor(${r})" title="追加費用">＋</span><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><input type="hidden" id="r${r}c26" value="${saved[26] || ''}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="綠：製作完成"></span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="黃：已收款"></span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="紫：已分潤夥伴"></span></div>`;
         } else if (c===20) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" title="${val.replace(/"/g,'&quot;')}" oninput="this.title=this.value; calc(${r},${c})">`;
         } else {
@@ -4388,6 +4494,83 @@ function toggleDoneFlag(r) {
 }
 window.toggleDoneFlag = toggleDoneFlag;
 
+// ---------- 追加費用：案件明細上的小標籤＋編輯視窗 ----------
+function refreshAddonChip(r) {
+    const chip = document.getElementById(`r${r}addon`);
+    if (!chip) return;
+    const d = getRowData(r);
+    const list = addonList(d);
+    const sum = addonSum(d);
+    if (list.length === 0) {
+        chip.classList.remove('has');
+        chip.textContent = '＋';
+        chip.title = '加追加費用（修改費、調整費…）';
+    } else {
+        chip.classList.add('has');
+        chip.textContent = '+' + addonShort(sum);
+        chip.title = '追加費用（未稅，已算進含稅總額和分潤）：\n' + list.map(a => `・${String(a.desc || '').trim() || '追加費用'}　$${addonNum(a.amount).toLocaleString()}`).join('\n');
+    }
+}
+window._addonDraft = null;
+function openAddonEditor(r) {
+    const d = getRowData(r);
+    window._addonDraft = { r, items: addonList(d).map(a => ({ desc: String(a.desc || ''), amount: a.amount === '' || a.amount == null ? '' : String(a.amount) })) };
+    if (window._addonDraft.items.length === 0) window._addonDraft.items.push({ desc: '', amount: '' });
+    document.getElementById('addon-modal-sub').textContent = `${d[1] || ''} ${d[3] || '（未填案名）'}${d[2] ? '・' + d[2] : ''}`;
+    renderAddonList();
+    document.getElementById('addon-modal').classList.add('active');
+    setTimeout(() => { const f = document.querySelector('#addon-list input'); if (f) f.focus(); }, 80);
+}
+function renderAddonList() {
+    const items = window._addonDraft.items;
+    document.getElementById('addon-list').innerHTML = items.map((a, i) => `
+        <div class="addon-row">
+            <input type="text" value="${qtEsc(a.desc)}" placeholder="例如：第 3 次修改費" oninput="window._addonDraft.items[${i}].desc=this.value">
+            <input type="number" value="${qtEsc(a.amount)}" placeholder="0" onwheel="this.blur()" oninput="window._addonDraft.items[${i}].amount=this.value; updateAddonSum()">
+            <button onclick="addonRemoveRow(${i})" title="刪除這筆">✕</button>
+        </div>`).join('') || `<div class="addon-empty">沒有追加費用，儲存後這個案子就不會顯示追加</div>`;
+    updateAddonSum();
+}
+function updateAddonSum() {
+    const sum = window._addonDraft.items.reduce((t, a) => t + addonNum(a.amount), 0);
+    document.getElementById('addon-sum').innerHTML = sum ? `追加合計（未稅）<b>$ ${sum.toLocaleString()}</b><span>會加進這個案子的含稅總額跟分潤</span>` : '';
+}
+function addonAddRow(desc) {
+    window._addonDraft.items.push({ desc, amount: '' });
+    renderAddonList();
+    const rows = document.querySelectorAll('#addon-list .addon-row');
+    const last = rows[rows.length - 1];
+    if (last) last.querySelectorAll('input')[desc ? 1 : 0].focus();
+}
+function addonAddPreset(desc) {
+    const items = window._addonDraft.items;
+    const blank = items.findIndex(a => !String(a.desc).trim() && !String(a.amount).trim());
+    if (blank !== -1) {
+        items[blank].desc = desc;
+        renderAddonList();
+        document.querySelectorAll('#addon-list .addon-row')[blank].querySelectorAll('input')[1].focus();
+    } else {
+        addonAddRow(desc);
+    }
+}
+function addonRemoveRow(i) { window._addonDraft.items.splice(i, 1); renderAddonList(); }
+function closeAddonEditor() { document.getElementById('addon-modal').classList.remove('active'); window._addonDraft = null; }
+async function saveAddonEditor() {
+    const draft = window._addonDraft;
+    if (!draft) return;
+    const cleaned = draft.items.filter(a => String(a.desc).trim() || String(a.amount).trim());
+    if (cleaned.some(a => !String(a.desc).trim())) { await uiAlert("每一筆都要填「說明」，客戶才知道這筆是什麼費用。"); return; }
+    if (cleaned.some(a => String(a.amount).trim() === '' || isNaN(parseFloat(a.amount)))) { await uiAlert("每一筆都要填金額（未稅）。"); return; }
+    const r = draft.r;
+    const d = { ...getRowData(r) };
+    d[27] = cleaned.map(a => ({ desc: String(a.desc).trim(), amount: parseFloat(a.amount) }));
+    setRowData(r, d);
+    closeAddonEditor();
+    calc(r, 9, true);
+    qtToast(cleaned.length ? `已儲存 ${cleaned.length} 筆追加費用` : '已清除追加費用');
+}
+Object.assign(window, { refreshAddonChip, openAddonEditor, renderAddonList, updateAddonSum, addonAddRow, addonAddPreset, addonRemoveRow, closeAddonEditor, saveAddonEditor });
+
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function computeNextIdForPrefix(prefix, currentRow) {
@@ -4544,7 +4727,8 @@ function calc(r, c, save=true) {
         }
     }
     
-    let net = parseFloat(String(g(9)).replace(/,/g,'')) || 0, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
+    let addonTotal = addonSum(getRowData(r));
+    let net = (parseFloat(String(g(9)).replace(/,/g,'')) || 0) + addonTotal, tax = g(7) ? Math.round(net*0.05) : 0, total = net + tax;
     let deposit = parseFloat(String(g(8)).replace(/,/g,'')) || 0, tail = parseFloat(String(g(12)).replace(/,/g,'')) || 0, rem = total - deposit - tail;
     s(10, tax); s(11, total); s(13, rem); 
     
@@ -4567,7 +4751,7 @@ function calc(r, c, save=true) {
     let row = document.getElementById(`r${r}`); 
     let isSettled = false;
     if (row) { 
-        let isFree = (String(g(9)).trim() === '0'); 
+        let isFree = (String(g(9)).trim() === '0') && addonTotal === 0; 
         isSettled = (net > 0 && rem <= 0) || isFree;
         row.classList.remove('is-settled'); 
         if (isSettled) row.classList.add('is-settled'); 
@@ -4582,6 +4766,7 @@ function calc(r, c, save=true) {
     let isDone = g(24) === '完';
     if (doneBadge) doneBadge.classList.toggle('active', isDone);
     colorizeProjName(r);
+    refreshAddonChip(r);
 
     if (row) row.classList.toggle('is-all-done', isSettled && isPartnerPaid && isDone);
     
@@ -4692,7 +4877,7 @@ function formatDiscountLabel(percent) {
 window.formatDiscountLabel = formatDiscountLabel;
 
 function recalcRowValues(d) {
-    let net = parseFloat(String(d[9] || '0').replace(/,/g, '')) || 0;
+    let net = rowNet(d);
     let hasInvoice = d[7] === true || d[7] === 'true';
     let tax = hasInvoice ? Math.round(net * 0.05) : 0;
     let total = net + tax;
@@ -4881,8 +5066,10 @@ function getContractRows(name) {
             let d; try { d = JSON.parse(raw); } catch (e) { continue; }
             if (d[25] !== name) continue;
             const hasInv = d[7] === true || d[7] === 'true';
-            const after = contractNum(d[9]);
-            const orig = contractNum(d[26]) || after;
+            const addon = addonSum(d);
+            const base = contractNum(d[9]);
+            const after = base + addon;
+            const orig = (contractNum(d[26]) || base) + addon;
             const origGross = orig + (hasInv ? Math.round(orig * 0.05) : 0);
             const afterGross = contractNum(d[11]) || (after + (hasInv ? Math.round(after * 0.05) : 0));
             const unpaid = Math.max(0, contractNum(d[13]));
