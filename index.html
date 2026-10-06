@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.56</title>
+    <title>杰冉宇宙營收表 V3.57</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -700,6 +700,18 @@
         .st-btn-primary { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; }
         .st-btn-primary:hover:not(:disabled) { background: #333; }
 
+        /* ============ V3.57 合約 → 請款 ============ */
+        .ct-bill-bar { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; padding: 10px 14px 10px 16px; background: #FFF; border: 1px solid var(--card-border); border-radius: 12px; }
+        .ct-bill-info { font-size: 13px; font-weight: 700; color: var(--mid); }
+        .ct-bill-info b { color: #1D1D1F; font-weight: 900; font-variant-numeric: tabular-nums; }
+        .ct-table tr.ct-row { cursor: pointer; }
+        .ct-table tr.ct-row.is-on td { background: rgba(var(--primary-rgb), 0.06); }
+        .ct-table .ct-cb, #ct-sel-all { width: 16px !important; height: 16px !important; accent-color: #1D1D1F; cursor: pointer; margin: auto; display: block; }
+        .bill-source-banner { align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 9px 12px 9px 14px; background: #F4F5F7; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--mid); }
+        .bill-source-banner b { color: #1D1D1F; }
+        .bill-source-banner button { border: 1px solid var(--card-border); background: #FFF; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; color: var(--text-main); }
+        .bill-source-banner button:hover { background: #F9FAFB; }
+
         /* ============ V3.53 合約頁 ============ */
         .ct-list-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; cursor: pointer; margin-bottom: 8px; background: #FFF; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: background 0.15s; }
         .ct-list-item:hover { background: #F7F8FA; }
@@ -1189,10 +1201,11 @@
 
                 <div style="padding: 20px 30px; border-bottom: 1px solid var(--card-border); flex-shrink: 0; display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="qC" placeholder="👤 搜尋客戶名稱..." oninput="runQuoteSearch()" style="border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 14px; font-weight: 800; color: var(--text-main); outline: none; width: 200px;">
-                        <input type="text" id="qM" placeholder="📅 搜尋月份 (ex:05)" oninput="runQuoteSearch()" style="border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 14px; font-weight: 800; color: var(--text-main); outline: none; width: 160px;">
+                        <input type="text" id="qC" placeholder="👤 搜尋客戶名稱..." oninput="clearBillSource(); runQuoteSearch()" style="border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 14px; font-weight: 800; color: var(--text-main); outline: none; width: 200px;">
+                        <input type="text" id="qM" placeholder="📅 搜尋月份 (ex:05)" oninput="clearBillSource(); runQuoteSearch()" style="border: 1px solid var(--card-border); padding: 10px 20px; border-radius: 40px; background: #F4F7F9; font-size: 14px; font-weight: 800; color: var(--text-main); outline: none; width: 160px;">
                     </div>
                     <div id="quote-vip-chips" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                    <div id="bill-source-banner" class="bill-source-banner" style="display:none;"></div>
                 </div>
 
                 <div id="quote-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 24px 30px 0 30px; box-sizing: border-box;">
@@ -3490,56 +3503,81 @@ function updateMonthlyReport() {
     }
 }
 
-function runQuoteSearch() { 
+// V3.57：請款系統的資料來源有兩種
+// 1. 一般搜尋：上面打客戶或月份（只找目前年度）
+// 2. 從合約頁按「匯到請款系統」帶過來的指定案子（window._billSource，可以跨年度、跨客戶）
+window._billSource = null;
+function clearBillSource() { window._billSource = null; }
+window.clearBillSource = clearBillSource;
+
+function runQuoteSearch() {
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
-    
+    const src = window._billSource;
+
     let emptyState = document.getElementById('quote-empty-state');
     let resultBody = document.getElementById('quote-result-body');
     let invWrapper = document.getElementById('inv-list-wrapper');
+    let banner = document.getElementById('bill-source-banner');
 
-    if (sc !== "" || (sm !== "" && sm !== "00")) {
-        emptyState.style.display = 'none';
-        resultBody.style.display = 'flex';
-        invWrapper.innerHTML = '';
-        
-        let terms = sc ? sc.split(/[\s,，]+/) : []; 
-        document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
-        document.getElementById('inv-official-name').value = sc ? resolveOfficialClientName(sc) : '';
-        
-        let results = [];
-        for(let r=0; r<rowCount; r++){ 
-            let d = getRowData(r);
-            let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
-            if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); }
-        }
-        
-        results.forEach((d, index) => {
-            let preTax = parseFloat(String(d[9]).replace(/,/g,''))||0;
-            let totalAmt = parseFloat(String(d[11]).replace(/,/g,''))||0;
-            
-            invWrapper.innerHTML += `
-            <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${d[4] || ''}">
-                <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
-                    <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
-                </div>
-                <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${d[1]||''}</div>
-                <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;"><span class="inv-item-name-text">${d[3]}</span>${d[4] ? ` <span style="display:inline-block; margin-left:4px; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:800; background:#FEF3C7; color:#92400E; vertical-align:middle;">${d[4]}</span>` : ''}</div>
-                <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${preTax.toLocaleString()}</div>
-                <div style="width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${(d[10]||0).toLocaleString()}</div>
-                <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${totalAmt.toLocaleString()}</div>
-            </div>`;
+    let results = null;
+    if (src) {
+        results = [];
+        src.rows.forEach(({ year, row }) => {
+            let d = {};
+            try { d = JSON.parse(localStorage.getItem(`d_${year}_${row}`)) || {}; } catch (e) {}
+            if (d[3]) results.push(d);
         });
-        
-        document.getElementById('inv-discount-input').value = "10";
-        let discPanel = document.getElementById('inv-discount-panel');
-        let discToggle = document.getElementById('inv-discount-toggle');
-        if (discPanel) discPanel.style.display = 'none';
-        if (discToggle) discToggle.style.display = 'block';
-        calcQuoteTotal();
-    } else { 
-        emptyState.style.display = 'block';
-        resultBody.style.display = 'none'; 
+        document.getElementById('inv-cust-info').innerText = `合約：${src.label}`;
+        document.getElementById('inv-official-name').value = src.client ? resolveOfficialClientName(src.client) : '';
+        banner.innerHTML = `<span>📑 這張是從合約「<b>${qtEsc(src.label)}</b>」帶過來的 ${results.length} 件案子</span><button onclick="clearBillSource(); runQuoteSearch();">改回一般搜尋</button>`;
+        banner.style.display = 'flex';
+    } else {
+        banner.style.display = 'none';
+        if (sc !== "" || (sm !== "" && sm !== "00")) {
+            let terms = sc ? sc.split(/[\s,，]+/) : [];
+            document.getElementById('inv-cust-info').innerText = sc ? `客戶：${terms.join(" / ").toUpperCase()}` : `月份：${sm}月`;
+            document.getElementById('inv-official-name').value = sc ? resolveOfficialClientName(sc) : '';
+            results = [];
+            for(let r=0; r<rowCount; r++){
+                let d = getRowData(r);
+                let matchC = terms.length === 0 || terms.some(t => (d[2]||"").toLowerCase().includes(t));
+                if (matchC && (!sm || sm==='00' || (d[0]||"").includes(`-${sm}`)) && d[3]) { results.push(d); }
+            }
+        }
     }
+
+    if (!results) {
+        emptyState.style.display = 'block';
+        resultBody.style.display = 'none';
+        return;
+    }
+    emptyState.style.display = 'none';
+    resultBody.style.display = 'flex';
+
+    invWrapper.innerHTML = results.map(d => {
+        let preTax = parseFloat(String(d[9]).replace(/,/g,''))||0;
+        let totalAmt = parseFloat(String(d[11]).replace(/,/g,''))||0;
+        let taxAmt = parseFloat(String(d[10] == null ? '' : d[10]).replace(/,/g,'')) || 0;
+        return `
+        <div class="inv-item quote-data-row" style="display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${qtEsc(d[4] || '')}">
+            <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
+                <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
+            </div>
+            <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${qtEsc(d[1]||'')}</div>
+            <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;"><span class="inv-item-name-text">${qtEsc(d[3])}</span>${d[4] ? ` <span style="display:inline-block; margin-left:4px; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:800; background:#FEF3C7; color:#92400E; vertical-align:middle;">${qtEsc(d[4])}</span>` : ''}</div>
+            <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${preTax.toLocaleString()}</div>
+            <div style="width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">$ ${taxAmt.toLocaleString()}</div>
+            <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${totalAmt.toLocaleString()}</div>
+        </div>`;
+    }).join('');
+    if (results.length === 0) invWrapper.innerHTML = `<div style="padding:40px; text-align:center; color:var(--light); font-weight:700;">沒有找到案子</div>`;
+
+    document.getElementById('inv-discount-input').value = "10";
+    let discPanel = document.getElementById('inv-discount-panel');
+    let discToggle = document.getElementById('inv-discount-toggle');
+    if (discPanel) discPanel.style.display = 'none';
+    if (discToggle) discToggle.style.display = 'block';
+    calcQuoteTotal();
 }
 window.runQuoteSearch = runQuoteSearch;
 
@@ -3548,7 +3586,7 @@ function renderQuoteVipChips() {
     if (!container) return;
     if (!vipClients || vipClients.length === 0) { container.innerHTML = ''; return; }
     container.innerHTML = vipClients.map(c =>
-        `<div class="client-chip" style="padding: 6px 14px; font-size: 12px; margin: 0;" onclick="document.getElementById('qC').value='${c}'; runQuoteSearch();">${c}</div>`
+        `<div class="client-chip" style="padding: 6px 14px; font-size: 12px; margin: 0;" onclick="clearBillSource(); document.getElementById('qC').value='${c}'; runQuoteSearch();">${c}</div>`
     ).join('');
 }
 window.renderQuoteVipChips = renderQuoteVipChips;
@@ -3682,7 +3720,7 @@ function downloadPDF() {
 
     document.getElementById('quote-export-no').innerText = docNo;
     document.getElementById('quote-export-date').innerText = dateStr;
-    document.getElementById('quote-export-client').innerText = document.getElementById('inv-official-name').value.trim() || resolveOfficialClientName(sc) || (sm ? sm + '月份' : '');
+    document.getElementById('quote-export-client').innerText = document.getElementById('inv-official-name').value.trim() || (window._billSource ? window._billSource.label : '') || resolveOfficialClientName(sc) || (sm ? sm + '月份' : '');
 
     let paymentTerms = document.getElementById('inv-payment-terms').value.trim();
     let termsCell = document.getElementById('quote-export-terms-cell');
@@ -3720,7 +3758,7 @@ function downloadPDF() {
     el.style.display = 'block';
     let opt = {
         margin: [0.3, 0.35, 0.3, 0.35],
-        filename: `${(sc.replace(/\s+/g,'_') || sm+'月')}_請款單.pdf`,
+        filename: `${window._billSource ? window._billSource.label.replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'_') : (sc.replace(/\s+/g,'_') || sm+'月')}_請款單.pdf`,
         image: { type: 'jpeg', quality: 1 },
         html2canvas: { scale: 3, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
@@ -4960,6 +4998,16 @@ function renderContractDetail(name) {
     const arg = contractJsArg(name);
     const $ = (n) => '$ ' + Math.round(n).toLocaleString();
 
+    // 要匯到請款系統的勾選：換合約時重設，預設勾「還沒收齊」的案子（全部收齊就全勾）
+    const keyOf = x => `${x.year}_${x.row}`;
+    if (!window._ctSel || window._ctSel.name !== name) {
+        const anyUnpaid = rows.some(x => x.unpaid > 0);
+        window._ctSel = { name, keys: new Set(rows.filter(x => !anyUnpaid || x.unpaid > 0).map(keyOf)) };
+    }
+    const validKeys = new Set(rows.map(keyOf));
+    [...window._ctSel.keys].forEach(k => { if (!validKeys.has(k)) window._ctSel.keys.delete(k); });
+    window._ctRowsCache = rows;
+
     window._contractPreviewBase = { name, totalOriginal: sum.orig, currentPercent: discount, count: rows.length };
     const presetChips = [100, 95, 92, 90, 88, 85, 80].map(p =>
         `<button class="contract-preset-chip ${p === discount ? 'active' : ''}" style="--cc:${curColor};" onclick="setContractDiscountPreset(${p})">${formatDiscountLabel(p)}</button>`
@@ -5033,16 +5081,21 @@ function renderContractDetail(name) {
             ${pricePanel}
         </div>
 
+        ${rows.length ? `<div class="ct-bill-bar">
+            <div class="ct-bill-info" id="ct-bill-info"></div>
+            <button class="st-btn st-btn-primary" id="ct-bill-btn" onclick="ctSendToBilling()">匯到請款系統 →</button>
+        </div>` : ''}
         <div class="ct-table-wrap ${isDone ? 'is-done' : ''}">
         <table class="ct-table">
             <thead>
                 <tr class="ct-group-row">
-                    <th colspan="5"></th>
+                    <th colspan="6"></th>
                     <th colspan="2" class="ct-grp">折扣前</th>
                     <th colspan="2" class="ct-grp ct-grp-after" style="--cc:${curColor};">折扣後</th>
                     <th></th>
                 </tr>
                 <tr>
+                    <th style="width:44px; text-align:center;"><input type="checkbox" id="ct-sel-all" onchange="ctToggleAll(this.checked)" title="全選／全不選"></th>
                     <th style="width:40px;">序</th><th>年度</th><th>編號</th><th>客戶</th><th>案名</th>
                     <th class="num">未稅</th><th class="num">含稅</th>
                     <th class="num">未稅</th><th class="num">含稅</th>
@@ -5051,10 +5104,12 @@ function renderContractDetail(name) {
             </thead>
             <tbody>`;
     if (rows.length === 0) {
-        html += `<tr><td colspan="10" style="text-align:center; color:var(--light); padding:48px 0;">目前沒有案子屬於這份合約，去案件明細表案名旁邊的下拉選單套用看看</td></tr>`;
+        html += `<tr><td colspan="11" style="text-align:center; color:var(--light); padding:48px 0;">目前沒有案子屬於這份合約，去案件明細表案名旁邊的下拉選單套用看看</td></tr>`;
     } else {
         rows.forEach((x, i) => {
-            html += `<tr>
+            const k = keyOf(x);
+            html += `<tr class="ct-row" data-key="${k}" onclick="ctToggleRow(event, '${k}')">
+                <td style="text-align:center;"><input type="checkbox" class="ct-cb" onclick="event.stopPropagation()" onchange="ctToggleRow(null, '${k}')"></td>
                 <td style="color:var(--light); font-weight:700; text-align:center;">${i + 1}</td>
                 <td>${x.year}</td>
                 <td style="font-weight:700;">${qtEsc(x.d[1] || '')}</td>
@@ -5071,7 +5126,7 @@ function renderContractDetail(name) {
     html += `</tbody>`;
     if (rows.length > 0) {
         html += `<tfoot><tr>
-            <td colspan="5" style="text-align:right; font-weight:900;">合計</td>
+            <td colspan="6" style="text-align:right; font-weight:900;">合計</td>
             <td class="num muted">${sum.orig.toLocaleString()}</td>
             <td class="num muted">${sum.origGross.toLocaleString()}</td>
             <td class="num" style="font-weight:900;">${sum.after.toLocaleString()}</td>
@@ -5082,9 +5137,56 @@ function renderContractDetail(name) {
     html += `</table></div>`;
 
     document.getElementById('contract-detail').innerHTML = html;
+    ctUpdateSelUI();
     updateContractDiscountPreview();
 }
 window.renderContractDetail = renderContractDetail;
+
+// 只更新勾選相關的畫面，不整頁重畫（才不會把正在打的折扣數字洗掉）
+function ctUpdateSelUI() {
+    const sel = window._ctSel;
+    const rows = window._ctRowsCache || [];
+    if (!sel) return;
+    let n = 0, net = 0, gross = 0;
+    rows.forEach(x => {
+        const on = sel.keys.has(`${x.year}_${x.row}`);
+        if (on) { n++; net += x.after; gross += x.afterGross; }
+        const tr = document.querySelector(`#contract-detail tr.ct-row[data-key="${x.year}_${x.row}"]`);
+        if (tr) { tr.classList.toggle('is-on', on); tr.querySelector('.ct-cb').checked = on; }
+    });
+    const all = document.getElementById('ct-sel-all');
+    if (all) { all.checked = rows.length > 0 && n === rows.length; all.indeterminate = n > 0 && n < rows.length; }
+    const info = document.getElementById('ct-bill-info');
+    if (info) info.innerHTML = n
+        ? `要請款的案子：<b>${n}</b> 件　未稅 <b>$ ${Math.round(net).toLocaleString()}</b>　含稅 <b>$ ${Math.round(gross).toLocaleString()}</b>`
+        : `<span style="color:var(--light);">勾選下面要請款的案子</span>`;
+    const btn = document.getElementById('ct-bill-btn');
+    if (btn) btn.disabled = n === 0;
+}
+function ctToggleRow(e, key) {
+    if (e && e.target.closest('input, button, a')) return;
+    const keys = window._ctSel.keys;
+    if (keys.has(key)) keys.delete(key); else keys.add(key);
+    ctUpdateSelUI();
+}
+function ctToggleAll(on) {
+    const keys = window._ctSel.keys;
+    (window._ctRowsCache || []).forEach(x => { const k = `${x.year}_${x.row}`; on ? keys.add(k) : keys.delete(k); });
+    ctUpdateSelUI();
+}
+function ctSendToBilling() {
+    const sel = window._ctSel;
+    const rows = (window._ctRowsCache || []).filter(x => sel && sel.keys.has(`${x.year}_${x.row}`));
+    if (rows.length === 0) return;
+    const firstClient = (rows[0].d[2] || '').trim();
+    const sameClient = rows.every(x => (x.d[2] || '').trim() === firstClient);
+    window._billSource = { label: sel.name, client: sameClient ? firstClient : '', rows: rows.map(x => ({ year: x.year, row: x.row })) };
+    document.getElementById('qC').value = '';
+    document.getElementById('qM').value = '';
+    switchSlide(3, document.querySelectorAll('.app-nav-item')[3]);
+    runQuoteSearch();
+}
+Object.assign(window, { ctUpdateSelUI, ctToggleRow, ctToggleAll, ctSendToBilling });
 
 function setContractDiscountPreset(percent) {
     const input = document.getElementById('contract-discount-input');
