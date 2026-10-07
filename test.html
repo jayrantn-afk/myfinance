@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.59</title>
+    <title>杰冉宇宙營收表 V3.60</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -700,6 +700,30 @@
         .st-btn-primary { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; }
         .st-btn-primary:hover:not(:disabled) { background: #333; }
 
+        /* ============ V3.60 電腦備份 ============ */
+        .lb-content { max-width: 460px !important; text-align: left !important; }
+        .lb-title { margin: 0; font-size: 18px; font-weight: 900; color: var(--text-main); }
+        .lb-sub { margin: 6px 0 18px; font-size: 13px; color: var(--mid); font-weight: 600; line-height: 1.5; }
+        .lb-option { width: 100%; display: flex; align-items: center; gap: 14px; text-align: left; border: 1px solid var(--card-border); background: #FFF; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; font-family: inherit; transition: background 0.15s, border-color 0.15s; }
+        .lb-option:hover { background: #F7F8FA; border-color: rgba(0,0,0,0.18); }
+        .lb-icon { width: 36px; height: 36px; border-radius: 10px; background: #F1F2F4; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; color: var(--text-main); flex-shrink: 0; }
+        .lb-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .lb-text b { font-size: 14px; font-weight: 900; color: var(--text-main); }
+        .lb-text span { font-size: 12px; color: var(--mid); font-weight: 600; }
+        .lb-compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; }
+        .lb-col { border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px; background: #FFF; }
+        .lb-col-k { font-size: 11px; font-weight: 800; color: var(--light); margin-bottom: 6px; }
+        .lb-col-v { font-size: 13px; color: var(--text-main); font-weight: 700; line-height: 1.4; }
+        .lb-col-v b { font-size: 18px; font-weight: 900; margin-right: 4px; }
+        .lb-col-v small { display: block; font-size: 11px; color: var(--mid); font-weight: 600; margin-bottom: 6px; }
+        .lb-empty { color: var(--light); }
+        .lb-arrow { align-self: center; font-size: 11px; font-weight: 800; color: var(--light); white-space: nowrap; }
+        .lb-warn { margin-top: 12px; font-size: 12px; font-weight: 700; color: #C96500; line-height: 1.6; }
+        .lb-warn:empty { display: none; }
+        .lb-note { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--card-border); font-size: 11px; color: var(--light); font-weight: 600; line-height: 1.6; }
+        .lb-close { margin-top: 12px; width: 100%; height: 40px; border: none; background: #F4F7F6; border-radius: 50px; font-weight: 800; font-size: 14px; color: var(--mid); cursor: pointer; font-family: inherit; }
+        .lb-close:hover { background: #E5E5EA; color: var(--text-main); }
+
         /* ============ V3.59 合約頁分開列追加費用 ============ */
         .ct-compare tr.is-addon td { color: #C96500; }
         .ct-compare tr.is-addon td:first-child { color: #C96500; }
@@ -1049,6 +1073,41 @@
     </div>
 </div>
 
+<div id="local-backup-modal" class="custom-modal">
+    <div class="custom-modal-content lb-content">
+        <h3 class="lb-title">電腦備份</h3>
+        <p class="lb-sub">把營收表存成一個檔案放在你電腦裡，或用之前存的檔案還原。</p>
+
+        <div id="lb-step-main">
+            <button class="lb-option" onclick="exportData()">
+                <span class="lb-icon">⬇</span>
+                <span class="lb-text"><b>下載備份檔</b><span id="lb-current-summary">把這台電腦上的營收表資料存成一個檔案</span></span>
+            </button>
+            <button class="lb-option" onclick="document.getElementById('lb-file').click()">
+                <span class="lb-icon">⬆</span>
+                <span class="lb-text"><b>從備份檔還原</b><span>選一個之前下載的備份檔，取代這台電腦上的營收表資料</span></span>
+            </button>
+            <input type="file" id="lb-file" accept=".json,application/json" style="display:none;" onchange="handleLocalBackupFile(this)">
+        </div>
+
+        <div id="lb-step-confirm" style="display:none;">
+            <div class="lb-compare">
+                <div class="lb-col"><div class="lb-col-k">備份檔</div><div class="lb-col-v" id="lb-file-summary"></div></div>
+                <div class="lb-arrow">→ 取代 →</div>
+                <div class="lb-col"><div class="lb-col-k">這台電腦目前</div><div class="lb-col-v" id="lb-now-summary"></div></div>
+            </div>
+            <div class="lb-warn" id="lb-warn"></div>
+            <div class="custom-modal-actions" style="margin-top:16px;">
+                <button class="custom-modal-btn btn-cancel" onclick="resetLocalBackupModal()">返回</button>
+                <button class="custom-modal-btn btn-confirm" onclick="confirmLocalRestore()">確定還原</button>
+            </div>
+        </div>
+
+        <div class="lb-note">備份檔只包含營收表的資料，不含登入資訊。還原只會改這台電腦，不會自動上傳雲端，確認沒問題後再按「搬家至 Firebase」。</div>
+        <button class="lb-close" id="lb-close" onclick="closeLocalBackupModal()">關閉</button>
+    </div>
+</div>
+
 <div id="backup-list-modal" class="custom-modal">
     <div class="custom-modal-content" style="max-width: 500px; width: 90%;">
         <h3 style="margin-top:0; color:var(--text-main); font-weight: 900; font-size: 20px; margin-bottom: 10px;">📜 雲端版本備份</h3>
@@ -1090,7 +1149,7 @@
             <div class="app-sidebar-btn firebase" id="cloudSaveBtn" onclick="cloudSync('SAVE')" title="搬家至 Firebase"><span class="nav-icon">🔥</span><span class="nav-label">搬家至 Firebase</span></div>
             <div class="app-sidebar-btn" style="color:var(--primary)" onclick="cloudSync('LOAD')" title="從雲端載入"><span class="nav-icon">🔄</span><span class="nav-label">從雲端載入</span></div>
             <div class="app-sidebar-btn backup" onclick="openBackupModal()" title="版本備份"><span class="nav-icon">📜</span><span class="nav-label">版本備份</span></div>
-            <div class="app-sidebar-btn" onclick="exportData()" title="匯出電腦備份"><span class="nav-icon">📤</span><span class="nav-label">匯出電腦備份</span></div>
+            <div class="app-sidebar-btn" onclick="openLocalBackupModal()" title="電腦備份（下載／還原）"><span class="nav-icon">💾</span><span class="nav-label">電腦備份</span></div>
             <div class="app-sidebar-btn" style="color:#6C5CE7" onclick="reconcilePMWithRevenue()" title="以營收表為準，完整同步管理表(建立/更新/刪除多餘)"><span class="nav-icon">🔄</span><span class="nav-label">完整同步管理表</span></div>
         </div>
     </aside>
@@ -5556,7 +5615,140 @@ async function deleteContractFromPage(name) {
 }
 window.deleteContractFromPage = deleteContractFromPage;
 
-function exportData() { let b = new Blob([JSON.stringify(localStorage)], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `backup_${curY}.json`; a.click(); }
+// V3.60 電腦備份：下載和還原整合在同一個視窗。只處理營收表自己的資料（不會把同網址其他系統的登入資訊一起打包）
+const REVENUE_KEY_PREFIXES = ['d_', 'vB_', 'rowCount_', 'inv_', 'invCount_'];
+function isRevenueKey(k) { return REVENUE_KEY_PREFIXES.some(p => String(k).startsWith(p)); }
+function collectRevenueData() {
+    const out = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (isRevenueKey(k)) out[k] = localStorage.getItem(k);
+    }
+    return out;
+}
+function lbStamp() {
+    const t = new Date();
+    const p = n => String(n).padStart(2, '0');
+    return `${t.getFullYear()}${p(t.getMonth() + 1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}`;
+}
+function downloadRevenueFile(data, filename) {
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function summarizeRevenueData(obj) {
+    const years = {};
+    let cases = 0, invoices = 0;
+    Object.keys(obj).forEach(k => {
+        let m = k.match(/^d_(\d{4})_\d+$/);
+        if (m) {
+            let d = {};
+            try { d = JSON.parse(obj[k]) || {}; } catch (e) {}
+            if (d[1] || d[2] || d[3]) { cases++; years[m[1]] = (years[m[1]] || 0) + 1; }
+            return;
+        }
+        m = k.match(/^inv_(\d{4})_\d+$/);
+        if (m) {
+            let d = {};
+            try { d = JSON.parse(obj[k]) || {}; } catch (e) {}
+            if (d[1] || d[2] || d[5]) invoices++;
+        }
+    });
+    const count = key => { try { const v = JSON.parse(obj[key] || 'null'); return v ? (Array.isArray(v) ? v.length : Object.keys(v).length) : 0; } catch (e) { return 0; } };
+    return { years, cases, invoices, quotes: count('vB_SavedQuotes'), contracts: count('vB_Contracts') };
+}
+function summaryHtml(sum) {
+    if (sum.cases === 0 && sum.invoices === 0) return '<span class="lb-empty">沒有資料</span>';
+    const yrs = Object.keys(sum.years).sort().map(y => `${y} 年 ${sum.years[y]} 筆`).join('、') || '—';
+    return `<b>${sum.cases}</b> 筆案件<small>${yrs}</small><b>${sum.invoices}</b> 筆發票<small>報價單存檔 ${sum.quotes} 份・合約 ${sum.contracts} 份</small>`;
+}
+
+function exportData() {
+    const data = collectRevenueData();
+    const sum = summarizeRevenueData(data);
+    if (sum.cases === 0 && sum.invoices === 0) { uiAlert("這台電腦上沒有營收表資料可以備份。"); return; }
+    downloadRevenueFile(data, `營收表備份_${lbStamp()}.json`);
+    qtToast(`已下載備份檔（${sum.cases} 筆案件、${sum.invoices} 筆發票）`);
+}
+
+function openLocalBackupModal() {
+    resetLocalBackupModal();
+    const sum = summarizeRevenueData(collectRevenueData());
+    document.getElementById('lb-current-summary').textContent = `目前這台電腦有 ${sum.cases} 筆案件、${sum.invoices} 筆發票`;
+    document.getElementById('local-backup-modal').classList.add('active');
+}
+function closeLocalBackupModal() {
+    document.getElementById('local-backup-modal').classList.remove('active');
+    resetLocalBackupModal();
+}
+function resetLocalBackupModal() {
+    window._lbPending = null;
+    document.getElementById('lb-step-main').style.display = 'block';
+    document.getElementById('lb-step-confirm').style.display = 'none';
+    document.getElementById('lb-close').style.display = 'block';
+    document.getElementById('lb-file').value = '';
+}
+
+function handleLocalBackupFile(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+        let raw;
+        try { raw = JSON.parse(reader.result); } catch (e) { await uiAlert("這個檔案打不開，可能不是營收表的備份檔。"); resetLocalBackupModal(); return; }
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) { await uiAlert("這個檔案的格式不對，不是營收表的備份檔。"); resetLocalBackupModal(); return; }
+        const data = {};
+        Object.keys(raw).forEach(k => {
+            if (!isRevenueKey(k)) return;
+            const v = raw[k];
+            if (v === null || v === undefined || v === 'undefined' || v === 'null') return;
+            data[k] = typeof v === 'string' ? v : JSON.stringify(v);
+        });
+        const fileSum = summarizeRevenueData(data);
+        if (fileSum.cases === 0 && fileSum.invoices === 0) { await uiAlert("這個檔案裡沒有營收表的案件或發票資料，已取消。"); resetLocalBackupModal(); return; }
+        const nowSum = summarizeRevenueData(collectRevenueData());
+        window._lbPending = { data, fileSum, nowSum, name: file.name };
+
+        document.getElementById('lb-file-summary').innerHTML = summaryHtml(fileSum);
+        document.getElementById('lb-now-summary').innerHTML = summaryHtml(nowSum);
+        const warn = [];
+        if (nowSum.cases > fileSum.cases) warn.push(`備份檔的案件比目前少 ${nowSum.cases - fileSum.cases} 筆，還原後這些會不見。`);
+        if (nowSum.invoices > fileSum.invoices) warn.push(`備份檔的發票比目前少 ${nowSum.invoices - fileSum.invoices} 筆。`);
+        if (nowSum.cases > 0) warn.push('還原前會先自動下載一份「目前資料」的備份檔，萬一選錯檔案還救得回來。');
+        document.getElementById('lb-warn').innerHTML = warn.map(w => `<div>${qtEsc(w)}</div>`).join('');
+        document.getElementById('lb-step-main').style.display = 'none';
+        document.getElementById('lb-step-confirm').style.display = 'block';
+        document.getElementById('lb-close').style.display = 'none';
+    };
+    reader.readAsText(file, 'utf-8');
+}
+
+async function confirmLocalRestore() {
+    const pending = window._lbPending;
+    if (!pending) return;
+    if (pending.nowSum.cases > 0 || pending.nowSum.invoices > 0) {
+        downloadRevenueFile(collectRevenueData(), `營收表_還原前自動備份_${lbStamp()}.json`);
+    }
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isRevenueKey(k)) toRemove.push(k); }
+    try {
+        toRemove.forEach(k => localStorage.removeItem(k));
+        Object.keys(pending.data).forEach(k => localStorage.setItem(k, pending.data[k]));
+    } catch (e) {
+        console.error(e);
+        await uiAlert("還原到一半失敗了（可能是瀏覽器空間不夠）。剛剛自動下載的「還原前自動備份」檔可以用來救回原本的資料。");
+        return;
+    }
+    closeLocalBackupModal();
+    await uiAlert(`✅ 已還原 ${pending.fileSum.cases} 筆案件、${pending.fileSum.invoices} 筆發票。\n\n畫面會重新整理。確認資料沒問題後，記得按「搬家至 Firebase」讓雲端也更新。`);
+    location.reload();
+}
+Object.assign(window, { exportData, openLocalBackupModal, closeLocalBackupModal, resetLocalBackupModal, handleLocalBackupFile, confirmLocalRestore });
 
 document.addEventListener('keydown', function(e) {
     if (!e.target.matches('input[type="text"], select, input[type="checkbox"]')) return;
