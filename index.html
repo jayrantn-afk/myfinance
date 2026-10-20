@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.60</title>
+    <title>杰冉宇宙營收表 V3.63</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -896,6 +896,8 @@
         .qt-doc td { height: auto !important; font-size: 12px; border: 1px solid #1D1D1F; padding: 7px 8px; vertical-align: top; transition: none; }
         .qt-doc tr:hover td { background: transparent !important; box-shadow: none !important; }
         .qt-doc td.qt-yellow, .qt-doc tr:hover td.qt-yellow { background: #F0C64B !important; }
+        .qt-doc td.qt-red, .qt-doc tr:hover td.qt-red { background: #FDECEC !important; }
+        .qt-input.qt-neg { color: #D32F2F !important; font-weight: 900 !important; }
 
         #qt-toast { position: fixed; left: 50%; bottom: 36px; transform: translate(-50%, 20px); background: #1D1D1F; color: #FFF; padding: 11px 20px; border-radius: 50px; font-size: 13px; font-weight: 800; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 100001; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
         #qt-toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -1596,7 +1598,7 @@
                         <div style="position:relative;">
                             <button class="qt-btn ghost" onclick="toggleQuoteImportMenu(event)">📂 匯入舊報價單</button>
                             <div id="quote-import-menu">
-                                <input type="text" id="quote-import-search" placeholder="🔍 搜尋標題、客戶、單號" autocomplete="off" oninput="renderQuoteImportMenu()">
+                                <input type="text" id="quote-import-search" autocomplete="off" oninput="renderQuoteImportMenu()">
                                 <div id="quote-import-list"></div>
                             </div>
                         </div>
@@ -1613,29 +1615,29 @@
                             <div class="qt-section-head"><h3 class="qt-section-title">基本資料</h3></div>
                             <div class="qt-field" style="margin-bottom:10px;">
                                 <label for="qt-title">案件標題</label>
-                                <input type="text" id="qt-title" placeholder="例如：品牌形象影片製作" class="qt-input" style="height:44px; font-size:15px; font-weight:800;" oninput="onQtFormChange()">
+                                <input type="text" id="qt-title" class="qt-input" style="height:44px; font-size:15px; font-weight:800;" oninput="onQtFormChange()">
                             </div>
                             <div class="qt-field" style="margin-bottom:10px;">
                                 <label for="qt-subtitle">副標（選填）</label>
-                                <input type="text" id="qt-subtitle" placeholder="例如：30 秒形象影片 ＋ 15 秒剪輯版" class="qt-input" oninput="onQtFormChange()">
+                                <input type="text" id="qt-subtitle" class="qt-input" oninput="onQtFormChange()">
                             </div>
                             <div class="qt-grid-2">
                                 <div class="qt-field">
                                     <label for="qt-client">客戶名稱</label>
-                                    <input type="text" id="qt-client" list="qt-client-list" placeholder="輸入或從常用客戶選" class="qt-input" autocomplete="off" oninput="onQtFormChange()">
+                                    <input type="text" id="qt-client" list="qt-client-list" class="qt-input" autocomplete="off" oninput="onQtFormChange()">
                                     <datalist id="qt-client-list"></datalist>
                                 </div>
                                 <div class="qt-field">
                                     <label for="qt-validity">報價效期</label>
-                                    <input type="text" id="qt-validity" placeholder="例如：報價日起 30 天內" class="qt-input" oninput="onQtFormChange()">
+                                    <input type="text" id="qt-validity" class="qt-input" oninput="onQtFormChange()">
                                 </div>
                                 <div class="qt-field">
                                     <label for="qt-window">案件窗口（選填）</label>
-                                    <input type="text" id="qt-window" placeholder="對方聯絡人" class="qt-input" oninput="onQtFormChange()">
+                                    <input type="text" id="qt-window" class="qt-input" oninput="onQtFormChange()">
                                 </div>
                                 <div class="qt-field">
                                     <label for="qt-days">製作天數（選填）</label>
-                                    <input type="text" id="qt-days" placeholder="例如：14 個工作天" class="qt-input" oninput="onQtFormChange()">
+                                    <input type="text" id="qt-days" class="qt-input" oninput="onQtFormChange()">
                                 </div>
                                 <div class="qt-field">
                                     <label for="qt-no">報價單號</label>
@@ -1669,9 +1671,10 @@
                             </label>
                             <div class="qt-sum-row">
                                 <span>優惠後金額（選填，填了就以這個為總價）</span>
-                                <input type="number" id="qt-discount-final" min="0" placeholder="不填＝原價" oninput="if(this.value<0)this.value=0; onQtFormChange()" onwheel="this.blur()" style="width:130px; height:34px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:8px; padding:0 10px; outline:none; font-family:inherit; -moz-appearance:textfield;">
+                                <input type="number" id="qt-discount-final" min="0" oninput="if(this.value<0)this.value=0; onQtFormChange()" onwheel="this.blur()" style="width:130px; height:34px; text-align:right; font-weight:800; color:#C89B2C; border:1px solid var(--card-border); border-radius:8px; padding:0 10px; outline:none; font-family:inherit; -moz-appearance:textfield;">
                             </div>
                             <div id="qt-orig-line" class="qt-sum-row" style="display:none;"><span>原價</span><b style="text-decoration:line-through; color:var(--light);">$ <span id="qt-orig-total">0</span></b></div>
+                            <div id="qt-disc-amt-line" class="qt-sum-row" style="display:none; color:#D32F2F;"><span style="font-weight:900;">優惠折扣</span><b style="color:#D32F2F; font-size:16px; font-weight:900;">-<span id="qt-disc-amt">0</span></b></div>
                             <div id="qt-disc-net-line" class="qt-sum-row" style="display:none;"><span>優惠後未稅</span><b>$ <span id="qt-disc-net">0</span></b></div>
                             <div id="qt-disc-tax-line" class="qt-sum-row" style="display:none;"><span>優惠後營業稅 5%</span><b>$ <span id="qt-disc-tax">0</span></b></div>
                             <div class="qt-sum-total"><span id="qt-total-label">總價（含稅）</span><span>$ <span id="qt-total">0</span></span></div>
@@ -3105,6 +3108,9 @@ function calcQuotationTotal() {
     setText('qt-orig-total', t.originalTotal.toLocaleString());
     const origLine = document.getElementById('qt-orig-line');
     if (origLine) origLine.style.display = t.hasDiscount ? 'flex' : 'none';
+    const dal = document.getElementById('qt-disc-amt-line');
+    if (dal) dal.style.display = t.hasDiscount ? 'flex' : 'none';
+    setText('qt-disc-amt', t.discountAmount.toLocaleString());
     const showDiscBreakdown = t.hasDiscount && t.includeTax;
     const dnl = document.getElementById('qt-disc-net-line');
     const dtl = document.getElementById('qt-disc-tax-line');
@@ -3154,9 +3160,9 @@ function renderQtItems() {
             <div class="qt-item-card">
                 <div class="qt-item-row">
                     <div class="qt-item-num">${i + 1}</div>
-                    <input type="text" value="${qtEsc(item.name)}" placeholder="服務項目" oninput="updateQtItem(${i}, 'name', this.value)" class="qt-input" style="flex: 2; height: 34px; font-weight: 700;">
-                    <input type="text" value="${qtEsc(item.spec)}" placeholder="規格／數量" oninput="updateQtItem(${i}, 'spec', this.value)" class="qt-input" style="flex: 1; height: 34px;">
-                    <input type="number" value="${qtEsc(item.amount)}" placeholder="金額" oninput="updateQtItem(${i}, 'amount', this.value)" onwheel="this.blur()" class="qt-input" style="width: 110px; height: 34px; font-weight: 800; color: #C89B2C; flex-shrink: 0; text-align: right;">
+                    <input type="text" value="${qtEsc(item.name)}" oninput="updateQtItem(${i}, 'name', this.value)" class="qt-input" style="flex: 2; height: 34px; font-weight: 700;">
+                    <input type="text" value="${qtEsc(item.spec)}" oninput="updateQtItem(${i}, 'spec', this.value)" class="qt-input" style="flex: 1; height: 34px;">
+                    <input type="number" value="${qtEsc(item.amount)}" oninput="this.classList.toggle('qt-neg', parseFloat(this.value) < 0); updateQtItem(${i}, 'amount', this.value)" onwheel="this.blur()" class="qt-input ${parseFloat(item.amount) < 0 ? 'qt-neg' : ''}" style="width: 110px; height: 34px; font-weight: 800; color: #C89B2C; flex-shrink: 0; text-align: right;">
                     <div class="qt-item-actions">
                         <button class="qt-icon-btn" onclick="moveQtItem(${i}, -1)" title="往上移" ${i === 0 ? 'disabled' : ''}>↑</button>
                         <button class="qt-icon-btn" onclick="moveQtItem(${i}, 1)" title="往下移" ${i === last ? 'disabled' : ''}>↓</button>
@@ -3164,7 +3170,7 @@ function renderQtItems() {
                         <button class="qt-icon-btn danger" onclick="deleteQtItem(${i})" title="刪除這一項">✕</button>
                     </div>
                 </div>
-                <textarea placeholder="製作內容說明（可以換行）" oninput="updateQtItem(${i}, 'desc', this.value)" class="qt-input" rows="2" style="width: 100%; height: auto; margin-top: 6px; padding: 8px 12px; resize: vertical; line-height: 1.5;">${qtEsc(item.desc)}</textarea>
+                <textarea oninput="updateQtItem(${i}, 'desc', this.value)" class="qt-input" rows="2" style="width: 100%; height: auto; margin-top: 6px; padding: 8px 12px; resize: vertical; line-height: 1.5;">${qtEsc(item.desc)}</textarea>
             </div>
         `).join('');
     }
@@ -3287,7 +3293,7 @@ function buildQuoteDocHTML(state, t, opts = {}) {
             <td style="${cell} text-align:left; font-weight:700;">${e(it.name)}</td>
             <td style="${cell} text-align:left; color:#475467; line-height:1.55;">${e(it.desc || '').replace(/\n/g, '<br>')}</td>
             <td style="${cell} text-align:center;">${e(it.spec || '')}</td>
-            <td style="${cell} text-align:right; font-weight:800; white-space:nowrap;">${(parseFloat(it.amount) || 0).toLocaleString()}</td>
+            <td style="${cell} text-align:right; white-space:nowrap; ${(parseFloat(it.amount) || 0) < 0 ? 'font-weight:900; color:#D32F2F;' : 'font-weight:800;'}">${(parseFloat(it.amount) || 0).toLocaleString()}</td>
         </tr>`).join('')
         : `<tr><td colspan="5" style="${cell} text-align:center; color:#C7C7CC; padding:22px;">${preview ? '左邊填了服務項目，這裡就會出現' : ''}</td></tr>`;
 
@@ -3297,7 +3303,7 @@ function buildQuoteDocHTML(state, t, opts = {}) {
     if (t.includeTax) foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">營業稅 5%</td><td style="${val}">${t.tax.toLocaleString()}</td></tr>`;
     if (t.hasDiscount) {
         foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">原價合計</td><td style="${val} text-decoration:line-through; color:#999;">${t.originalTotal.toLocaleString()}</td></tr>`;
-        foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠折扣</td><td style="${val} color:#D32F2F;">－${t.discountAmount.toLocaleString()}</td></tr>`;
+        foot += `<tr style="page-break-inside:avoid;"><td colspan="4" class="qt-red" style="${cell} text-align:right; color:#D32F2F; font-weight:900; font-size:13px;">優惠折扣</td><td class="qt-red" style="${cell} text-align:right; color:#D32F2F; font-weight:900; font-size:14px; white-space:nowrap;">-${t.discountAmount.toLocaleString()}</td></tr>`;
         if (t.includeTax) {
             foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠後未稅</td><td style="${val}">${t.discountedNet.toLocaleString()}</td></tr>`;
             foot += `<tr style="page-break-inside:avoid;"><td colspan="4" style="${lab}">優惠後營業稅 5%</td><td style="${val}">${t.discountedTax.toLocaleString()}</td></tr>`;
