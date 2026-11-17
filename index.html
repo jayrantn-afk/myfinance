@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.70</title>
+    <title>杰冉宇宙營收表 V3.71</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -2044,14 +2044,13 @@ function itemDiscountPercent(d) {
     } catch (e) { return 100; }
 }
 function itemRawSum(d) { return itemList(d).reduce((t, it) => t + addonNum(it.amount), 0); }
+// V3.71 合約折扣改成「平均分攤」：每一支影片（沒細項的案子算一支、有細項的每一項算一支）折一樣多的錢
+// 每支要折多少由 recomputeContract() 算好存在 item.disc，這裡只負責扣掉
 function itemNets(d) {
     const items = itemList(d);
     if (!items.length) return [];
-    const disc = itemDiscountPercent(d);
-    const nets = items.map(it => Math.round(addonNum(it.amount) * disc / 100));
-    const want = Math.round(itemRawSum(d) * disc / 100);
-    nets[nets.length - 1] += want - nets.reduce((t, n) => t + n, 0);
-    return items.map((it, i) => ({ ...it, net: nets[i] }));
+    const inContract = itemDiscountPercent(d) < 100;
+    return items.map(it => ({ ...it, net: addonNum(it.amount) - (inContract ? addonNum(it.disc) : 0) }));
 }
 function splitAmount(net, pc, pb, pp) {
     const b = Math.round(net * pb / 100), p = Math.round(net * pp / 100);
@@ -4372,6 +4371,7 @@ function duplicateProjectRow(r) {
         if (tr) { tr.classList.add('row-flash'); tr.scrollIntoView({ block: 'nearest', inline: 'start' }); setTimeout(() => tr.classList.remove('row-flash'), 1600); }
         if (nameEl) { nameEl.focus({ preventScroll: true }); nameEl.select(); }
     }, 320);
+    if (copy[25]) { recomputeContract(copy[25]); initTable(); filterTable(); }
     qtToast(`已複製成 ${copy[1] || '新的一列'}，直接打新的案名就好`);
 }
 window.duplicateProjectRow = duplicateProjectRow;
@@ -4391,6 +4391,7 @@ async function deleteProjectRow(r) {
     }
     localStorage.setItem(`d_${curY}_${rc-1}`, JSON.stringify({}));
     clearRowCache();
+    if (d[25]) recomputeContract(d[25]);
     
     initTable();
     window.settleCheckedIdxs.clear();
@@ -4903,7 +4904,7 @@ function updateAddonSum() {
     if (sp) {
         const disc = itemDiscountPercent(d);
         box.innerHTML = `
-            <div class="ce-sum-row"><span>細項合計${disc < 100 ? `（合約 ${formatDiscountLabel(disc)}）` : ''}</span><b>${fmt(sp.base)}</b></div>
+            <div class="ce-sum-row"><span>細項合計${disc < 100 ? `（合約折扣會在存檔後平均分攤）` : ''}</span><b>${fmt(sp.base)}</b></div>
             ${addon ? `<div class="ce-sum-row addon"><span>追加費用</span><b>＋${fmt(addon).slice(2)}</b></div>` : ''}
             <div class="ce-sum-row total"><span>未稅額</span><b>${fmt(sp.base + addon)}</b></div>
             <div class="ce-split"><span>公司 <b>${fmt(sp.c)}</b></span><span>老闆 <b>${fmt(sp.b)}</b></span><span>夥伴 <b>${fmt(sp.p)}</b></span></div>`;
@@ -4950,13 +4951,14 @@ async function saveAddonEditor() {
     const d = { ...getRowData(r) };
     const hadItems = itemList(d).length > 0;
     d[27] = adds.map(a => ({ desc: String(a.desc).trim(), amount: parseFloat(a.amount) }));
-    d[28] = lines.map(it => ({ name: String(it.name).trim(), amount: parseFloat(it.amount), assign: it.assign, pc: addonNum(it.pc), pb: addonNum(it.pb), pp: addonNum(it.pp) }));
+    d[28] = lines.map(it => ({ name: String(it.name).trim(), amount: parseFloat(it.amount), assign: it.assign, pc: addonNum(it.pc), pb: addonNum(it.pb), pp: addonNum(it.pp), disc: 0 }));
     setRowData(r, d);
     closeAddonEditor();
     if (hadItems && lines.length === 0) {
         [9, 14, 15, 16].forEach(c => { const el = document.getElementById(`r${r}c${c}`); if (el) el.readOnly = false; });
     }
     calc(r, 9, true);
+    if (d[25]) { recomputeContract(d[25]); initTable(); }
     qtToast('已儲存案件內容');
 }
 Object.assign(window, { refreshAddonChip, openAddonEditor, renderCeItems, cePct, ceToggleAssign, ceAddItem, ceRemoveItem, renderAddonList, updateAddonSum, addonAddRow, addonAddPreset, addonRemoveRow, closeAddonEditor, saveAddonEditor });
@@ -5435,27 +5437,86 @@ async function quickDeleteContract(name, r) {
 }
 window.quickDeleteContract = quickDeleteContract;
 
+// 把一份合約底下所有影片重新平均分攤折扣。percentOverride 有給就用它試算（還沒存進合約）
+// 回傳 { ok, units, off, share, tooSmall: [名稱...] }；dryRun 為 true 時只試算不寫入
+function recomputeContract(name, opts = {}) {
+    if (!name) return { ok: true, units: 0, off: 0, share: 0, tooSmall: [] };
+    const contracts = getContracts();
+    const pct = opts.percent != null ? opts.percent : ((contracts[name] || {}).discount ?? 100);
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    const rows = [];
+    yList.forEach(year => {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let r = 0; r < rc; r++) {
+            const raw = localStorage.getItem(`d_${year}_${r}`);
+            if (!raw) continue;
+            let d; try { d = JSON.parse(raw); } catch (e) { continue; }
+            if (d[25] === name) rows.push({ year, r, d });
+        }
+    });
+    rows.sort((a, b) => a.year === b.year ? a.r - b.r : a.year.localeCompare(b.year));
+
+    const units = [];
+    rows.forEach(x => {
+        const items = Array.isArray(x.d[28]) ? x.d[28] : [];
+        const live = items.filter(it => it && (String(it.name || '').trim() !== '' || addonNum(it.amount) !== 0));
+        if (live.length) live.forEach(it => units.push({ x, item: it, orig: addonNum(it.amount), label: `${x.d[1] || ''} ${it.name || ''}`.trim() }));
+        else {
+            const orig = addonNum(x.d[26]) || addonNum(x.d[9]);
+            units.push({ x, item: null, orig, label: `${x.d[1] || ''} ${x.d[3] || ''}`.trim() });
+        }
+    });
+    const total = units.reduce((t, u) => t + u.orig, 0);
+    const off = pct < 100 ? total - Math.round(total * pct / 100) : 0;
+    const n = units.length;
+    const share = n ? Math.floor(off / n) : 0;
+    units.forEach((u, i) => { u.disc = i === n - 1 ? off - share * (n - 1) : share; });
+    const tooSmall = units.filter(u => u.disc > u.orig).map(u => u.label);
+    const result = { ok: tooSmall.length === 0, units: n, off, share, tooSmall };
+    if (opts.dryRun || !result.ok) return result;
+
+    units.forEach(u => {
+        const d = u.x.d;
+        if (u.item) u.item.disc = pct < 100 ? u.disc : 0;
+        else if (pct < 100) { d[26] = String(u.orig); d[9] = String(u.orig - u.disc); }
+        else { d[9] = String(u.orig); d[26] = ''; }
+    });
+    rows.forEach(x => {
+        const d = recalcRowValues(x.d);
+        localStorage.setItem(`d_${x.year}_${x.r}`, JSON.stringify(d));
+    });
+    clearRowCache();
+    return result;
+}
+window.recomputeContract = recomputeContract;
+
 function applyContractToRow(r, contractName) {
     const netInput = document.getElementById(`r${r}c9`);
     const origInput = document.getElementById(`r${r}c26`);
     const contractInput = document.getElementById(`r${r}c25`);
     if (!netInput || !origInput || !contractInput) return;
+    const oldName = contractInput.value;
 
     if (!contractName) {
         if (origInput.value) netInput.value = origInput.value;
         origInput.value = '';
         contractInput.value = '';
+        const d = { ...getRowData(r) };
+        if (Array.isArray(d[28])) { d[28] = d[28].map(it => ({ ...it, disc: 0 })); setRowData(r, d); }
         calc(r, 9, true);
+        if (oldName) recomputeContract(oldName);
+        clearRowCache(); initTable();
         return;
     }
 
-    const contracts = getContracts();
-    const discount = (contracts[contractName] || {}).discount ?? 100;
     let originalPrice = (origInput.value && parseFloat(origInput.value) > 0) ? parseFloat(origInput.value) : (parseFloat(netInput.value) || 0);
-    origInput.value = String(originalPrice);
+    if (!itemList(getRowData(r)).length) { origInput.value = String(originalPrice); netInput.value = String(originalPrice); }
     contractInput.value = contractName;
-    netInput.value = String(Math.round(originalPrice * discount / 100));
     calc(r, 9, true);
+    const res = recomputeContract(contractName);
+    if (!res.ok) uiAlert(`合約「${contractName}」平均分攤後，每支要折約 $${res.share.toLocaleString()}，但這些影片本身比這個金額還便宜：\n${res.tooSmall.join('\n')}\n\n金額先維持原價，請調整折扣或案子。`);
+    if (oldName && oldName !== contractName) recomputeContract(oldName);
+    clearRowCache(); initTable();
 }
 window.applyContractToRow = applyContractToRow;
 
@@ -5618,7 +5679,8 @@ function renderContractDetail(name) {
     [...window._ctSel.keys].forEach(k => { if (!validKeys.has(k)) window._ctSel.keys.delete(k); });
     window._ctRowsCache = rows;
 
-    window._contractPreviewBase = { name, totalOriginal: sum.baseOrig, currentPercent: discount, count: rows.length };
+    const unitCount = rows.reduce((t, x) => t + (itemList(x.d).length || 1), 0);
+    window._contractPreviewBase = { name, totalOriginal: sum.baseOrig, currentPercent: discount, count: rows.length, units: unitCount };
     const presetChips = [100, 95, 92, 90, 88, 85, 80].map(p =>
         `<button class="contract-preset-chip ${p === discount ? 'active' : ''}" style="--cc:${curColor};" onclick="setContractDiscountPreset(${p})">${formatDiscountLabel(p)}</button>`
     ).join('');
@@ -5850,7 +5912,9 @@ function updateContractDiscountPreview() {
         return;
     }
     const after = Math.round(base.totalOriginal * percent / 100);
-    box.innerHTML = `套用後：案子本身未稅會變成 <b>$${after.toLocaleString()}</b>（原價 $${base.totalOriginal.toLocaleString()}，追加費用不打折）`;
+    const off = base.totalOriginal - after;
+    const each = base.units ? Math.floor(off / base.units) : 0;
+    box.innerHTML = `套用後：未稅 <b>$${after.toLocaleString()}</b>（原價 $${base.totalOriginal.toLocaleString()}），總共折 <b>$${off.toLocaleString()}</b>，平均分攤到 ${base.units} 支影片，每支折約 <b>$${each.toLocaleString()}</b>（追加費用不打折）`;
 }
 window.updateContractDiscountPreview = updateContractDiscountPreview;
 
@@ -5903,34 +5967,19 @@ async function applyContractDiscount(name) {
     const discount = discountInputToPercent(input.value);
     if (discount === null) { await uiAlert("看不懂這個折數。\n\n打 9 或 90 = 九折\n打 92 或 9.2 = 92 折\n空白或 0 = 原價"); input.focus(); return; }
     const displayText = discount >= 100 ? '原價(不打折)' : `打 ${formatDiscountLabel(discount)}`;
-    if (!(await uiConfirm(`確定要把「${name}」底下所有案子的折扣改成 ${displayText} 嗎？\n\n會直接改動未稅額、稅金、含稅總額、公司/老闆/夥伴金額，跟營收表是同一份資料，改了就會同步。`, "套用折扣確認"))) return;
+    if (!(await uiConfirm(`確定要把「${name}」底下所有案子的折扣改成 ${displayText} 嗎？\n\n折扣金額會平均分攤到每一支影片（有細項的案子每一項算一支）。\n會直接改動未稅額、稅金、含稅總額、公司/老闆/夥伴金額。`, "套用折扣確認"))) return;
+
+    const test = recomputeContract(name, { percent: discount, dryRun: true });
+    if (!test.ok) { await uiAlert(`平均分攤後每支要折約 $${test.share.toLocaleString()}，但這些影片本身比這個金額還便宜，沒辦法套用：\n\n${test.tooSmall.join('\n')}`); return; }
 
     let contracts = getContracts();
     contracts[name] = { ...(contracts[name] || {}), discount };
     saveContracts(contracts);
+    const res = recomputeContract(name);
 
-    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
-    let updatedCount = 0;
-    yList.forEach(year => {
-        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
-        for (let r = 0; r < rc; r++) {
-            const raw = localStorage.getItem(`d_${year}_${r}`);
-            if (!raw) continue;
-            let d; try { d = JSON.parse(raw); } catch (e) { continue; }
-            if (d[25] !== name) continue;
-            const original = parseFloat(d[26]) || parseFloat(d[9]) || 0;
-            if (!d[26]) d[26] = String(original);
-            d[9] = String(Math.round(original * discount / 100));
-            d = recalcRowValues(d);
-            localStorage.setItem(`d_${year}_${r}`, JSON.stringify(d));
-            updatedCount++;
-        }
-    });
-
-    clearRowCache();
     initTable();
     renderContractPage();
-    await uiAlert(`✅ 已更新 ${updatedCount} 筆案子的金額！`);
+    await uiAlert(discount >= 100 ? `✅ 已改回原價，共 ${res.units} 支影片` : `✅ 已套用 ${formatDiscountLabel(discount)}：總共折 $${res.off.toLocaleString()}，平均分攤到 ${res.units} 支影片，每支折約 $${res.share.toLocaleString()}`);
 }
 window.applyContractDiscount = applyContractDiscount;
 
