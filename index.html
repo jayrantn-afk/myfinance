@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.71</title>
+    <title>杰冉宇宙營收表 V3.72</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -4159,7 +4159,7 @@ function createRow(r) {
             td.innerHTML = `<div class="proj-name-cell"><div class="contract-trigger ${saved[25] ? 'has-value' : ''}" id="r${r}c25trigger" onclick="event.stopPropagation(); openContractMenu(this, ${r})" title="所屬合約包"><i class="fas fa-link"></i></div><input type="hidden" id="r${r}c25" value="${saved[25] || ''}"><input type="text" id="r${r}c${c}" value="${val}" oninput="calc(${r},${c})"><span class="addon-chip" id="r${r}addon" onclick="event.stopPropagation(); openAddonEditor(${r})" title="追加費用">＋</span><input type="hidden" id="r${r}c24" value="${saved[24] || '製'}"><input type="hidden" id="r${r}c26" value="${saved[26] || ''}"><span class="done-badge ${saved[24] === '完' ? 'active' : ''}" id="r${r}c24badge" onclick="event.stopPropagation(); toggleDoneFlag(${r})" title="綠：製作完成"></span><span class="settled-badge" id="r${r}c3badge" onclick="event.stopPropagation(); toggleSettled(${r})" title="黃：已收款"></span><span class="partner-badge" id="r${r}c21badge" onclick="event.stopPropagation(); togglePartnerPaid(${r})" title="紫：已分潤夥伴"></span></div>`;
         } else if (c===9) {
             td.classList.add('net-cell');
-            td.innerHTML = `<input type="text" id="r${r}c9" value="${val}" oninput="calc(${r},9)"><span class="net-total" id="r${r}c9total"></span>`;
+            td.innerHTML = `<input type="text" id="r${r}c9" value="${val}" oninput="calc(${r},9)" onchange="onContractNetChange(${r})"><span class="net-total" id="r${r}c9total"></span>`;
         } else if (c===20) {
             td.innerHTML = `<input type="text" id="r${r}c${c}" value="${val}" title="${val.replace(/"/g,'&quot;')}" oninput="this.title=this.value; calc(${r},${c})">`;
         } else {
@@ -5490,6 +5490,55 @@ function recomputeContract(name, opts = {}) {
 }
 window.recomputeContract = recomputeContract;
 
+// V3.72 修正：有些合約案子沒有存到「原價」（d[26] 是空的或 '0'），系統就把已經打過折的價格當成原價，
+// 結果請款系統顯示「已折 0」、平均分攤也算錯。開啟時自動補回原價（現在的價格 ÷ 折數），
+// 然後把還沒標記完成的合約重新平均分攤一次。已收款完成的合約只補原價，金額不動。
+function migrateContractOriginals() {
+    let contracts;
+    try { contracts = JSON.parse(localStorage.getItem('vB_Contracts')) || {}; } catch (e) { return; }
+    const touched = new Set();
+    const yList = JSON.parse(localStorage.getItem('vB_List')) || [curY];
+    yList.forEach(year => {
+        const rc = parseInt(localStorage.getItem(`rowCount_${year}`)) || 65;
+        for (let r = 0; r < rc; r++) {
+            const key = `d_${year}_${r}`;
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            let d; try { d = JSON.parse(raw); } catch (e) { continue; }
+            const c = d[25] && contracts[d[25]];
+            if (!c) continue;
+            const pct = c.discount ?? 100;
+            if (pct >= 100) continue;
+            if (Array.isArray(d[28]) && d[28].some(it => it && (String(it.name || '').trim() || addonNum(it.amount)))) continue;
+            if (addonNum(d[26]) > 0) continue;
+            const net = addonNum(d[9]);
+            if (!net) continue;
+            d[26] = String(Math.round(net * 100 / pct));
+            localStorage.setItem(key, JSON.stringify(d));
+            touched.add(d[25]);
+        }
+    });
+    touched.forEach(name => { if (!contracts[name].completed) recomputeContract(name); });
+    clearRowCache();
+    if (touched.size) setTimeout(() => qtToast(`已補回 ${[...touched].join('、')} 裡缺少的原價，並重新平均分攤`), 1200);
+}
+window.migrateContractOriginals = migrateContractOriginals;
+
+// 合約案子（沒有細項）在「未稅額」改金額：當成改原價，改完自動重新平均分攤
+function onContractNetChange(r) {
+    const d = getRowData(r);
+    const name = d[25];
+    if (!name || itemDiscountPercent(d) >= 100 || itemList(d).length) return;
+    const v = addonNum(document.getElementById(`r${r}c9`).value);
+    const nd = { ...d, 26: String(v), 9: String(v) };
+    setRowData(r, nd);
+    recomputeContract(name);
+    initTable();
+    filterTable();
+    qtToast(`合約案子的未稅額當成原價 $${v.toLocaleString()}，已重新平均分攤「${name}」的折扣`);
+}
+window.onContractNetChange = onContractNetChange;
+
 function applyContractToRow(r, contractName) {
     const netInput = document.getElementById(`r${r}c9`);
     const origInput = document.getElementById(`r${r}c26`);
@@ -6188,6 +6237,7 @@ window.deleteProjectRow = deleteProjectRow;
 
 window.onload = () => { 
     migrateRitaToYiminjia(); 
+    migrateContractOriginals();
     applyTheme(curY); 
     document.getElementById('yDisp').innerText = curY; 
     if (localStorage.getItem('vB_SidebarCollapsed') === '1') {
