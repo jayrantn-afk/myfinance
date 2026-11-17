@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.69</title>
+    <title>杰冉宇宙營收表 V3.70</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -706,6 +706,12 @@
         .st-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .st-btn-primary { background: #1D1D1F; color: #FFF; border-color: #1D1D1F; }
         .st-btn-primary:hover:not(:disabled) { background: #333; }
+
+        /* ============ V3.70 合約折扣標示 ============ */
+        .inv-cdisc-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 900; background: #FDECEC; color: #D32F2F; vertical-align: middle; cursor: help; }
+        .inv-cdisc-line { font-size: 12px; font-weight: 600; color: #667085; margin-top: 3px; }
+        .inv-cdisc-line b { color: #D32F2F; font-weight: 900; }
+        .inv-disc-locked { margin-top: 6px; font-size: 12px; font-weight: 800; color: #D32F2F; }
 
         /* ============ V3.60 電腦備份 ============ */
         .lb-content { max-width: 460px !important; text-align: left !important; }
@@ -1414,6 +1420,7 @@
                                 稅金 <span id="inv-disc-tax" style="color: #101828; font-weight: 900;">$ 0</span>
                             </div>
                             <div id="inv-discount-toggle" onclick="toggleDiscountPanel()" style="margin-top: 6px; font-size: 12px; color: var(--primary); font-weight: 700; cursor: pointer;">＋ 套用折扣</div>
+                            <div id="inv-discount-locked" class="inv-disc-locked" style="display:none;"></div>
                             <div id="inv-discount-panel" style="display: none; margin-top: 8px; align-items: center; justify-content: flex-end; gap: 6px; font-size: 13px; color: #667085; font-weight: 600;">
                                 套用 
                                 <input type="number" step="1" min="0" max="100" id="inv-discount-input" value="10" oninput="calcQuoteTotal()" style="width: 50px; text-align: center; font-size: 14px; font-weight: 800; color: var(--primary); border: 1px solid #D0D5DD; border-radius: 6px; padding: 2px 4px; outline: none;"> 折
@@ -3773,6 +3780,16 @@ window._billSource = null;
 function clearBillSource() { window._billSource = null; }
 window.clearBillSource = clearBillSource;
 
+// V3.70 合約折扣在請款系統要看得到，而且有合約折扣的案子不能再打一次折
+function contractDiscInfo(d) {
+    const pct = itemDiscountPercent(d);
+    if (!d || !d[25] || pct >= 100) return null;
+    const addon = addonSum(d);
+    const origBase = itemList(d).length ? itemRawSum(d) : (addonNum(d[26]) || addonNum(d[9]));
+    const nowBase = itemList(d).length ? itemNets(d).reduce((t, it) => t + it.net, 0) : addonNum(d[9]);
+    return { name: String(d[25]), pct, label: formatDiscountLabel(pct), origBase, saved: origBase - nowBase, addon };
+}
+
 function runQuoteSearch() {
     let sc = document.getElementById('qC').value.trim().toLowerCase(), sm = document.getElementById('qM').value.trim().padStart(2,'0'), rowCount = parseInt(localStorage.getItem(`rowCount_${curY}`)) || 65;
     const src = window._billSource;
@@ -3792,7 +3809,8 @@ function runQuoteSearch() {
         });
         document.getElementById('inv-cust-info').innerText = `合約：${src.label}`;
         document.getElementById('inv-official-name').value = src.client ? resolveOfficialClientName(src.client) : '';
-        banner.innerHTML = `<span>📑 這張是從合約「<b>${qtEsc(src.label)}</b>」帶過來的 ${results.length} 件案子</span><button onclick="clearBillSource(); runQuoteSearch();">改回一般搜尋</button>`;
+        const srcDisc = results.map(contractDiscInfo).find(Boolean);
+        banner.innerHTML = `<span>📑 這張是從合約「<b>${qtEsc(src.label)}</b>」帶過來的 ${results.length} 件案子${srcDisc ? `，金額<b>已經是合約 ${srcDisc.label}</b>` : ''}</span><button onclick="clearBillSource(); runQuoteSearch();">改回一般搜尋</button>`;
         banner.style.display = 'flex';
     } else {
         banner.style.display = 'none';
@@ -3825,6 +3843,9 @@ function runQuoteSearch() {
         let preTax = parts.reduce((t, p) => t + p.pre, 0);
         let totalAmt = parts.reduce((t, p) => t + p.total, 0);
         let taxAmt = basePart.tax;
+        const cd = contractDiscInfo(d);
+        const cdTag = cd ? ` <span class="inv-cdisc-tag" title="合約「${qtEsc(cd.name)}」，案子原價未稅 $${cd.origBase.toLocaleString()}，已折 $${cd.saved.toLocaleString()}（追加費用不打折）">合約 ${cd.label}</span>` : '';
+        const cdLine = cd ? `<div class="inv-cdisc-line">原價未稅 <s>$ ${cd.origBase.toLocaleString()}</s>　合約 ${cd.label}，已折 <b>-${cd.saved.toLocaleString()}</b>${cd.addon ? '（追加費用不打折）' : ''}</div>` : '';
         const addonHtml = addons.map(a => `
             <div class="inv-addon-line">
                 <div style="width: 120px;"></div>
@@ -3834,13 +3855,13 @@ function runQuoteSearch() {
                 <div style="width: 120px; text-align: right; font-weight: 800;">$ ${a.total.toLocaleString()}</div>
             </div>`).join('');
         return `
-        <div class="inv-item quote-data-row" style="border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${qtEsc(d[4] || '')}" data-parts="${qtEsc(JSON.stringify(parts))}">
+        <div class="inv-item quote-data-row" style="border-bottom: 1px solid #E4E7EC; transition: 0.2s; background: #FFF;" data-pre="${preTax}" data-total="${totalAmt}" data-type="${qtEsc(d[4] || '')}" data-parts="${qtEsc(JSON.stringify(parts))}" data-cdisc="${cd ? cd.pct : ''}" data-cname="${cd ? qtEsc(cd.name) : ''}" data-corig="${cd ? cd.origBase : ''}" data-csaved="${cd ? cd.saved : ''}">
         <div style="display: flex; align-items: center; padding: 12px 20px;">
             <div class="quote-cb-wrap" style="width: 40px; text-align: center;">
                 <input type="checkbox" class="quote-cb" data-pre="${preTax}" data-amt="${totalAmt}" checked onchange="calcQuoteTotal(this)" style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; margin: auto;">
             </div>
             <div class="inv-col-id" style="width: 80px; font-size: 13px; font-weight: 800; color: #475467; text-align: center;">${qtEsc(d[1]||'')}</div>
-            <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;"><span class="inv-item-name-text">${qtEsc(d[3])}</span>${d[4] ? ` <span style="display:inline-block; margin-left:4px; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:800; background:#FEF3C7; color:#92400E; vertical-align:middle;">${qtEsc(d[4])}</span>` : ''}</div>
+            <div class="inv-col-info" style="flex: 1; font-size: 15px; font-weight: 800; color: #101828; padding-left: 10px;"><span class="inv-item-name-text">${qtEsc(d[3])}</span>${d[4] ? ` <span style="display:inline-block; margin-left:4px; padding:1px 8px; border-radius:20px; font-size:11px; font-weight:800; background:#FEF3C7; color:#92400E; vertical-align:middle;">${qtEsc(d[4])}</span>` : ''}${cdTag}${cdLine}</div>
             <div style="width: 100px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">${hasItems ? '' : '$ ' + basePart.pre.toLocaleString()}</div>
             <div style="width: 80px; text-align: right; font-size: 13px; font-weight: 600; color: #667085;">${hasItems ? '' : '$ ' + taxAmt.toLocaleString()}</div>
             <div class="inv-col-total" style="width: 120px; text-align: right; font-size: 15px; font-weight: 900; color: var(--primary);">$ ${(hasItems ? totalAmt : basePart.total).toLocaleString()}</div>
@@ -3869,6 +3890,7 @@ function renderQuoteVipChips() {
 window.renderQuoteVipChips = renderQuoteVipChips;
 
 function toggleDiscountPanel() {
+    if (window._billDiscLocked) return;
     let panel = document.getElementById('inv-discount-panel');
     let toggle = document.getElementById('inv-discount-toggle');
     let isOpening = panel.style.display === 'none' || !panel.style.display;
@@ -3905,13 +3927,32 @@ function calcQuoteTotal(el = null) {
     }
     
     let totalPre = 0, totalAmt = 0;
+    let lockedBy = [];
     document.querySelectorAll('.inv-item').forEach(item => {
         let cb = item.querySelector('.quote-cb');
         if (cb && cb.checked) {
             totalPre += parseFloat(item.getAttribute('data-pre')) || 0;
             totalAmt += parseFloat(item.getAttribute('data-total')) || 0; 
+            if (item.getAttribute('data-cdisc')) lockedBy.push(item.getAttribute('data-cname'));
         }
     });
+    const lockEl = document.getElementById('inv-discount-locked');
+    const toggleEl = document.getElementById('inv-discount-toggle');
+    const panelEl = document.getElementById('inv-discount-panel');
+    window._billDiscLocked = lockedBy.length > 0;
+    if (window._billDiscLocked) {
+        document.getElementById('inv-discount-input').value = '10';
+        if (panelEl) panelEl.style.display = 'none';
+        if (toggleEl) toggleEl.style.display = 'none';
+        if (lockEl) {
+            const names = [...new Set(lockedBy)];
+            lockEl.innerHTML = `已含合約折扣（${names.map(qtEsc).join('、')}），不能再另外打折`;
+            lockEl.style.display = 'block';
+        }
+    } else {
+        if (lockEl) lockEl.style.display = 'none';
+        if (toggleEl && (!panelEl || panelEl.style.display === 'none' || !panelEl.style.display)) toggleEl.style.display = 'block';
+    }
     
     let discountVal = document.getElementById('inv-discount-input').value;
     let resolvedPercent = resolveDiscountPercent(discountVal);
@@ -3966,7 +4007,9 @@ function downloadPDF() {
         let type = item.getAttribute('data-type') || '';
         let parts = [];
         try { parts = JSON.parse(item.getAttribute('data-parts') || '[]'); } catch (e) {}
-        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', type, pre, tax: total - pre, total, parts });
+        const cdisc = item.getAttribute('data-cdisc');
+        const cinfo = cdisc ? { label: formatDiscountLabel(parseFloat(cdisc)), orig: parseFloat(item.getAttribute('data-corig')) || 0, saved: parseFloat(item.getAttribute('data-csaved')) || 0 } : null;
+        items.push({ id: idEl ? idEl.innerText : '', name: nameEl ? nameEl.innerText : '', type, pre, tax: total - pre, total, parts, cinfo });
     });
     if (items.length === 0) { uiAlert("目前沒有勾選任何項目可以匯出。"); return; }
 
@@ -3988,7 +4031,7 @@ function downloadPDF() {
         const line = addons.length ? 'none' : '1px solid #E5E5EA';
         let rowsHtml = `<tr style="page-break-inside: avoid; font-size: 12px;">
             <td style="padding: 6px; text-align: center; border-bottom: ${line};">${i + 1}</td>
-            <td style="padding: 6px; text-align: left; border-bottom: ${line}; font-weight: 700;">${qtEsc(it.name)}${typeTag}</td>
+            <td style="padding: 6px; text-align: left; border-bottom: ${line}; font-weight: 700;">${qtEsc(it.name)}${typeTag}${it.cinfo ? `<span style="display:inline-block; margin-left:6px; padding:1px 7px; border-radius:20px; font-size:10px; font-weight:800; background:#FDECEC; color:#D32F2F; vertical-align:middle;">合約 ${it.cinfo.label}</span><div style="font-size:10px; font-weight:600; color:#667085; margin-top:2px;">原價未稅 <s>$ ${it.cinfo.orig.toLocaleString()}</s>，已折 <span style="color:#D32F2F; font-weight:800;">-${it.cinfo.saved.toLocaleString()}</span></div>` : ''}</td>
             <td style="padding: 6px; text-align: right; border-bottom: ${line};">${hasItems ? '' : '$ ' + base.pre.toLocaleString()}</td>
             <td style="padding: 6px; text-align: right; border-bottom: ${line};">${hasItems ? '' : '$ ' + Math.round(base.tax).toLocaleString()}</td>
             <td style="padding: 6px; text-align: right; border-bottom: ${line}; font-weight: 800;">$ ${(hasItems ? it.total : base.total).toLocaleString()}</td>
