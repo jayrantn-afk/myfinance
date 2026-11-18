@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>杰冉宇宙營收表 V3.72</title>
+    <title>杰冉宇宙營收表 V3.74</title>
     <link rel="icon" href="favicon.png?v=2" type="image/png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -771,6 +771,11 @@
         .ce-item-row input.pct { padding: 0 6px; }
         .ce-item-row input:focus { border-color: #1D1D1F; }
         .ce-item-row.bad input.pct { border-color: #D32F2F; color: #D32F2F; background: #FFF5F5; }
+        .ce-item-row input.pct.warn { border-color: #D32F2F; color: #D32F2F; background: #FFF5F5; font-weight: 900; }
+        #mainTable td.split-warn { background: #FFF0F0 !important; }
+        #mainTable td.split-warn input { color: #D32F2F !important; font-weight: 900 !important; }
+        .split-warn-badge { align-items: center; gap: 4px; padding: 3px 10px; border-radius: 50px; background: #FDECEC; color: #D32F2F; font-weight: 900; cursor: pointer; white-space: nowrap; }
+        .split-warn-badge:hover { background: #FAD4D4; }
         .ce-item-row button { border: none; background: transparent; color: var(--light); font-weight: 900; cursor: pointer; border-radius: 8px; height: 30px; }
         .ce-item-row button:hover { color: #D32F2F; background: rgba(211,47,47,0.08); }
         .ce-assign { display: flex; gap: 4px; justify-content: center; }
@@ -1271,6 +1276,7 @@
                             <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block;"></span>完成</span>
                             <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>結清</span>
                             <span style="display:flex; align-items:center; gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#8E24C9;display:inline-block;"></span>分潤</span>
+                            <span id="split-warn-badge" class="split-warn-badge" style="display:none;" onclick="jumpToSplitWarn()" title="點一下跳到下一筆"></span>
                         </div>
                     </div>
                 </div>
@@ -4770,6 +4776,68 @@ function toggleDoneFlag(r) {
 window.toggleDoneFlag = toggleDoneFlag;
 
 // ---------- 追加費用：案件明細上的小標籤＋編輯視窗 ----------
+// V3.73 分潤檢查：只指派杰 → 老闆 70%、夥伴 5%；只指派魏 → 老闆 5%、夥伴 70%；兩個都有或都沒有就不檢查
+// V3.74 只檢查 2026 年 9 月以後的案子（之前用的是舊比例）；還沒填交件日的新案子也會檢查
+const SPLIT_RULE_FROM = '2026-09';
+function splitRuleApplies(ym) {
+    const m = String(ym || '').match(/^(\d{4})-(\d{1,2})/);
+    if (!m) return true;
+    return `${m[1]}-${m[2].padStart(2, '0')}` >= SPLIT_RULE_FROM;
+}
+function splitRule(assign) {
+    const a = String(assign || '');
+    const c = a.includes('杰'), w = a.includes('魏');
+    if (c && !w) return { who: '杰', pb: 70, pp: 5 };
+    if (w && !c) return { who: '魏', pb: 5, pp: 70 };
+    return null;
+}
+function splitMismatch(assign, pb, pp) {
+    const rule = splitRule(assign);
+    if (!rule) return null;
+    const badB = String(pb ?? '').trim() === '' || Math.abs(addonNum(pb) - rule.pb) >= 0.01;
+    const badP = String(pp ?? '').trim() === '' || Math.abs(addonNum(pp) - rule.pp) >= 0.01;
+    return (badB || badP) ? { rule, badB, badP } : null;
+}
+function refreshSplitCheck(r) {
+    const tr = document.getElementById(`r${r}`);
+    const bEl = document.getElementById(`r${r}c15`), pEl = document.getElementById(`r${r}c16`);
+    if (!tr || !bEl || !pEl) return;
+    const d = getRowData(r);
+    const hasData = !!(d[1] || d[2] || d[3] || d[9]);
+    const usesItems = itemList(d).length > 0;
+    const ym = (document.getElementById(`r${r}c0`) || {}).value || d[0];
+    const m = (hasData && !usesItems && splitRuleApplies(ym)) ? splitMismatch((document.getElementById(`r${r}c22`) || {}).value, bEl.value, pEl.value) : null;
+    const bTd = bEl.closest('td'), pTd = pEl.closest('td');
+    bTd.classList.toggle('split-warn', !!(m && m.badB));
+    pTd.classList.toggle('split-warn', !!(m && m.badP));
+    tr.classList.toggle('has-split-warn', !!m);
+    const tip = m ? `指派${m.rule.who}：老闆應該是 ${m.rule.pb}%、夥伴應該是 ${m.rule.pp}%` : '';
+    bTd.title = m && m.badB ? tip : '';
+    pTd.title = m && m.badP ? tip : '';
+    clearTimeout(window._splitCountTimer);
+    window._splitCountTimer = setTimeout(updateSplitWarnBadge, 300);
+}
+function updateSplitWarnBadge() {
+    const badge = document.getElementById('split-warn-badge');
+    if (!badge) return;
+    const n = document.querySelectorAll('#tb tr.has-split-warn').length;
+    badge.style.display = n ? 'inline-flex' : 'none';
+    badge.textContent = `⚠ 分潤要確認 ${n} 筆`;
+}
+function jumpToSplitWarn() {
+    const rows = [...document.querySelectorAll('#tb tr.has-split-warn')].filter(tr => tr.style.display !== 'none');
+    if (!rows.length) { qtToast('目前畫面上的分潤都對，可能要切到「全部月份」才看得到'); return; }
+    window._splitJump = ((window._splitJump ?? -1) + 1) % rows.length;
+    const tr = rows[window._splitJump];
+    tr.scrollIntoView({ block: 'center' });
+    tr.classList.add('row-flash');
+    setTimeout(() => tr.classList.remove('row-flash'), 1600);
+    const r = tr.id.replace('r', '');
+    const target = tr.querySelector('td.split-warn input');
+    if (target) target.focus({ preventScroll: true });
+}
+Object.assign(window, { splitRule, splitMismatch, refreshSplitCheck, updateSplitWarnBadge, jumpToSplitWarn });
+
 function refreshAddonChip(r) {
     const chip = document.getElementById(`r${r}addon`);
     if (!chip) return;
@@ -4834,8 +4902,9 @@ function renderCeItems() {
     document.getElementById('ce-item-list').innerHTML = lines.map((it, i) => {
         const sumPct = addonNum(it.pc) + addonNum(it.pb) + addonNum(it.pp);
         const bad = (String(it.name).trim() || String(it.amount).trim()) && Math.abs(sumPct - 100) >= 0.01;
+        const sm = ((String(it.name).trim() || String(it.amount).trim()) && ceRuleApplies()) ? splitMismatch(it.assign, it.pb, it.pp) : null;
         return `
-        <div class="ce-item-row ${bad ? 'bad' : ''}">
+        <div class="ce-item-row ${bad ? 'bad' : ''}" ${sm ? `title="指派${sm.rule.who}：老闆應該是 ${sm.rule.pb}%、夥伴應該是 ${sm.rule.pp}%"` : ''}>
             <input type="text" value="${qtEsc(it.name)}" oninput="window._addonDraft.lines[${i}].name=this.value">
             <input type="number" class="num" value="${qtEsc(it.amount)}" onwheel="this.blur()" oninput="window._addonDraft.lines[${i}].amount=this.value; updateAddonSum()">
             <div class="ce-assign">
@@ -4843,18 +4912,29 @@ function renderCeItems() {
                 <span class="assign-badge ${it.assign.includes('魏') ? 'active-wei' : ''}" onclick="ceToggleAssign(${i}, '魏')">魏</span>
             </div>
             <input type="number" class="num pct" value="${qtEsc(it.pc)}" onwheel="this.blur()" oninput="cePct(${i}, 'pc', this.value)">
-            <input type="number" class="num pct" value="${qtEsc(it.pb)}" onwheel="this.blur()" oninput="cePct(${i}, 'pb', this.value)">
-            <input type="number" class="num pct" value="${qtEsc(it.pp)}" onwheel="this.blur()" oninput="cePct(${i}, 'pp', this.value)">
+            <input type="number" class="num pct ${sm && sm.badB ? 'warn' : ''}" value="${qtEsc(it.pb)}" onwheel="this.blur()" oninput="cePct(${i}, 'pb', this.value)">
+            <input type="number" class="num pct ${sm && sm.badP ? 'warn' : ''}" value="${qtEsc(it.pp)}" onwheel="this.blur()" oninput="cePct(${i}, 'pp', this.value)">
             <button onclick="ceRemoveItem(${i})" title="刪除這項">✕</button>
         </div>`;
     }).join('') || `<div class="addon-empty">沒有細項，這個案子就照原本「未稅額」和整筆的 % 計算</div>`;
     updateAddonSum();
 }
+function ceRuleApplies() {
+    const r = window._addonDraft && window._addonDraft.r;
+    if (r == null) return true;
+    return splitRuleApplies((document.getElementById(`r${r}c0`) || {}).value || getRowData(r)[0]);
+}
 function cePct(i, key, v) {
     window._addonDraft.lines[i][key] = v;
     const it = window._addonDraft.lines[i];
     const bad = (String(it.name).trim() || String(it.amount).trim()) && Math.abs(addonNum(it.pc) + addonNum(it.pb) + addonNum(it.pp) - 100) >= 0.01;
-    document.querySelectorAll('#ce-item-list .ce-item-row')[i].classList.toggle('bad', !!bad);
+    const rowEl = document.querySelectorAll('#ce-item-list .ce-item-row')[i];
+    rowEl.classList.toggle('bad', !!bad);
+    const sm = ((String(it.name).trim() || String(it.amount).trim()) && ceRuleApplies()) ? splitMismatch(it.assign, it.pb, it.pp) : null;
+    const pcts = rowEl.querySelectorAll('input.pct');
+    pcts[1].classList.toggle('warn', !!(sm && sm.badB));
+    pcts[2].classList.toggle('warn', !!(sm && sm.badP));
+    rowEl.title = sm ? `指派${sm.rule.who}：老闆應該是 ${sm.rule.pb}%、夥伴應該是 ${sm.rule.pp}%` : '';
     updateAddonSum();
 }
 function ceToggleAssign(i, who) {
@@ -5174,6 +5254,7 @@ function calc(r, c, save=true) {
     if (doneBadge) doneBadge.classList.toggle('active', isDone);
     colorizeProjName(r);
     refreshAddonChip(r);
+    refreshSplitCheck(r);
 
     if (row) row.classList.toggle('is-all-done', isSettled && isPartnerPaid && isDone);
     
